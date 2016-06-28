@@ -4,7 +4,7 @@
 #
 # Determines which package manager is being used, then installs all the packages listed in programs.txt (or argument, if provided)
 #
-# v1.0 June 28, 2016
+# v1.0 June 28, 2016, 16:58 PST
 
 ### Variables
 
@@ -20,18 +20,18 @@ if [[ $(which apt-get) == 0 ]]; then # Most common, so it goes first
 elif [[ $(which yum) == 0 ]]; then
 	program="yum"
 	#yum update
-elif [[ $(which yast) == 0]]; then
+elif [[ $(which yast) == 0 ]]; then
 	program="yast"
-elif [[ $(which pacman) == 0]]; then
+elif [[ $(which pacman) == 0 ]]; then
 	program="pacman"
-elif [[ $(which aptitude) == 0]]; then # Just in case apt-get is somehow not installed with aptitude, happens
+elif [[ $(which aptitude) == 0 ]]; then # Just in case apt-get is somehow not installed with aptitude, happens
 	program="aptitude"
 	aptitude update
 fi
 }
 
 function install() {
-case $program in:
+case $program in
 	apt)
 	apt-get install -y $*
 	;;
@@ -51,6 +51,7 @@ case $program in:
 	echo "Package manager not found! Please update script or diagnose problem!"
 	exit 3
 	;;
+esac
 	# Insert code dealing with failed installs here
 }
 
