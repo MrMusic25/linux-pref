@@ -11,6 +11,9 @@ wifite
 pyrit
 cowpatty
 
+# Usability programs, might require extra repos depending on distribution!
 
+grive
+notepadqq
 
 #EOF
