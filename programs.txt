@@ -1,0 +1,16 @@
+# This file contains programs I want installed in every distribution I install
+# Make sure installer script ignores pound sign for comments!
+
+# wavemon - used to view and monitor Wi-Fi airwaves
+wavemon
+
+# Programs used for wireless captures/password cracking
+
+aircrack-ng
+wifite
+pyrit
+cowpatty
+
+
+
+#EOF
