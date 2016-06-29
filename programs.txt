@@ -16,4 +16,7 @@ cowpatty
 grive
 notepadqq
 
+# Used for downloading videos from YouTube. Make sure to get yt-script.sh from Grive!
+youtube-dl
+
 #EOF
