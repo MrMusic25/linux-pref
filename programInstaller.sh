@@ -4,7 +4,7 @@
 #
 # Determines which package manager is being used, then installs all the packages listed in programs.txt (or argument, if provided)
 #
-# v1.0 June 28, 2016, 16:58 PST
+# v1.0.1 June 29, 2016, 12:28 PST
 
 ### Variables
 
@@ -21,14 +21,15 @@ if [[ ! -z $(which apt-get) ]]; then # Most common, so it goes first
 	apt-get update &>/dev/null
 elif [[ ! -z $(which yum) ]]; then
 	export program="yum"
-	#yum update
+	yum check-update &>/dev/null
 elif [[ ! -z $(which rpm) ]]; then
 	export program="rpm"
-	rpm -F --justdb $>/dev/null # Only updates the DB, not the system
+	rpm -F --justdb &>/dev/null # Only updates the DB, not the system
 elif [[ ! -z $(which yast) ]]; then
 	export program="yast"
 elif [[ ! -z $(which pacman) ]]; then
 	export program="pacman"
+	pacman -yy &>/dev/null
 elif [[ ! -z $(which aptitude) ]]; then # Just in case apt-get is somehow not installed with aptitude, happens
 	export program="aptitude"
 	aptitude update &>/dev/null
@@ -51,7 +52,7 @@ case $program in
 	rpm -i $* >> "$log"
 	;;
 	pacman)
-	pacman -Syu $* >> "$log"
+	pacman -S $* >> "$log"
 	;;
 	aptitude)
 	aptitude install -y $* >> "$log"
