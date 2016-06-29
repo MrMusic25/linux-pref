@@ -18,20 +18,20 @@ function determinePM() {
 #echo "Finding which package manager is in use..."
 if [[ ! -z $(which apt-get) ]]; then # Most common, so it goes first
 	export program="apt"
-	apt-get update
+	apt-get update &>/dev/null
 elif [[ ! -z $(which yum) ]]; then
 	export program="yum"
 	#yum update
 elif [[ ! -z $(which rpm) ]]; then
 	export program="rpm"
-	rpm -F --justdb # Only updates the DB, not the system
+	rpm -F --justdb $>/dev/null # Only updates the DB, not the system
 elif [[ ! -z $(which yast) ]]; then
 	export program="yast"
 elif [[ ! -z $(which pacman) ]]; then
 	export program="pacman"
 elif [[ ! -z $(which aptitude) ]]; then # Just in case apt-get is somehow not installed with aptitude, happens
 	export program="aptitude"
-	aptitude update
+	aptitude update &>/dev/null
 fi
 }
 
@@ -85,9 +85,14 @@ if [[ ! -e $file ]]; then
 fi
 
 # Now that file is valid, determine program to use
+echo "Determining package manager and updating. This may take time depending on internet speed and repo size."
 determinePM
 echo "This distribution is using $program as it's package manager!"
 echo "Now installing programs from $file!"
+echo " "
+echo "Note: This may take some time depending on size of list."
+echo "      Check $log for progress and details!"
+echo " "
 
 # Now we can install everything
 touch $log # Touch logfile so nothing fails
