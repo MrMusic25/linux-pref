@@ -86,3 +86,48 @@ do
 done
 	# Insert code dealing with failed installs here
 }
+
+## announce()
+# Function: Make a visible notice to display text - catch the user's eye
+# PreReq: None
+#
+# Call: announce <text1> [text2] [text3] ...
+#
+# Input: Text in quotation marks. Each argument will be a new line in the announcement.
+#
+# Output: None, no return values
+#
+# Other info: Try not to make text too long, it may not display correctly
+function announce() {
+	# Determine highest amount of chars
+	stars=0
+		for j in "$@"; # Stupid quotation marks killed the whole thing.... ugh....
+	do
+		if [[ ${#j} -gt $stars ]]; then
+			export stars=${#j}
+		fi
+	done
+	let "stars += 9" # 4 beginning characters and 5 trailing
+	
+	# Now print beginning set of stars
+	printf "\n\n"
+	for l in `seq 1 $stars`;
+	do
+		printf "*"
+	done
+	printf "\n"
+	
+	# Now, print announcements
+	for i in `seq 1 $#`;
+	do
+		printf "\n*** ${!i} \n"
+	done
+	
+	#Finally, print ending stars
+	printf "\n"
+	for k in `seq 1 $stars`;
+	do
+		printf "*"
+	done
+	printf "\n\n"
+}
