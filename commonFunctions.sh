@@ -4,7 +4,14 @@
 #
 # Note: this script whould not be run by itself, as it only contains functions and variables
 #
-# v1.0 29 June 2016 13:38 PST
+# Changes:
+# v1.1.1
+# - debug() now touches logfile so script doesn't have to!
+#
+# v1.1
+# - Added announce() and debug() functions
+#
+# v1.1 01 July 2016 12:38 PST
 
 ### Variables
 
@@ -80,7 +87,7 @@ do
 		aptitude install -y $var 
 		;;
 		*)
-		echo "Package manager not found! Please update script or diagnose problem!"
+		announce "Package manager not found! Please update script or diagnose problem!"
 		#exit 300
 		;;
 	esac
@@ -145,12 +152,17 @@ function announce() {
 # Output: stdout, no return value
 #
 # Other info: If log_file is present, it will ALWAYS send debug message to log - useful when sharing scripts
+#             Note: Debug also runs 'touch' on file if not present, no need to do so in script now!
 function debug() {
 	if [[ $debugFlag -eq 1 ]]; then
 		echo "$1"
 	fi
 	
 	if [[ ! -z $2 ]]; then
+		if [[ ! -f $2 ]]; then
+			touch "$2"
+		fi
+		
 		echo "$1" >> "$2"
 	fi
 }
