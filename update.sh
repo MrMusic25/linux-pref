@@ -6,80 +6,41 @@
 # Running update by itself will update and upgrade all system packages.
 # If there are arguments, it will try to install the programs listed
 #
-# v1.0, 29 June 2016 12:22 PST
+# Changes:
+#
+# v1.1
+# - Script will now ask if you would like to reboot after updating, if it is needed
+# - Changed echoes to announce()
+#
+# v1.1, 01 July 2016 14:47 PST
 
 ### Variables
 
-program="NULL"
+#program="NULL"
+log="update.log"
 
 ### Functions
 
-# determinePM() and install() taken from programInstaller.sh, make sure to mirror changes to both!\
-# Determines the PM in use, and updates the repos if possible
-function determinePM() {
-#echo "Finding which package manager is in use..."
-if [[ ! -z $(which apt-get) ]]; then # Most common, so it goes first
-	export program="apt"
-	apt-get update
-elif [[ ! -z $(which yum) ]]; then
-	export program="yum"
-	#yum update
-elif [[ ! -z $(which rpm) ]]; then
-	export program="rpm"
-	rpm -F --justdb # Only updates the DB, not the system
-elif [[ ! -z $(which yast) ]]; then # YaST is annoying af, so look for rpm and yum first
-	export program="yast"
-elif [[ ! -z $(which pacman) ]]; then
-	export program="pacman"
-	pacman -yy # Refreshes the repos, always read the man pages!
-elif [[ ! -z $(which aptitude) ]]; then # Just in case apt-get is somehow not installed with aptitude, happens
-	export program="aptitude"
-	aptitude update
+if [[ ! -f commonFunctions.sh ]]; then
+	echo "commonFunctions.sh could not be found!" 
+	echo "Please place in the same directory or create a link in $(pwd)!"
+	exit 1
+else
+	source commonFunctions.sh
 fi
-}
-
-# Attempts to install program(s) in $* based on PM
-function install() {
-printf "\nInstalling $*\n" 
-case $program in
-	apt)
-	apt-get install -y $*  
-	;;
-	yum)
-	yum install $* 
-	;;
-	yast)
-	yast -i $* 
-	;;
-	rpm)
-	rpm -i $* 
-	;;
-	pacman)
-	pacman -S $* 
-	;;
-	aptitude)
-	aptitude install -y $* 
-	;;
-	*)
-	echo "Package manager not found! Please update script or diagnose problem!"
-	exit 3
-	;;
-esac
-	# Insert code dealing with failed installs here
-}
 
 # Upgrades the system based on PM
 function upgradeSystem() {
 case $program in
 	apt)
-	echo "NOTE: script will be running a dist-upgrade!"
+	announce "NOTE: script will be running a dist-upgrade!"
 	apt-get dist-upgrade
 	;;
 	yum)
 	yum upgrade
 	;;
 	yast)
-	echo "Systems running YaST must be manually updated!"
+	announce "Systems running YaST must be manually updated!"
 	#yast -i $*
 	;;
 	rpm)
@@ -89,11 +50,11 @@ case $program in
 	pacman -Syu
 	;;
 	aptitude)
-	echo "NOTE: aptitude will be doing a dist-upgrade!"
+	announce "NOTE: aptitude will be doing a dist-upgrade!"
 	aptitude dist-upgrade
 	;;
 	*)
-	echo "Package manager not found! Please update script or diagnose problem!"
+	announce "Package manager not found! Please update script or diagnose problem!"
 	exit 3
 	;;
 esac
@@ -114,19 +75,19 @@ case $program in
 	#yast -i $*
 	;;
 	rpm)
-	echo "RPM has no clean function"
+	announce "RPM has no clean function"
 	# Nothing to be done
 	;;
 	pacman)
 	pacman -cq
 	;;
 	aptitude)
-	echo "NOTE: aptitude will be doing a dist-upgrade!"
+	#echo "NOTE: aptitude will be doing a dist-upgrade!"
 	aptitude clean -y
 	aptitude autoclean -y
 	;;
 	*)
-	echo "Package manager not found! Please update script or diagnose problem!"
+	announce "Package manager not found! Please update script or diagnose problem!"
 	exit 3
 	;;
 esac
@@ -135,31 +96,56 @@ esac
 ### Main Script
 
 if [ "$EUID" -ne 0 ]; then
-	echo "This script require root privileges, please run as root or sudo!"
+	announce "This script require root privileges, please run as root or sudo!"
 	exit 2
 fi
 
 if [[ $# -ne 0 ]]; then
-	echo "Script will upgrade system, then attempt to install packages from arguments."
+	announce "Script will upgrade system, then attempt to install packages from arguments."
 else
-	echo "Script will now upgrade your system."
+	announce "Script will now upgrade your system."
 fi
 
 determinePM
 upgradeSystem
 
 if [[ $# -ne 0 ]]; then
-	install $*
+	universalInstaller $*
 fi
 
-echo "Everything is installed and upgraded, cleaning up now!"
+announce "Everything is installed and upgraded, cleaning up now!"
 cleanSystem
 
 if [[ ! -z $(which msfupdate) ]]; then
-	echo "Metasploit installed, updating as well!"
+	announce "Metasploit installed, updating as well!"
 	msfupdate
 fi
 
-echo "Done!"
+# Code that asks to reboot if it is required
+if [[ -f /var/run/reboot-required ]]; then
+	announce "A reboot is required after updating!" 
+	printf "\nWould you like the script to manually reboot for you? (y/n): "
+	answer="NULL"
+	while [[ $answer != "y" && $answer != "yes" && $answer != "n" && $answer != "no" ]]; do
+		read answer
+		case $answer in
+			y|yes)
+			announce "Script will reboot computer in 3 minutes! Please close your work!" "Press any key to reboot immediately!"
+			sleep 180
+			announce "Rebooting computer now!"
+			sleep 5
+			reboot
+			;;
+			n|no)
+			echo "Computer will not be rebooted. Please reboot manually later."
+			;;
+			*)
+			printf "\nWould you like the script to manually reboot for you? (y/n): "
+			;;
+		esac
+	done
+fi
+
+announce "Done!"
 
 #eof

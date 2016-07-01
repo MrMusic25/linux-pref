@@ -16,14 +16,14 @@
 ### Variables
 
 file="programs.txt"
-program="NULL"
+#program="NULL"
 log="pm.log" # Remember to change this to 'install-logs/pm.log' when other scripts ready
 
 ### Functions
 
 if [[ ! -f commonFunctions.sh ]]; then
 	echo "commonFunctions.sh could not be found!" 
-	echo "Please place in the same directory or create a link to $(pwd)!"
+	echo "Please place in the same directory or create a link in $(pwd)!"
 	exit 1
 else
 	source commonFunctions.sh

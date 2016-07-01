@@ -7,11 +7,15 @@
 # Changes:
 # v1.1.1
 # - debug() now touches logfile so script doesn't have to!
+# - Slightly changed the output of announce() to look more symmetrical
 #
 # v1.1
 # - Added announce() and debug() functions
 #
-# v1.1 01 July 2016 12:38 PST
+# To-Do:
+# - Make the length for printf in announce() dynamic so the side stars match-up
+#
+# v1.1.1 01 July 2016 14:30 PST
 
 ### Variables
 
@@ -115,7 +119,7 @@ function announce() {
 			export stars=${#j}
 		fi
 	done
-	let "stars += 9" # 4 beginning characters and 5 trailing
+	let "stars += 8" # 4 beginning characters and 4 trailing
 	
 	# Now print beginning set of stars
 	printf "\n\n"
@@ -128,7 +132,7 @@ function announce() {
 	# Now, print announcements
 	for i in `seq 1 $#`;
 	do
-		printf "\n*** ${!i} \n"
+		printf "\n*** ${!i} ***\n"
 	done
 	
 	#Finally, print ending stars
