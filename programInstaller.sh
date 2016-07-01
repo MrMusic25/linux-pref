@@ -6,12 +6,15 @@
 #
 # Changes:
 #
+# v1.1.1
+# - Syntax change, now multiple programs on one line will install at the same time
+#
 # v1.1
 # - Script now uses commonFunctions.sh
 # - Changed most output to use announce() and debug()
 # - determinePM() redirects to /dev/null now because it is not important to view except on failure
 #
-# v1.1 01 July, 2016, 13:10 PST
+# v1.1.1 01 July, 2016, 15:29 PST
 
 ### Variables
 
@@ -60,7 +63,7 @@ sleep 2
 # Now we can install everything
 while read -r line; do
 	[[ $line = \#* ]] && continue # Skips comment lines
-	universalInstaller $line
+	universalInstaller "$line"
 done < $file
 
 announce "Done installing programs!"
