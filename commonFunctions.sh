@@ -9,6 +9,7 @@
 ### Variables
 
 program="NULL" # This should be the start point for most scripts
+debugFlag=0
 
 ### Functions
 
@@ -130,4 +131,26 @@ function announce() {
 		printf "*"
 	done
 	printf "\n\n"
+}
+
+## debug()
+# Function: When enabled, it allows you to send debug messages to a log or stdout
+# PreReq: 'export debugFlag=1' if you want stdout
+#
+# Call: debug <message> [log_file]
+#
+# Input: Text string for input. If log_file is present, it will echo>> to that file as well with 'Debug:' to denote debug output
+#        Note: Message will only output if debugFlag=1, so that debug code doesn't need to be erased or commented out
+#
+# Output: stdout, no return value
+#
+# Other info: If log_file is present, it will ALWAYS send debug message to log - useful when sharing scripts
+function debug() {
+	if [[ $debugFlag -eq 1 ]]; then
+		echo "$1"
+	fi
+	
+	if [[ ! -z $2 ]]; then
+		echo "$1" >> "$2"
+	fi
 }
