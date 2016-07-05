@@ -5,6 +5,9 @@
 # Note: this script whould not be run by itself, as it only contains functions and variables
 #
 # Changes:
+# v1.1.3
+# - Added a 'sleep 2' statement to the end of announce() since I keep doing it anyways
+#
 # v1.1.2
 # - Added 'dnf' to determinePM() and universalInstaller() after reading about it on DistroWatch. Similar changes made in programInstaller.sh
 #
@@ -18,7 +21,7 @@
 # To-Do:
 # - Make the length for printf in announce() dynamic so the side stars match-up
 #
-# v1.1.2 05 July 2016 12:18 PST
+# v1.1.3 05 July 2016 12:33 PST
 
 ### Variables
 
@@ -151,6 +154,7 @@ function announce() {
 		printf "*"
 	done
 	printf "\n\n"
+	sleep 2
 }
 
 ## debug()

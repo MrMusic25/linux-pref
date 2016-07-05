@@ -1,0 +1,19 @@
+# Because these are mostly cracking programs, this file will stay hidden
+# Stored in a seperate file so the user can choose whether or not to install these 'suspicious' programs
+zenmap
+theharvester
+metasploit-framework
+john
+crunch
+ophcrack
+pdfcrack
+dsniff
+sslsniff
+wireshark
+setoolkit
+testdisk
+photorec
+btscanner
+aircrack-ng
+wifite
+pyrit

@@ -7,12 +7,14 @@
 # If there are arguments, it will try to install the programs listed
 #
 # Changes:
+# v1.1.1
+# - Got rid of sleep statements now that it is in announce()
 #
 # v1.1
 # - Script will now ask if you would like to reboot after updating, if it is needed
 # - Changed echoes to announce()
 #
-# v1.1, 01 July 2016 14:47 PST
+# v1.1.1, 05 July 2016 12:37 PST
 
 ### Variables
 

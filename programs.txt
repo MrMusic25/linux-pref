@@ -1,24 +1,6 @@
 # This file contains programs I want installed in every distribution I install
 # Make sure installer script ignores pound sign for comments!
 
-# wavemon - used to view and monitor Wi-Fi airwaves
-wavemon
-
-# Programs used for wireless captures/password cracking
-
-aircrack-ng
-wifite
-pyrit
-
-# Usability programs, might require extra repos depending on distribution!
-
-grive
-notepadqq
-screen
-
-# Used for downloading videos from YouTube. Make sure to get yt-script.sh from Grive!
-youtube-dl
-
 # Things that, for some reason, not every distribution installs by default
 git
 build-essential linux-firmware make
@@ -26,7 +8,17 @@ gcc
 python
 python3
 
-# Going through the Backbox/Kali programs, picking out my favorites
-zenmap
+# wavemon - used to view and monitor Wi-Fi airwaves
+wavemon
+
+# Usability programs, might require extra repos depending on distribution!
+
+grive
+notepadqq
+screen
+tlp
+
+# Used for downloading videos from YouTube. Make sure to get yt-script.sh from Grive!
+youtube-dl
 
 #EOF

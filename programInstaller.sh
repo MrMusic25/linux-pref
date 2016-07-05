@@ -5,6 +5,8 @@
 # Determines which package manager is being used, then installs all the packages listed in programs.txt (or argument, if provided)
 #
 # Changes:
+# v1.1.3
+# - Got rid of sleep statements, as I added it to announce()
 #
 # v1.1.2
 # -Added dnf to programs, added commands for clean and upgrade
@@ -17,7 +19,7 @@
 # - Changed most output to use announce() and debug()
 # - determinePM() redirects to /dev/null now because it is not important to view except on failure
 #
-# v1.1.2 05 July, 2016, 12:16 PST
+# v1.1.3 05 July, 2016, 12:35 PST
 
 ### Variables
 
@@ -61,7 +63,6 @@ determinePM &>/dev/null
 
 debug "This distribution is using $program as it's package manager!" $log
 announce "Now installing programs listed in $file!" "This may take a while depending on number of updates and internet speed" "Check $log for details"
-sleep 2
 
 # Now we can install everything
 while read -r line; do
