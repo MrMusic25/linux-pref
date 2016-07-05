@@ -5,6 +5,9 @@
 # Note: this script whould not be run by itself, as it only contains functions and variables
 #
 # Changes:
+# v1.1.2
+# - Added 'dnf' to determinePM() and universalInstaller() after reading about it on DistroWatch. Similar changes made in programInstaller.sh
+#
 # v1.1.1
 # - debug() now touches logfile so script doesn't have to!
 # - Slightly changed the output of announce() to look more symmetrical
@@ -15,7 +18,7 @@
 # To-Do:
 # - Make the length for printf in announce() dynamic so the side stars match-up
 #
-# v1.1.1 01 July 2016 14:30 PST
+# v1.1.2 05 July 2016 12:18 PST
 
 ### Variables
 
@@ -39,6 +42,9 @@ function determinePM() {
 if [[ ! -z $(which apt-get) ]]; then # Most common, so it goes first
 	export program="apt"
 	apt-get update
+elif [[ ! -z $(which dnf) ]]; then # This is why we love DistroWatch, learned about the 'replacement' to yum!
+	export program="dnf"
+	dnf check-update
 elif [[ ! -z $(which yum) ]]; then
 	export program="yum"
 	yum check-update
@@ -74,6 +80,9 @@ do
 	case $program in
 		apt)
 		apt-get install -y $var  
+		;;
+		dnf)
+		dnf -y install $var
 		;;
 		yum)
 		yum install $var 

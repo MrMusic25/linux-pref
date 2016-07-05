@@ -6,6 +6,9 @@
 #
 # Changes:
 #
+# v1.1.2
+# -Added dnf to programs, added commands for clean and upgrade
+#
 # v1.1.1
 # - Syntax change, now multiple programs on one line will install at the same time
 #
@@ -14,7 +17,7 @@
 # - Changed most output to use announce() and debug()
 # - determinePM() redirects to /dev/null now because it is not important to view except on failure
 #
-# v1.1.1 01 July, 2016, 15:29 PST
+# v1.1.2 05 July, 2016, 12:16 PST
 
 ### Variables
 

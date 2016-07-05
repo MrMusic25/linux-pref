@@ -36,6 +36,9 @@ case $program in
 	announce "NOTE: script will be running a dist-upgrade!"
 	apt-get dist-upgrade
 	;;
+	dnf)
+	dnf -y upgrade
+	;;
 	yum)
 	yum upgrade
 	;;
@@ -66,6 +69,10 @@ case $program in
 	apt)
 	apt-get autoremove -y
 	apt-get autoclean
+	;;
+	dnf)
+	dnf -y clean all
+	dnf -y autoerase
 	;;
 	yum)
 	yum clean all

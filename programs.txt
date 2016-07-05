@@ -9,12 +9,12 @@ wavemon
 aircrack-ng
 wifite
 pyrit
-cowpatty
 
 # Usability programs, might require extra repos depending on distribution!
 
 grive
 notepadqq
+screen
 
 # Used for downloading videos from YouTube. Make sure to get yt-script.sh from Grive!
 youtube-dl
@@ -25,5 +25,8 @@ build-essential linux-firmware make
 gcc
 python
 python3
+
+# Going through the Backbox/Kali programs, picking out my favorites
+zenmap
 
 #EOF
