@@ -7,6 +7,7 @@ build-essential linux-firmware make
 gcc
 python
 python3
+screen
 
 # wavemon - used to view and monitor Wi-Fi airwaves
 wavemon
@@ -15,7 +16,6 @@ wavemon
 
 grive
 notepadqq
-screen
 tlp
 
 # Used for downloading videos from YouTube. Make sure to get yt-script.sh from Grive!

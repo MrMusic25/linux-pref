@@ -7,6 +7,9 @@
 # If there are arguments, it will try to install the programs listed
 #
 # Changes:
+# v1.1.2
+# - Added the ability to source from /usr/share automatically
+#
 # v1.1.1
 # - Got rid of sleep statements now that it is in announce()
 #
@@ -14,7 +17,7 @@
 # - Script will now ask if you would like to reboot after updating, if it is needed
 # - Changed echoes to announce()
 #
-# v1.1.1, 05 July 2016 12:37 PST
+# v1.1.2, 05 July 2016 15:43 PST
 
 ### Variables
 
@@ -23,12 +26,16 @@ log="update.log"
 
 ### Functions
 
-if [[ ! -f commonFunctions.sh ]]; then
-	echo "commonFunctions.sh could not be found!" 
-	echo "Please place in the same directory or create a link in $(pwd)!"
-	exit 1
-else
+if [[ -f commonFunctions.sh ]]; then
 	source commonFunctions.sh
+elif [[ -f /usr/share/commonFunctions.sh ]]; then
+	source /usr/share/commonFunctions.sh
+else
+	echo "commonFunctions.sh could not be located!"
+	
+	# Comment/uncomment below depending on if script actually uses common functions
+	echo "Script will now exit, please put file in same directory as script, or link to /usr/share!"
+	exit 1
 fi
 
 # Upgrades the system based on PM

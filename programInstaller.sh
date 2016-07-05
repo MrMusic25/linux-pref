@@ -1,10 +1,14 @@
 #!/bin/bash
 #
+# programInstaller.sh - Used to install programs from a text-based, tab-delimited source
 # Usage: ./programInstaller.sh <programs.txt>
 #
 # Determines which package manager is being used, then installs all the packages listed in programs.txt (or argument, if provided)
 #
 # Changes:
+# v1.1.4
+# - Added the ability to source from /usr/share automatically
+#
 # v1.1.3
 # - Got rid of sleep statements, as I added it to announce()
 #
@@ -19,7 +23,7 @@
 # - Changed most output to use announce() and debug()
 # - determinePM() redirects to /dev/null now because it is not important to view except on failure
 #
-# v1.1.3 05 July, 2016, 12:35 PST
+# v1.1.4 05 July, 2016, 15:35 PST
 
 ### Variables
 
@@ -29,12 +33,16 @@ log="pm.log" # Remember to change this to 'install-logs/pm.log' when other scrip
 
 ### Functions
 
-if [[ ! -f commonFunctions.sh ]]; then
-	echo "commonFunctions.sh could not be found!" 
-	echo "Please place in the same directory or create a link in $(pwd)!"
-	exit 1
-else
+if [[ -f commonFunctions.sh ]]; then
 	source commonFunctions.sh
+elif [[ -f /usr/share/commonFunctions.sh ]]; then
+	source /usr/share/commonFunctions.sh
+else
+	echo "commonFunctions.sh could not be located!"
+	
+	# Comment/uncomment below depending on if script actually uses common functions
+	echo "Script will now exit, please put file in same directory as script, or link to /usr/share!"
+	exit 1
 fi
 
 ### Main script
