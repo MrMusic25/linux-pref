@@ -7,6 +7,9 @@
 # If there are arguments, it will try to install the programs listed
 #
 # Changes:
+# v1.1.3
+# - Changed script to use checkPrivilege()
+#
 # v1.1.2
 # - Added the ability to source from /usr/share automatically
 #
@@ -17,7 +20,7 @@
 # - Script will now ask if you would like to reboot after updating, if it is needed
 # - Changed echoes to announce()
 #
-# v1.1.2, 05 July 2016 15:43 PST
+# v1.1.3, 05 July 2016 16:31 PST
 
 ### Variables
 
@@ -111,10 +114,7 @@ esac
 
 ### Main Script
 
-if [ "$EUID" -ne 0 ]; then
-	announce "This script require root privileges, please run as root or sudo!"
-	exit 2
-fi
+checkPrivilege "exit" # I will chuckle everytime I have to type this lol
 
 if [[ $# -ne 0 ]]; then
 	announce "Script will upgrade system, then attempt to install packages from arguments."

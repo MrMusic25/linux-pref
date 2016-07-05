@@ -6,6 +6,9 @@
 # Determines which package manager is being used, then installs all the packages listed in programs.txt (or argument, if provided)
 #
 # Changes:
+# v1.1.5
+# - Changed script to use checkPrivilege()
+#
 # v1.1.4
 # - Added the ability to source from /usr/share automatically
 #
@@ -23,7 +26,7 @@
 # - Changed most output to use announce() and debug()
 # - determinePM() redirects to /dev/null now because it is not important to view except on failure
 #
-# v1.1.4 05 July, 2016, 15:35 PST
+# v1.1.5 05 July, 2016, 16:30 PST
 
 ### Variables
 
@@ -48,10 +51,7 @@ fi
 ### Main script
 
 # First, check to see is user is root/sudo. Makes scripting easier
-if [ "$EUID" -ne 0 ]; then
-	announce "This script require root privileges, please run as root or sudo!"
-	exit 2
-fi
+checkPrivilege "exit" #lol
 
 # Checks for argument and sets as file location
 if [[ $# != 0 ]]; then

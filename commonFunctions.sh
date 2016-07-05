@@ -5,6 +5,9 @@
 # Note: this script whould not be run by itself, as it only contains functions and variables
 #
 # Changes:
+# v1.2
+# - Added checkPrivilege(). Checks if user is root, and exits with code 777 if not
+#
 # v1.1.3
 # - Added a 'sleep 2' statement to the end of announce() since I keep doing it anyways
 #
@@ -21,12 +24,13 @@
 # To-Do:
 # - Make the length for printf in announce() dynamic so the side stars match-up
 #
-# v1.1.3 05 July 2016 12:33 PST
+# v1.2 05 July 2016 16:30 PST
 
 ### Variables
 
 program="NULL" # This should be the start point for most scripts
 debugFlag=0
+privilege=0 # 0 if root, 777 if not
 
 ### Functions
 
@@ -182,4 +186,26 @@ function debug() {
 		
 		echo "$1" >> "$2"
 	fi
+}
+
+## checkPrivilege()
+# Function: Simple function to check if this script is being run as root or sudo, in case it is necessary
+#
+# Call: checkPrivilege [exit]
+#
+# Input: Only accepts the word "exit" as an argument
+#
+# Output: stdout, sets privilege to 777 if not root; this allows you to call sudo <command>, or exit entire script
+#
+# Other info: Just calling will return 777; calling with the word "exit" at the end will kill the current script if not root
+function checkPrivilege() {
+if [ "$EUID" -ne 0 ]; then
+	announce "This script require root privileges, please run as root or sudo!"
+	export privilege=777
+	
+	# Only exits if the flag ($1) is set
+	if [[ "$1" == "exit" ]]; then
+		exit 777
+	fi
+fi
 }
