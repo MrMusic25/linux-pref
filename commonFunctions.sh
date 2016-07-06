@@ -5,6 +5,10 @@
 # Note: this script whould not be run by itself, as it only contains functions and variables
 #
 # Changes:
+# v1.2.2
+# - Added variable for a log directory prefix; small line, big impact
+# - debug() will also make sure directory exists before writing to it
+#
 # v1.2.1
 # - Added an initilizer to debug() so that time log was started is shown at beginning of log
 #
@@ -24,7 +28,7 @@
 # v1.1
 # - Added announce() and debug() functions
 #
-# v1.2.1 06 July 2016 10:35 PST
+# v1.2.2 06 July 2016 12:38 PST
 
 ### Variables
 
@@ -32,6 +36,7 @@ program="NULL" # This should be the start point for most scripts
 debugFlag=0
 privilege=0 # 0 if root, 777 if not
 debugInit=0
+debugPrefix="$HOME/.logs" # Use: scriptLog="$debugPrefix/scriptLog.log", then include $scriptLog in debug() statements
 
 ### Functions
 
@@ -176,6 +181,12 @@ function announce() {
 # Other info: If log_file is present, it will ALWAYS send debug message to log - useful when sharing scripts
 #             Note: Debug also runs 'touch' on file if not present, no need to do so in script now!
 function debug() {
+	# It would be kinda awkward trying to write to a non-existent directory... Hate to run it every call but it is necessary
+	if [[ ! -d $debugPrefix ]]; then
+		touch $debugPrefix
+	fi
+	
+	# Echoes the message if debug flag is on
 	if [[ $debugFlag -eq 1 ]]; then
 		echo "Debug: $1"
 	fi

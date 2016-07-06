@@ -11,7 +11,11 @@
 #
 # Relies on the .git folder in the directory to be able to pull, therefore must be setup beforehand!
 #
-# v1.0, 06 July 2016 11:38 PST
+# Changes:
+# v1.0.1
+# - Script now uses $debugPrefix
+#
+# v1.0.1, 06 July 2016 12:47 PST
 
 ### Variables
 

@@ -7,6 +7,9 @@
 # If there are arguments, it will try to install the programs listed
 #
 # Changes:
+# v1.1.4
+# - Script is now using $debugPrefix
+#
 # v1.1.3
 # - Changed script to use checkPrivilege()
 #
@@ -20,12 +23,12 @@
 # - Script will now ask if you would like to reboot after updating, if it is needed
 # - Changed echoes to announce()
 #
-# v1.1.3, 05 July 2016 16:31 PST
+# v1.1.4, 06 July 2016 12:46 PST
 
 ### Variables
 
 #program="NULL"
-log="update.log"
+log="$debugPrefix/update.log"
 
 ### Functions
 

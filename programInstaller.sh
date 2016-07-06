@@ -6,6 +6,9 @@
 # Determines which package manager is being used, then installs all the packages listed in programs.txt (or argument, if provided)
 #
 # Changes:
+# v1.1.6
+# - Script is now using $debugPrefix
+#
 # v1.1.5
 # - Changed script to use checkPrivilege()
 #
@@ -16,7 +19,7 @@
 # - Got rid of sleep statements, as I added it to announce()
 #
 # v1.1.2
-# -Added dnf to programs, added commands for clean and upgrade
+# - Added dnf to programs, added commands for clean and upgrade
 #
 # v1.1.1
 # - Syntax change, now multiple programs on one line will install at the same time
@@ -26,13 +29,13 @@
 # - Changed most output to use announce() and debug()
 # - determinePM() redirects to /dev/null now because it is not important to view except on failure
 #
-# v1.1.5 05 July, 2016, 16:30 PST
+# v1.1.6 06 July, 2016, 12:46 PST
 
 ### Variables
 
 file="programs.txt"
 #program="NULL"
-log="pm.log" # Remember to change this to 'install-logs/pm.log' when other scripts ready
+log="$debugPrefix/pm.log" # Remember to change this to 'install-logs/pm.log' when other scripts ready
 
 ### Functions
 

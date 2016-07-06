@@ -5,16 +5,21 @@
 # Usage: ./grive.sh <grive_dir>
 # Specifying a directory is optional, otherwise defaults to $HOME/Grive
 #
-# Remember to redirect stdout and stderr to a log file in crontab! ( &>>$HOME/grive.log )
+# crontab line I use is as follows, syncs every 5 minutes and logs according to debug() in commonFunctions.sh
+#	*/5 * * * * /home/kyle/grive.sh
 #
-# crontab line I use is as follows, syncs every 5 minutes and redirects to a log
-#	*/5 * * * * /home/kyle/grive.sh &>>grive.log
+# Changes:
+# v1.1
+# - Script now uses commonFunctions.sh
+# - Main location moved to github to be used with other scripts
+# - Overhauled other parts of script to be 'self-friendly' (uses my own functions)
+# - Also updated to use $updatePrefix
 #
-# v1.0 June 1, 2016 17:36PST
+# v1.1, 06 July 2016 12:47 PST
 
 ### Variables
 
-griveLog="$HOME/griveLog.log" # Saves it in the grive directory unless otherwise specified
+griveLog="$updatePrefix/griveLog.log" # Saves it in the grive directory unless otherwise specified
 griveDir="NULL"
 
 ### Functions
