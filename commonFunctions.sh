@@ -5,6 +5,9 @@
 # Note: this script whould not be run by itself, as it only contains functions and variables
 #
 # Changes:
+# v1.2.3
+# - First actual 'bugfix' - accidentally made it touch $debugPrefix instead of mkdir
+#
 # v1.2.2
 # - Added variable for a log directory prefix; small line, big impact
 # - debug() will also make sure directory exists before writing to it
@@ -183,7 +186,7 @@ function announce() {
 function debug() {
 	# It would be kinda awkward trying to write to a non-existent directory... Hate to run it every call but it is necessary
 	if [[ ! -d $debugPrefix ]]; then
-		touch $debugPrefix
+		mkdir $debugPrefix
 	fi
 	
 	# Echoes the message if debug flag is on

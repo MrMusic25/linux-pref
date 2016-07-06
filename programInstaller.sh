@@ -53,6 +53,7 @@ fi
 
 ### Main script
 
+debug "Starting $0..." $log
 # First, check to see is user is root/sudo. Makes scripting easier
 checkPrivilege "exit" #lol
 

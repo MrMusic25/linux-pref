@@ -116,7 +116,7 @@ esac
 }
 
 ### Main Script
-
+debug "Starting $0 ..." $log
 checkPrivilege "exit" # I will chuckle everytime I have to type this lol
 
 if [[ $# -ne 0 ]]; then

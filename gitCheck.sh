@@ -21,7 +21,7 @@
 
 sleepTime=900 # Time in seconds to wait until going through loop again. 900 seconds (15 minutes) by default
 directory="NULL"
-gitLog=gitLog.log
+gitLog="$debugPrefix/gitLog.log"
 
 ### Functions 
 
@@ -38,7 +38,7 @@ else
 fi
 
 ### Main Script
-
+debug "Starting $0 ..." $gitLog
 # I was reminded why comments are important when I looked upon this codebock the next day and did not understand it...
 # Anyways lol, this block is used to determine if directory is valid and git-ready
 if [[ -d "$1" ]]; then
