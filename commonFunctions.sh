@@ -5,6 +5,9 @@
 # Note: this script whould not be run by itself, as it only contains functions and variables
 #
 # Changes:
+# v1.2.1
+# - Added an initilizer to debug() so that time log was started is shown at beginning of log
+#
 # v1.2
 # - Added checkPrivilege(). Checks if user is root, and exits with code 777 if not
 #
@@ -21,16 +24,14 @@
 # v1.1
 # - Added announce() and debug() functions
 #
-# To-Do:
-# - Make the length for printf in announce() dynamic so the side stars match-up
-#
-# v1.2 05 July 2016 16:30 PST
+# v1.2.1 06 July 2016 10:35 PST
 
 ### Variables
 
 program="NULL" # This should be the start point for most scripts
 debugFlag=0
 privilege=0 # 0 if root, 777 if not
+debugInit=0
 
 ### Functions
 
@@ -176,12 +177,21 @@ function announce() {
 #             Note: Debug also runs 'touch' on file if not present, no need to do so in script now!
 function debug() {
 	if [[ $debugFlag -eq 1 ]]; then
-		echo "$1"
+		echo "Debug: $1"
 	fi
 	
 	if [[ ! -z $2 ]]; then
 		if [[ ! -f $2 ]]; then
 			touch "$2"
+		fi
+	
+		# Initilize the log file
+		if [[ $debugInit -eq 0 ]]; then
+			export startTime=$(date)
+			echo " " >> "$2"
+			echo "*** Started at $startTime ***" >> "$2"
+			echo " " >> "$2"
+			export debugInit=1
 		fi
 		
 		echo "$1" >> "$2"
