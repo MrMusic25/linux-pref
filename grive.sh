@@ -9,6 +9,10 @@
 #	*/5 * * * * /home/kyle/grive.sh
 #
 # Changes:
+# v1.1.2
+# - Fixed a silly typo preventing the script from running
+# - Added some announce statements so the user knows if it's running or not
+#
 # v1.1.1
 # - Changed where $griveLog gets declared
 # - Added a "done" debug statement
@@ -41,8 +45,9 @@ else
 fi
 
 ### Main Script
-griveLog="$updatePrefix/griveLog.log"
+griveLog="$debugPrefix/griveLog.log"
 debug "Starting $0..." $griveLog
+announce "Preparing to sync with Google Drive using grive!"
 
 # Determine runlevel for more debug
 rl=$( runlevel | cut -d ' ' -f2 ) # Determine runlevel for additional info
@@ -89,6 +94,7 @@ if [[ $? != 0 ]]; then
 fi
 
 # If checks pass, sync!
+announce "Computer and servers ready, now syncronizing!"
 cd $griveDir
 grive sync &>> $griveLog
 
@@ -97,6 +103,8 @@ if [[ $? != 0 ]]; then
 	echo "Grive encountered an error while attempting to sync at $(date)! Please view $griveLog for more info." | mail -s "grive.sh" $USER
 	exit 4
 fi
+
+announce "Done syncronizing!" "Please check $griveLog for more info!"
 
 debug "Done with script!" $griveLog
 #EOF

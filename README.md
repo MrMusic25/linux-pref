@@ -52,8 +52,8 @@ Usage: `./grive.sh [path_to_grive_folder]`
 If no path is given, it assumes folder is found at $HOME/Grive. Script also assumes Grive has already been setup for that folder.
 
 Use the following line in your crontab:
-` */5 * * * * /home/$USER/linux-pref/grive.sh [path_to_grive_folder]`
-This will sync every 5 minutes.
+` */5 * * * * /home/$USER/linux-pref/grive.sh [path_to_grive_folder] &>/dev/null`
+This will sync every 5 minutes. Redirects info to /dev/null, as it is not necessary as a daemon.
 
 ### commonFunctions.sh
 A file I use to store all my functions that multiple scripts may need to use. Not meant to be run on its own, but rather imported by other scripts.
