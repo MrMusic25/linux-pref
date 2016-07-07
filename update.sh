@@ -7,6 +7,10 @@
 # If there are arguments, it will try to install the programs listed
 #
 # Changes:
+# v1.1.5
+# - Had to change where $log was declared
+# - Added a debug statement at the end, log for this looks boring
+#
 # v1.1.4
 # - Script is now using $debugPrefix
 #
@@ -23,12 +27,12 @@
 # - Script will now ask if you would like to reboot after updating, if it is needed
 # - Changed echoes to announce()
 #
-# v1.1.4, 06 July 2016 12:46 PST
+# v1.1.5, 07 July 2016 11:47 PST
 
 ### Variables
 
 #program="NULL"
-log="$debugPrefix/update.log"
+#log="$debugPrefix/update.log"
 
 ### Functions
 
@@ -116,6 +120,7 @@ esac
 }
 
 ### Main Script
+log="$debugPrefix/update.log" # Needs to be declared down here apparently
 debug "Starting $0 ..." $log
 checkPrivilege "exit" # I will chuckle everytime I have to type this lol
 
@@ -166,5 +171,5 @@ if [[ -f /var/run/reboot-required ]]; then
 fi
 
 announce "Done!"
-
+debug "Finished at $(date) !" $log
 #eof

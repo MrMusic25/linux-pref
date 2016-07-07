@@ -9,17 +9,21 @@
 #	*/5 * * * * /home/kyle/grive.sh
 #
 # Changes:
+# v1.1.1
+# - Changed where $griveLog gets declared
+# - Added a "done" debug statement
+#
 # v1.1
 # - Script now uses commonFunctions.sh
 # - Main location moved to github to be used with other scripts
 # - Overhauled other parts of script to be 'self-friendly' (uses my own functions)
 # - Also updated to use $updatePrefix
 #
-# v1.1, 06 July 2016 12:47 PST
+# v1.1.1, 07 July 2016 11:50 PST
 
 ### Variables
 
-griveLog="$updatePrefix/griveLog.log" # Saves it in the grive directory unless otherwise specified
+#griveLog="$updatePrefix/griveLog.log" # Saves it in the grive directory unless otherwise specified
 griveDir="NULL"
 
 ### Functions
@@ -37,6 +41,7 @@ else
 fi
 
 ### Main Script
+griveLog="$updatePrefix/griveLog.log"
 debug "Starting $0..." $griveLog
 
 # Determine runlevel for more debug

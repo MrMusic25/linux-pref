@@ -12,16 +12,20 @@
 # Relies on the .git folder in the directory to be able to pull, therefore must be setup beforehand!
 #
 # Changes:
+# v1.0.2
+# - Changed where $gitLog is declared
+# - Added end debug statement
+#
 # v1.0.1
 # - Script now uses $debugPrefix
 #
-# v1.0.1, 06 July 2016 12:47 PST
+# v1.0.2, 07 July 2016 11:51 PST
 
 ### Variables
 
 sleepTime=900 # Time in seconds to wait until going through loop again. 900 seconds (15 minutes) by default
 directory="NULL"
-gitLog="$debugPrefix/gitLog.log"
+#gitLog="$debugPrefix/gitLog.log"
 
 ### Functions 
 
@@ -38,6 +42,7 @@ else
 fi
 
 ### Main Script
+gitLog="$debugPrefix/gitLog.log"
 debug "Starting $0 ..." $gitLog
 # I was reminded why comments are important when I looked upon this codebock the next day and did not understand it...
 # Anyways lol, this block is used to determine if directory is valid and git-ready

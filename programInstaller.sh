@@ -6,6 +6,10 @@
 # Determines which package manager is being used, then installs all the packages listed in programs.txt (or argument, if provided)
 #
 # Changes:
+# v1.1.7
+# - Changed where $log was declared so script works properly again
+# - Added ending debug statement
+#
 # v1.1.6
 # - Script is now using $debugPrefix
 #
@@ -29,13 +33,13 @@
 # - Changed most output to use announce() and debug()
 # - determinePM() redirects to /dev/null now because it is not important to view except on failure
 #
-# v1.1.6 06 July, 2016, 12:46 PST
+# v1.1.7 07 July, 2016, 11:49 PST
 
 ### Variables
 
 file="programs.txt"
 #program="NULL"
-log="$debugPrefix/pm.log" # Remember to change this to 'install-logs/pm.log' when other scripts ready
+#log="$debugPrefix/pm.log"
 
 ### Functions
 
@@ -52,7 +56,7 @@ else
 fi
 
 ### Main script
-
+log="$debugPrefix/pm.log"
 debug "Starting $0..." $log
 # First, check to see is user is root/sudo. Makes scripting easier
 checkPrivilege "exit" #lol
@@ -83,5 +87,5 @@ while read -r line; do
 done < $file
 
 announce "Done installing programs!"
-
+debug "Finished $0 at $(date)" $log
 #EOF
