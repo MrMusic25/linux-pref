@@ -5,6 +5,9 @@
 # Note: this script whould not be run by itself, as it only contains functions and variables
 #
 # Changes:
+# v1.3
+# - Added the ctrl_c() function, and corresponding trap for INT request
+#
 # v1.2.3
 # - First actual 'bugfix' - accidentally made it touch $debugPrefix instead of mkdir
 #
@@ -31,7 +34,7 @@
 # v1.1
 # - Added announce() and debug() functions
 #
-# v1.2.2 06 July 2016 12:38 PST
+# v1.3 06 July 2016 14:48 PST
 
 ### Variables
 
@@ -40,6 +43,9 @@ debugFlag=0
 privilege=0 # 0 if root, 777 if not
 debugInit=0
 debugPrefix="$HOME/.logs" # Use: scriptLog="$debugPrefix/scriptLog.log", then include $scriptLog in debug() statements
+
+cFlag=0 # Used with the ctrl_c function
+trap ctrl_c INT # This will run the function ctrl_c() when it captures the key press
 
 ### Functions
 
@@ -232,4 +238,25 @@ if [ "$EUID" -ne 0 ]; then
 		exit 777
 	fi
 fi
+}
+
+## ctrl_c()
+# Function: Kills programs and closes scripts early on key capture. Asks for verification first.
+#
+# Call: ctrl_c
+#
+# Input: None
+#
+# Output: stdout (announce()), debug messages will be output when standardized log-names are created
+#
+# Other info: commonFunction.sh automatically includes a call for this. Everywhere else you will need to put 'trap ctrl_c INT' near the top of your script
+function ctrl_c() {
+	if [[ $cFlag -eq 0 ]]; then
+		announce "Warning: CTRL+C event captured!" "If you would like to quit the script early, press CTRL+C again."
+		export cFlag=1
+	else
+		kill $$
+		announce "Exiting script early..."
+		exit 999
+	fi
 }

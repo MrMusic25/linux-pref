@@ -55,7 +55,6 @@ Use the following line in your crontab:
 ` */5 * * * * /home/$USER/linux-pref/grive.sh [path_to_grive_folder]`
 This will sync every 5 minutes.
 
-###
 ### commonFunctions.sh
 A file I use to store all my functions that multiple scripts may need to use. Not meant to be run on its own, but rather imported by other scripts.
 
@@ -87,6 +86,10 @@ In recent updates, debug() now touches the log file, and makes sure the log dire
 
 #### checkPrivilege()
 Checks to see if user has root privileges or not. Also has the option to exit script if privileges missing.
+
+#### ctrl_c()
+Meant to be used with the following line of code: `trap ctrl_c INT`
+User will be asked if they meant to press it, and if they press it again, processes will be stopped and script will exit with code 999.
 
 ## Text Files and Data
 

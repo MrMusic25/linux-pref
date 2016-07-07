@@ -37,7 +37,7 @@ function displayHelp() {
 	echo "    update              - Installs update script"
 	echo "    programs [file]     - Installs programs using programInstaller.sh, or provided text-based tab-delimited file"
 	echo "    kali [file]         - Same as 'programs', but installs from .kaliPrograms.txt by default. Also accepts file input."
-	echo "    git                 - Installs git monitoring script and sets up cron job to run at boot
+	echo "    git                 - Installs git monitoring script and sets up cron job to run at boot"
 	echo " "
 	echo " Options:"
 	echo "    -h | --help                        : Displays this help message"
