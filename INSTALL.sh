@@ -11,6 +11,8 @@
 
 sudoRequired=0 # Set to 0 by default - script will close if sudo is false and sudoRequired is true
 installOnly=0 # Used by -n|--no-run, if 1 then files will be copied and verified, but not executed
+inFile="NULL" # Multi-use input file variable
+runMode="NULL" # Variable used to hold which install option will be run
 
 ### Functions
 
@@ -26,6 +28,49 @@ else
 	#exit 1
 fi
 
+function processArgs() {
+	while [[ $# > 0 ]]; then
+	do
+		key="$1"
+		
+		case $key in
+			-h|--help)
+			displayHelp
+			exit 0
+			;;
+			-s|--sudo)
+			checkPrivilege "exit" # This is why we make functions
+			;;
+			-e|--except)
+			if [[ $2 == "all" ]]; then
+				export debugFlag=1
+				debug "ERROR: -e | --except option cannot be used with install option 'all' !"
+				displayHelp
+				exit 1
+			elif [[ ! -z $2 || $2 == "update" || $2 == "programs" || $2 == "kali" || $2 == "git" ]]; then
+				export except="$2"
+			else
+				export debugFlag=1
+				debug "ERROR: -e | --except must have an option following it! Please fix and re-run script!"
+				exit 1
+			fi
+			;;
+			-n|--no-run)
+			export installOnly=1
+			;;
+			all)
+			export runMode="all"
+			continue
+			;;
+			update)
+			export runMode="update"
+			continue
+			;;
+		esac
+		shift
+	done
+}
+
 function displayHelp() {
 	# Don't use announce() in here in case script fails from beng unable to source comonFunctions.sh
 	echo " "
@@ -33,6 +78,7 @@ function displayHelp() {
 	echo " "
 	echo " Install Options:"
 	echo " NOTE: Running any install option will check if /usr/share/commonFunctions.sh exists. If not, sudo permission will be requested to install."
+	echo "       Each script will be run after it is installed as well, to verify it is working properly."
 	echo "    all                 - Installs all the scripts below"
 	echo "    update              - Installs update script"
 	echo "    programs [file]     - Installs programs using programInstaller.sh, or provided text-based tab-delimited file"
@@ -48,7 +94,10 @@ function displayHelp() {
 
 ### Main Script
 
+# DELETE THIS WHEN READY
 displayHelp
 exit 5
+
+processArgs "$@"
 
 #EOF

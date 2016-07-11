@@ -5,6 +5,9 @@
 # Note: this script whould not be run by itself, as it only contains functions and variables
 #
 # Changes:
+# v1.3.1
+# - ctrl_c() now send a SIGINT to kill process
+#
 # v1.3
 # - Added the ctrl_c() function, and corresponding trap for INT request
 #
@@ -34,7 +37,7 @@
 # v1.1
 # - Added announce() and debug() functions
 #
-# v1.3 06 July 2016 14:48 PST
+# v1.3 11 July 2016 12:27 PST
 
 ### Variables
 
@@ -255,7 +258,7 @@ function ctrl_c() {
 		announce "Warning: CTRL+C event captured!" "If you would like to quit the script early, press CTRL+C again."
 		export cFlag=1
 	else
-		kill $$
+		kill -s SIGINT $$
 		announce "Exiting script early..."
 		exit 999
 	fi
