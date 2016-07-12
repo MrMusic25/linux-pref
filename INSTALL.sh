@@ -4,8 +4,16 @@
 # Usage: ./INSTALL.sh
 #
 # Note: This will change soon as functionality is added
+#
+# Changes:
+# v0.2
+# - Added linkCF() to check is commonFunctions.sh is linked to /usr/share
+# - Also added two checks to make sure it is linked
 # 
-# v0.1 12 July 2016 13:32 PST
+# v0.1
+# - Initial commit - only displayHelp() and processArgs() working currently
+#
+# v0.2 12 July 2016 13:49 PST
 
 ### Variables
 
@@ -17,11 +25,28 @@ runMode="NULL" # Variable used to hold which install option will be run
 
 ### Functions
 
-if [[ -f commonFunctions.sh ]]; then
-	source commonFunctions.sh
-	export installLog="$debugPrefix/installer.log"
-elif [[ -f /usr/share/commonFunctions.sh ]]; then
+# Used to link commonFunctions.sh to /usr/share, in case it is not there already
+function linkCF() {
+	if [[ ! -f commonFunctions.sh ]]; then
+		echo "ERROR: commonFunctions.sh is somehow not available, please correct and re-run!"
+		exit 1
+	fi
+	
+	if [[ "$EUID" -ne 0 ]]; then
+		echo "Linking to /usr/share requires root permissions, please login"
+		sudo ln commonFunctions.sh /usr/share/
+	else
+		echo "Linking to commonFunctions.sh to /usr/share/ !"
+		sudo ln commonFunctions.sh /usr/share/
+	fi
+}
+
+if [[ -f /usr/share/commonFunctions.sh ]]; then
 	source /usr/share/commonFunctions.sh
+	export installLog="$debugPrefix/installer.log"
+elif [[ -f commonFunctions.sh ]]; then
+	source commonFunctions.sh
+	linkCF
 	export installLog="$debugPrefix/installer.log"
 else
 	echo "commonFunctions.sh could not be located!"
@@ -84,7 +109,7 @@ function processArgs() {
 			programs)
 			if [[ -z $2 ]]; then
 				debug "No argument provided for 'programs' applet, assuming default file location" $installLog
-				if [[ -e $programsFile ]]; then
+				if [[ -f $programsFile ]]; then
 					debug "Default location of programs file is working, using for script..." $installLog
 					export runMode="programs"
 					export loopFlag=1	
@@ -95,7 +120,7 @@ function processArgs() {
 					displayHelp
 					exit 1
 				fi
-			elif [[ ! -e $2 ]]; then
+			elif [[ ! -f $2 ]]; then
 				export debugFlag=1
 				debug "ERROR: File provided for programs is invalid, or does not exist! Please fix and re-run script!" $installLog
 				displayHelp
@@ -110,7 +135,7 @@ function processArgs() {
 			kali)
 			if [[ -z $2 ]]; then
 				debug "No argument provided for 'kali' applet, assuming default file location" $installLog
-				if [[ -e $kaliFile ]]; then
+				if [[ -f $kaliFile ]]; then
 					debug "Default location of kali file is working, using for script..." $installLog
 					export runMode="kali"
 					export loopFlag=1	
@@ -121,7 +146,7 @@ function processArgs() {
 					displayHelp
 					exit 1
 				fi
-			elif [[ ! -e $2 ]]; then
+			elif [[ ! -f $2 ]]; then
 				export debugFlag=1
 				debug "ERROR: File provided for kali is invalid, or does not exist! Please fix and re-run script!" $installLog
 				displayHelp
@@ -179,9 +204,10 @@ function displayHelp() {
 
 ### Main Script
 
-# DELETE THIS WHEN READY
-#displayHelp
-#exit 5
+if [[ ! -f /usr/share/commonFunctions.sh ]]; then
+	echo "commonFunctions.sh not linked to /usr/share, fixing now!"
+	linkCF
+fi
 
 processArgs "$@"
 

@@ -6,9 +6,7 @@ A repository with all my favorite aliases, settings, scripts, and installer scri
 ### INSTALL.sh
 Meant to be the main installation script - run this, and it will do all the heavy lifting for you.
 
-~~I will update this once the script is ready. For now, it is empty.~~
-
-Running `./INSTALL.sh` will now display the help module, with all the planned functionality I plan to code into the script
+Status: Script now runs, displays help, and accepts arguments. Also set it up to link commonFunctions.sh. Doesn't do anything else (yet).
 
 ### programInstaller.sh
 A multi-distro script that installs a list of programs.
