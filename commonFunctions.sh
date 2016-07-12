@@ -5,6 +5,10 @@
 # Note: this script whould not be run by itself, as it only contains functions and variables
 #
 # Changes:
+# v1.4
+# - Added a re-run as sudo option to update.sh, then decided to make is common as part of checkPrivilege()
+# - ctrl_c now kill hung process first, then asks to exit. Safety measure
+#
 # v1.3.1
 # - ctrl_c() now send a SIGINT to kill process
 #
@@ -37,7 +41,7 @@
 # v1.1
 # - Added announce() and debug() functions
 #
-# v1.3 11 July 2016 12:27 PST
+# v1.4 12 July 2016 15:47 PST
 
 ### Variables
 
@@ -240,6 +244,12 @@ if [ "$EUID" -ne 0 ]; then
 	if [[ "$1" == "exit" ]]; then
 		exit 777
 	fi
+	
+	if [[ "$1" == "ask" ]]; then
+		announce "Script will now re-run itself as root, please provide password when prompted!"
+		sudo $0
+		exit $?
+	fi
 fi
 }
 
@@ -256,11 +266,15 @@ fi
 #             Found here: https://rimuhosting.com/knowledgebase/linux/misc/trapping-ctrl-c-in-bash
 function ctrl_c() {
 	if [[ $cFlag -eq 0 ]]; then
-		announce "Warning: CTRL+C event captured!" "If you would like to quit the script early, press CTRL+C again."
+		announce "Warning: CTRL+C event captured!" "If you would like kill hung or slow process, press CTRL+C again."
 		export cFlag=1
+	elif [[ $cFlag -eq 1 ]]; then
+		announce "CTRL+C captured! Killing hung or slow process!" "If you would like to exit script, press CTRL+C once more"
+		kill -s SIGINT $$
+		export cFlag=2
 	else
 		kill -s SIGINT $$
-		announce "Exiting script early..."
+		echo "Exiting script early based on user input (SIGINT)!"
 		exit 999
 	fi
 }

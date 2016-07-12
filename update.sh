@@ -7,6 +7,9 @@
 # If there are arguments, it will try to install the programs listed
 #
 # Changes:
+# v1.1.6
+# - Note really an update, but small change from commonFunctions.sh. Leftover code commented out
+#
 # v1.1.5
 # - Had to change where $log was declared
 # - Added a debug statement at the end, log for this looks boring
@@ -122,7 +125,13 @@ esac
 ### Main Script
 log="$debugPrefix/update.log" # Needs to be declared down here apparently
 debug "Starting $0 ..." $log
-checkPrivilege "exit" # I will chuckle everytime I have to type this lol
+checkPrivilege "ask"# I will chuckle everytime I have to type this lol
+
+#if [[ $privilege -eq 777 ]]; then
+#	announce "Re-running script as sudo!"
+#	sudo $0
+#	exit $?
+#fi
 
 if [[ $# -ne 0 ]]; then
 	announce "Script will upgrade system, then attempt to install packages from arguments."
