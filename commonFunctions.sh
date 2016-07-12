@@ -253,6 +253,7 @@ fi
 # Output: stdout (announce()), debug messages will be output when standardized log-names are created
 #
 # Other info: commonFunction.sh automatically includes a call for this. Everywhere else you will need to put 'trap ctrl_c INT' near the top of your script
+#             Found here: https://rimuhosting.com/knowledgebase/linux/misc/trapping-ctrl-c-in-bash
 function ctrl_c() {
 	if [[ $cFlag -eq 0 ]]; then
 		announce "Warning: CTRL+C event captured!" "If you would like to quit the script early, press CTRL+C again."

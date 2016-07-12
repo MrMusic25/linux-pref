@@ -13,6 +13,15 @@ exfat-utils
 # wavemon - used to view and monitor Wi-Fi airwaves
 wavemon
 
+# 'Fun' programs, why not enjoy linux?
+sl
+cowsay
+toilet
+cmatrix
+fortune
+oneko
+espeak
+
 # Usability programs, might require extra repos depending on distribution!
 
 grive
