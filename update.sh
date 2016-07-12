@@ -125,7 +125,7 @@ esac
 ### Main Script
 log="$debugPrefix/update.log" # Needs to be declared down here apparently
 debug "Starting $0 ..." $log
-checkPrivilege "ask"# I will chuckle everytime I have to type this lol
+checkPrivilege "ask" # I will chuckle everytime I have to type this lol
 
 #if [[ $privilege -eq 777 ]]; then
 #	announce "Re-running script as sudo!"
