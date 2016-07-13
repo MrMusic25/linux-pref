@@ -17,11 +17,13 @@
 
 ### Variables
 
-sudoRequired=0 # Set to 0 by default - script will close if sudo is false and sudoRequired is true
+#sudoRequired=0 # Set to 0 by default - script will close if sudo is false and sudoRequired is true
 installOnly=0 # Used by -n|--no-run, if 1 then files will be copied and verified, but not executed
 programsFile="programs.txt"
 kaliFile=".kaliPrograms.txt"
 runMode="NULL" # Variable used to hold which install option will be run
+pathCheck=0 # Used to tell other functions if path check as be run or not
+pathLocation="/usr/bin"
 
 ### Functions
 
@@ -179,6 +181,60 @@ function processArgs() {
 	fi
 }
 
+function pathCheck() {
+	echo $PATH | grep $pathLocation &>/dev/null # This shouldn't show anything, I hope
+	if [[ $? -eq 0 ]]; then
+		debug "$pathLocation is in the user's path!" $installLog
+		export pathCheck=1
+	else
+		announce "WARNING: $pathLocation is not in the PATH for $USER!"
+		answer="NULL"
+		echo "Would you like to specify a different directory in your PATH? (y/n): "
+		
+		while [[ $answer != "y" && $answer != "n" && $answer != "yes" && $answer != "no" ]]; do
+			read answer
+			case $answer in
+				n|no)
+					debug "User chose not to specify new directory for PATH!" $installLog
+					announce "Not updating path!" "Please add $pathLocation to your PATH manually!"
+					exit 1
+					;;
+				y|yes)
+					announce "Please choose one of the following directories when prompted:" "$(echo $PATH)"
+					export pathLocation="NULL"
+					
+					echo "Which directory in your path would you like to use? "
+					while [[ ! -d $pathLocation ]]; do
+						read pathLocation
+						echo $PATH | grep $pathLocation &>/dev/null
+						
+						if [[ -d $pathLocation && $? -eq 0 ]]; then
+							echo "$pathLocation is valid, continuing with script!"
+							export pathCheck=1
+						else
+							debug "ERROR: PATH given not valid!" $installLog
+							echo " Path given not valid, please try again: "
+						fi
+					done
+					;;
+				*)
+					echo "Please enter 'yes' or 'no': "
+					;;
+			esac
+		done
+	fi
+}
+
+function update() {
+	announce "Now installing the update script!" "NOTE: This will require sudo permissions."
+	if [[ $installOnly -ne 0 ]]; then
+		debug "User indicated not to run scripts, only installing update script!" $installLog
+	fi
+	
+	
+	sudo ln
+}
+
 function displayHelp() {
 	# Don't use announce() in here in case script fails from beng unable to source comonFunctions.sh
 	echo " "
@@ -210,6 +266,8 @@ if [[ ! -f /usr/share/commonFunctions.sh ]]; then
 fi
 
 processArgs "$@"
+
+pathCheck
 
 echo "Done with script!"
 
