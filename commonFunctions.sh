@@ -278,3 +278,57 @@ function ctrl_c() {
 		exit 999
 	fi
 }
+
+## addCronJob()
+# Function: Like the name implies, creates a cron job for the current user
+#
+# Call: addCronJob <number> <min|hour> "/path/to/command.sh -in quotations" [no-null]
+#
+# Input: Number of minutes or hours to run script, min or hour indicator, and the command in quotation marks
+#
+# Output: stdout, returns a 1 if it could not be added, 0 if successful
+#
+# Other info: First three variables require in the correct order. Second variable accepts (min, mins, minutes, minute, hour, hours).
+#             If the 4th argument is present, it will NOT redirect stdout to /dev/null. Otherwise cron will send you mail.
+#             Only hours and minutes for now, might add more later. In addition, find a way to specify '15' vs '*/15'.
+function addCronJob() {
+	# First, determine if time is valid
+	if [[ $1 -le 0 || $1 -gt 60 ]]; then
+		echo "ERROR: Call for addCronJob() is outside the natural time limits! (Num: $1)" # Don't you just LOVE cryptic messages?
+		return 1
+	elif [[ $1 -gt 24 ]]; then
+		echo "ERROR: There are not $1 hours in a day, please fix call!"
+		return 1
+	fi
+	
+	case $2 in
+		min|mins|minute|minutes)
+		announce "Preparing job $3 for cron!" "Job will every $1 minutes from now on."
+		
+		if [[ ! -z $4 ]]; then
+			echo "cronjob will NOT redirect to /dev/null, expect lots of mail from cron!"
+			crontab -l 2>/dev/null; echo "*/$1 * * * * $3 " | crontab -
+		else
+			crontab -l 2>/dev/null; echo "*/$1 * * * * $3 &>/dev/null" | crontab -
+		fi
+		;;
+		hour|hours)
+		announce "Preparing job $3 for cron!" "Job will run once per day at $1 o'clock, Military Time"
+		
+		if [[ ! -z $4 ]]; then
+			echo "cronjob will NOT redirect to /dev/null, expect lots of mail from cron!"
+			crontab -l 2>/dev/null; echo "* $1 * * * $3 " | crontab -
+		else
+			crontab -l 2>/dev/null; echo "* $1 * * * $3 &>/dev/null" | crontab -
+		fi
+		;;
+		*)
+		echo "ERROR: Unknown call value: $2"
+		return 1
+		;;
+	esac
+	
+	return 0
+}
+
+#EOF

@@ -27,7 +27,7 @@ sleepTime=900 # Time in seconds to wait until going through loop again. 900 seco
 directory="NULL"
 #gitLog="$debugPrefix/gitLog.log"
 
-### Functions 
+### Functions
 
 if [[ -f commonFunctions.sh ]]; then
 	source commonFunctions.sh
@@ -35,7 +35,7 @@ elif [[ -f /usr/share/commonFunctions.sh ]]; then
 	source /usr/share/commonFunctions.sh
 else
 	echo "commonFunctions.sh could not be located!"
-	
+
 	# Comment/uncomment below depending on if script actually uses common functions
 	echo "Script will now exit, please put file in same directory as script, or link to /usr/share!"
 	exit 1
@@ -78,7 +78,7 @@ fi
 # Note: Script itself will not loop, just in case there are bugs. Instead, set a cronjob to run it
 
 cd $directory
-git pull >> $gitLog
+git pull >>$gitLog
 
 if [[ $? -ne 0 ]]; then
 	debug "There was an error, please check log for more info" $gitLog

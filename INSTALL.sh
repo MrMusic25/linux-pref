@@ -231,8 +231,11 @@ function update() {
 		debug "User indicated not to run scripts, only installing update script!" $installLog
 	fi
 	
+	sudo ln update.sh /usr/bin/update
 	
-	sudo ln
+	if [[ $installOnly -eq 0 ]]; then
+		sudo update
+	fi
 }
 
 function displayHelp() {

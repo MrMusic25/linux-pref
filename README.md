@@ -38,7 +38,7 @@ Usage: `./gitCheck.sh <git_folder>`
 Script will check to see if git upload info is present. If so, it will change into directory and run a `git pull`.
 
 Add the following line to your crontab, since the script does not loop itself:
-`*/15 * * * * /home/$USER/linux-pref/gitCheck.sh <path_to_git_folder>`
+`*/15 * * * * /home/$USER/linux-pref/gitCheck.sh <path_to_git_folder> &>/dev/null`
 This will check for an update every 15 minutes.
 
 ### grive.sh
