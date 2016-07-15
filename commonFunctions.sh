@@ -357,8 +357,31 @@ function getUserAnswer() {
 		read ans
 	done
 	
+	if [[ ! -z $2 ]]; then
+		if [[ -z $3 ]]; then
+			echo "ERROR: Incorrect call for function getUserAnswer()! Please look at documentation!"
+		else
+			announce "$3"
+			echo "Please assign a value to $2 : "
+			read ${1}
+			echo "${1} is now equal to ${!1}!"
+		fi
+	fi
+	
 	case $ans in
 		y|yes)
+		return 0
+		;;
+		n|no)
+		return 1
+		;;
+		NULL)
+		announce "Congratulations, you somehow broke my script, Linux, and possibly the universe."
+		return 666
+		;;
+		*)
+		announce "You must not be very good at this if you made it here."
+		return 111
 		;;
 	esac
 }

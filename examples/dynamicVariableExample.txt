@@ -30,6 +30,10 @@ echo ${1}
 
 export ${1}=testing
 echo ${!1}
+
+echo "Please enter a value to assign to $1: "
+read ${1}
+echo "You input: ${!1}"
 #EOS
 
 This is the output, with $1=word: 
@@ -44,5 +48,8 @@ this should look normal
 word
 word
 testing
+Please enter a value to assign to test: 
+wat
+You input: wat
 
 #EOF
