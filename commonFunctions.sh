@@ -5,14 +5,18 @@
 # Note: this script whould not be run by itself, as it only contains functions and variables
 #
 # Changes:
-# v1.4
+# v1.5.0
+# - Retroactively employed the better looking numbering scheme
+# - Added the addCronJob() function. Have yet to test it, however
+#
+# v1.4.0
 # - Added a re-run as sudo option to update.sh, then decided to make is common as part of checkPrivilege()
 # - ctrl_c now kill hung process first, then asks to exit. Safety measure
 #
 # v1.3.1
 # - ctrl_c() now send a SIGINT to kill process
 #
-# v1.3
+# v1.3.0
 # - Added the ctrl_c() function, and corresponding trap for INT request
 #
 # v1.2.3
@@ -25,7 +29,7 @@
 # v1.2.1
 # - Added an initilizer to debug() so that time log was started is shown at beginning of log
 #
-# v1.2
+# v1.2.0
 # - Added checkPrivilege(). Checks if user is root, and exits with code 777 if not
 #
 # v1.1.3
@@ -38,10 +42,10 @@
 # - debug() now touches logfile so script doesn't have to!
 # - Slightly changed the output of announce() to look more symmetrical
 #
-# v1.1
+# v1.1.0
 # - Added announce() and debug() functions
 #
-# v1.4 12 July 2016 15:47 PST
+# v1.5.0 14 July 2016 16:02 PST
 
 ### Variables
 

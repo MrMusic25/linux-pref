@@ -28,7 +28,7 @@
 # v1.1.1
 # - Syntax change, now multiple programs on one line will install at the same time
 #
-# v1.1
+# v1.1.0
 # - Script now uses commonFunctions.sh
 # - Changed most output to use announce() and debug()
 # - determinePM() redirects to /dev/null now because it is not important to view except on failure

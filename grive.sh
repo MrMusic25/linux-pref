@@ -17,7 +17,7 @@
 # - Changed where $griveLog gets declared
 # - Added a "done" debug statement
 #
-# v1.1
+# v1.1.0
 # - Script now uses commonFunctions.sh
 # - Main location moved to github to be used with other scripts
 # - Overhauled other parts of script to be 'self-friendly' (uses my own functions)

@@ -7,6 +7,10 @@
 # If there are arguments, it will try to install the programs listed
 #
 # Changes:
+# v1.2.0
+# - Started using a better numbering system for changelog
+# - Added support for Raspberry Pi, specifically raspbian
+#
 # v1.1.6
 # - Note really an update, but small change from commonFunctions.sh. Leftover code commented out
 #
@@ -26,11 +30,11 @@
 # v1.1.1
 # - Got rid of sleep statements now that it is in announce()
 #
-# v1.1
+# v1.1.0
 # - Script will now ask if you would like to reboot after updating, if it is needed
 # - Changed echoes to announce()
 #
-# v1.1.5, 07 July 2016 11:47 PST
+# v1.2.0, 15 July 2016 11:23 PST
 
 ### Variables
 
@@ -152,6 +156,11 @@ cleanSystem
 if [[ ! -z $(which msfupdate) ]]; then
 	announce "Metasploit installed, updating as well!"
 	msfupdate
+fi
+
+if [[ ! -z $(which rpi-update) ]]; then
+	announce "This is a Raspberry Pi, running rpi-update as well!"
+	rpi-update
 fi
 
 # Code that asks to reboot if it is required

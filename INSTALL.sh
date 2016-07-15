@@ -6,14 +6,15 @@
 # Note: This will change soon as functionality is added
 #
 # Changes:
-# v0.2
+# v0.1.0
 # - Added linkCF() to check is commonFunctions.sh is linked to /usr/share
 # - Also added two checks to make sure it is linked
+# - Changed minor version because part of script actually functions now
 # 
-# v0.1
+# v0.0.1
 # - Initial commit - only displayHelp() and processArgs() working currently
 #
-# v0.2 12 July 2016 13:49 PST
+# v0.1.0 12 July 2016 13:49 PST
 
 ### Variables
 
