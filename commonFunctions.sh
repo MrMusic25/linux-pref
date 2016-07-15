@@ -335,4 +335,32 @@ function addCronJob() {
 	return 0
 }
 
+## getUserAnswer()
+#
+# Function: Asks a user for input, verifies input, then returns with the answer (0 for true/yes, 1 for false/no)
+#
+# Call: getUserAnswer "Question in quotation marks?" [variable_name] "Question for variable name, if present?"
+#
+# Input: User will be asked the question in quotes ($1). 
+#        If [variable_name] ($2) is present, it will ask the second question ($3) and assign response to that variable
+#
+# Output: stdout (obviously), return value of 0 for yes/true response, value of 1 for no/false response
+#
+# Other info: Be careful which names you give to the variables, you may accidentally delete other variables!
+function getUserAnswer() {
+	export ans="NULL"
+	announce "$1"
+	
+	while [[ $ans == "NULL" || $ans != "y" || $ans != "yes" || $ans != "n" || $ans != "no" ]];
+	do
+		echo "Please answer yes/no: "
+		read ans
+	done
+	
+	case $ans in
+		y|yes)
+		;;
+	esac
+}
+
 #EOF

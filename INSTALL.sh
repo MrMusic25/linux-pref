@@ -6,6 +6,10 @@
 # Note: This will change soon as functionality is added
 #
 # Changes:
+# v0.2.0
+# - Added installGit() and installUpdate()
+# - Created a system to notify the user if the script will require their attention (so they know not to wander off)
+#
 # v0.1.0
 # - Added linkCF() to check is commonFunctions.sh is linked to /usr/share
 # - Also added two checks to make sure it is linked
@@ -25,6 +29,7 @@ kaliFile=".kaliPrograms.txt"
 runMode="NULL" # Variable used to hold which install option will be run
 pathCheck=0 # Used to tell other functions if path check as be run or not
 pathLocation="/usr/bin"
+interactiveFlag=0 # Tells the script whether or not to inform the user that the script will require their interaction
 
 ### Functions
 
@@ -226,7 +231,7 @@ function pathCheck() {
 	fi
 }
 
-function update() {
+function installUpdate() {
 	announce "Now installing the update script!" "NOTE: This will require sudo permissions."
 	if [[ $installOnly -ne 0 ]]; then
 		debug "User indicated not to run scripts, only installing update script!" $installLog
@@ -237,6 +242,17 @@ function update() {
 	if [[ $installOnly -eq 0 ]]; then
 		sudo update
 	fi
+}
+
+function installGit() {
+	announce "Now installing the git auto-updating script!" "NOTE: This will require sudo premissions."
+	if [[ $installOnly -ne 0 ]]; then
+		debug "User indicated not to run scripts, so I will only install the script!" $installLog
+	fi
+	
+	sudo ln gitCheck.sh /usr/bin/gitcheck
+	
+	announce "This script can be used for any git repository, read the documentation for more info!" "Make sure to add a cron job for any new directories!"
 }
 
 function displayHelp() {

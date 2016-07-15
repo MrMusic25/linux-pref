@@ -1,0 +1,48 @@
+Script looks like: 
+
+#!/bin/bash
+# Script used to test functionality of functions and others from commonFunctions.sh
+
+source commonFunctions.sh
+
+var_1="this"
+var_2="should"
+var_3="look"
+var_4="normal"
+
+printf "\nWithout bang looks like this: \n"
+for i in `seq 1 4`;
+do
+	vari=var_$i
+	printf "${vari} "
+done
+
+printf "\n\nWith bang looks like this:\n"
+for j in `seq 1 4`;
+do
+	varia=var_$j
+	printf "${!varia} "
+done
+printf "\n\n"
+
+echo $1
+echo ${1}
+
+export ${1}=testing
+echo ${!1}
+#EOS
+
+This is the output, with $1=word: 
+
+
+Without bang looks like this: 
+var_1 var_2 var_3 var_4 
+
+With bang looks like this:
+this should look normal 
+
+word
+word
+testing
+
+#EOF
