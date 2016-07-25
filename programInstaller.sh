@@ -1,11 +1,13 @@
 #!/bin/bash
 #
 # programInstaller.sh - Used to install programs from a text-based, tab-delimited source
-# Usage: ./programInstaller.sh <programs.txt>
+# Usage: ./programInstaller.sh <list_of_programs.txt>
 #
 # Determines which package manager is being used, then installs all the packages listed in programs.txt (or argument, if provided)
 #
 # Changes:
+# v1.1.8
+# - Not ready to add new "per-file" install functionality, so interim update that fixes current implementation
 # v1.1.7
 # - Changed where $log was declared so script works properly again
 # - Added ending debug statement
@@ -33,11 +35,11 @@
 # - Changed most output to use announce() and debug()
 # - determinePM() redirects to /dev/null now because it is not important to view except on failure
 #
-# v1.1.7 07 July, 2016, 11:49 PST
+# v1.1.8 25 July, 2016, 16:30 PST
 
 ### Variables
 
-file="programs.txt"
+file="programLists/programs.txt"
 #program="NULL"
 #log="$debugPrefix/pm.log"
 
