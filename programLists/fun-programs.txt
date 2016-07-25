@@ -1,0 +1,9 @@
+# 'Fun' programs, why not enjoy linux?
+# All of these are commandline based, add others to requires-desktop-manager.txt
+sl
+cowsay
+toilet
+cmatrix
+fortune
+oneko
+espeak

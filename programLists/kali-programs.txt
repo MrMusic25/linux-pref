@@ -1,0 +1,18 @@
+# All of my favorite pentesting programs from kali, backbox, etc...
+zenmap
+theharvester
+metasploit-framework
+john
+crunch
+ophcrack
+pdfcrack
+dsniff
+sslsniff
+wireshark
+setoolkit
+testdisk
+photorec
+btscanner
+aircrack-ng
+wifite
+pyrit

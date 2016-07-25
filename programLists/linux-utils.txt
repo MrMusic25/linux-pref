@@ -1,0 +1,8 @@
+# Linux utilities I recquire that not every distribution installs by default
+git
+build-essential linux-firmware make
+gcc
+python
+python3
+screen
+exfat-utils

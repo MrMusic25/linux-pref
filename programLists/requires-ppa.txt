@@ -1,0 +1,6 @@
+# Programs that may require extra repos or a PPA, depending on distribution
+grive
+notepadqq
+tlp
+hamachi
+teamviewer

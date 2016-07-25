@@ -280,6 +280,7 @@ function displayHelp() {
 
 ### Main Script
 
+# This doesn't really need to be here now, but double-checking never hurts!
 if [[ ! -f /usr/share/commonFunctions.sh ]]; then
 	echo "commonFunctions.sh not linked to /usr/share, fixing now!"
 	linkCF
