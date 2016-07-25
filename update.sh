@@ -7,6 +7,9 @@
 # If there are arguments, it will try to install the programs listed
 #
 # Changes:
+# v1.2.1
+# - Added support for slackpkg
+#
 # v1.2.0
 # - Started using a better numbering system for changelog
 # - Added support for Raspberry Pi, specifically raspbian
@@ -34,7 +37,7 @@
 # - Script will now ask if you would like to reboot after updating, if it is needed
 # - Changed echoes to announce()
 #
-# v1.2.0, 15 July 2016 11:23 PST
+# v1.2.1, 25 July 2016 15:23 PST
 
 ### Variables
 
@@ -67,6 +70,10 @@ case $program in
 	;;
 	yum)
 	yum upgrade
+	;;
+	slackpkg)
+	slackpkg install-new # Required line
+	slackpkg upgrade-all
 	;;
 	yast)
 	announce "Systems running YaST must be manually updated!"
@@ -102,6 +109,9 @@ case $program in
 	;;
 	yum)
 	yum clean all
+	;;
+	slackpkg)
+	slackpkg clean-system
 	;;
 	yast)
 	#echo "Systems running YaST must be manually updated!"

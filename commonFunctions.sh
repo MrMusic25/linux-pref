@@ -5,6 +5,10 @@
 # Note: this script whould not be run by itself, as it only contains functions and variables
 #
 # Changes:
+# v1.5.1
+# - Turned off ctrl_() trap because it doesn't work properly, will fix later
+# - Added slackpkg to universalInstaller() and determinePM()
+#
 # v1.5.0
 # - Retroactively employed the better looking numbering scheme
 # - Added the addCronJob() function. Have yet to test it, however
@@ -45,7 +49,7 @@
 # v1.1.0
 # - Added announce() and debug() functions
 #
-# v1.5.0 14 July 2016 16:02 PST
+# v1.5.1 25 July 2016 15:21 PST
 
 ### Variables
 
@@ -56,7 +60,7 @@ debugInit=0
 debugPrefix="$HOME/.logs" # Use: scriptLog="$debugPrefix/scriptLog.log", then include $scriptLog in debug() statements
 
 cFlag=0 # Used with the ctrl_c function
-trap ctrl_c INT # This will run the function ctrl_c() when it captures the key press
+#trap ctrl_c INT # This will run the function ctrl_c() when it captures the key press
 
 ### Functions
 
@@ -81,6 +85,9 @@ elif [[ ! -z $(which dnf) ]]; then # This is why we love DistroWatch, learned ab
 elif [[ ! -z $(which yum) ]]; then
 	export program="yum"
 	yum check-update
+elif [[ ! -z $(which slackpkg) ]]; then
+	export program="slackpkg"
+	slackpkg update
 elif [[ ! -z $(which rpm) ]]; then
 	export program="rpm"
 	rpm -F --justdb # Only updates the DB, not the system
@@ -112,13 +119,16 @@ for var in "$@"
 do
 	case $program in
 		apt)
-		apt-get install -y $var  
+		apt-get -y install $var  
 		;;
 		dnf)
 		dnf -y install $var
 		;;
 		yum)
 		yum install $var 
+		;;
+		slackpkg)
+		slackpkg install $var
 		;;
 		yast)
 		yast -i $var 
@@ -130,7 +140,7 @@ do
 		pacman -S $var 
 		;;
 		aptitude)
-		aptitude install -y $var 
+		aptitude -y install $var 
 		;;
 		*)
 		announce "Package manager not found! Please update script or diagnose problem!"
