@@ -62,7 +62,7 @@ debugFlag=0
 privilege=0 # 0 if root, 777 if not
 debugInit=0
 debugPrefix="$HOME/.logs" # Use: scriptLog="$debugPrefix/scriptLog.log", then include $scriptLog in debug() statements
-logFile=$( basename $0 | cut -d '.' -f 1 ).log # Now every script has a unique yet dynamic log name!
+logFile=$debugPrefix/$( basename $0 | cut -d '.' -f 1 ).log # Now every script has a unique yet dynamic log name!
 
 cFlag=0 # Used with the ctrl_c function
 #trap ctrl_c INT # This will run the function ctrl_c() when it captures the key press
