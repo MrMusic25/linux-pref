@@ -6,6 +6,9 @@
 # Determines which package manager is being used, then installs all the packages listed in programs.txt (or argument, if provided)
 #
 # Changes:
+# v1.1.9
+# - Switched to dynamic logging
+#
 # v1.1.8
 # - Not ready to add new "per-file" install functionality, so interim update that fixes current implementation
 #
@@ -59,7 +62,7 @@ else
 fi
 
 ### Main script
-log="$debugPrefix/pm.log"
+#log="$debugPrefix/pm.log"
 debug "Starting $0..." $log
 # First, check to see is user is root/sudo. Makes scripting easier
 checkPrivilege "exit" #lol

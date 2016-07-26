@@ -9,6 +9,9 @@
 #	*/5 * * * * /home/kyle/grive.sh
 #
 # Changes:
+# v1.1.3
+# - Switched to dynamic logging
+#
 # v1.1.2
 # - Fixed a silly typo preventing the script from running
 # - Added some announce statements so the user knows if it's running or not
@@ -23,7 +26,7 @@
 # - Overhauled other parts of script to be 'self-friendly' (uses my own functions)
 # - Also updated to use $updatePrefix
 #
-# v1.1.1, 07 July 2016 11:50 PST
+# v1.1.3, 26 July 2016 15:41 PST
 
 ### Variables
 
@@ -45,7 +48,7 @@ else
 fi
 
 ### Main Script
-griveLog="$debugPrefix/griveLog.log"
+#griveLog="$debugPrefix/griveLog.log"
 debug "Starting $0..." $griveLog
 announce "Preparing to sync with Google Drive using grive!"
 

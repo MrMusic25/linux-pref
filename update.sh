@@ -7,6 +7,9 @@
 # If there are arguments, it will try to install the programs listed
 #
 # Changes:
+# v1.2.2
+# - Switched to dynamic logging
+#
 # v1.2.1
 # - Added support for slackpkg
 #
@@ -37,7 +40,7 @@
 # - Script will now ask if you would like to reboot after updating, if it is needed
 # - Changed echoes to announce()
 #
-# v1.2.1, 25 July 2016 15:23 PST
+# v1.2.2, 26 July 2016 15:40 PST
 
 ### Variables
 
@@ -137,7 +140,7 @@ esac
 }
 
 ### Main Script
-log="$debugPrefix/update.log" # Needs to be declared down here apparently
+#log="$debugPrefix/update.log" # Needs to be declared down here apparently
 debug "Starting $0 ..." $log
 checkPrivilege "ask" # I will chuckle everytime I have to type this lol
 

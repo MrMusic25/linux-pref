@@ -5,8 +5,12 @@
 # Note: this script whould not be run by itself, as it only contains functions and variables
 #
 # Changes:
+# v1.6.0
+# - Big update - now, all scripts have a dynamically assigned logFile based on the script name!
+# - All scripts have been updated to reflect this, they can still be found in '$HOME/.logs'
+#
 # v1.5.1
-# - Turned off ctrl_() trap because it doesn't work properly, will fix later
+# - Turned off ctrl_c() trap because it doesn't work properly, will fix later
 # - Added slackpkg to universalInstaller() and determinePM()
 #
 # v1.5.0
@@ -49,7 +53,7 @@
 # v1.1.0
 # - Added announce() and debug() functions
 #
-# v1.5.1 25 July 2016 15:21 PST
+# v1.6.0 26 July 2016 15:35 PST
 
 ### Variables
 
@@ -58,6 +62,7 @@ debugFlag=0
 privilege=0 # 0 if root, 777 if not
 debugInit=0
 debugPrefix="$HOME/.logs" # Use: scriptLog="$debugPrefix/scriptLog.log", then include $scriptLog in debug() statements
+logFile=$( basename $0 | cut -d '.' -f 1 ).log # Now every script has a unique yet dynamic log name!
 
 cFlag=0 # Used with the ctrl_c function
 #trap ctrl_c INT # This will run the function ctrl_c() when it captures the key press
@@ -201,7 +206,7 @@ function announce() {
 # Function: When enabled, it allows you to send debug messages to a log or stdout
 # PreReq: 'export debugFlag=1' if you want stdout
 #
-# Call: debug <message> [log_file]
+# Call: debug <message>
 #
 # Input: Text string for input. If log_file is present, it will echo>> to that file as well with 'Debug:' to denote debug output
 #        Note: Message will only output if debugFlag=1, so that debug code doesn't need to be erased or commented out
@@ -210,6 +215,7 @@ function announce() {
 #
 # Other info: If log_file is present, it will ALWAYS send debug message to log - useful when sharing scripts
 #             Note: Debug also runs 'touch' on file if not present, no need to do so in script now!
+#             Note: Starting with v1.6.0, dynamic logs are now used. $2 will be ignored, so erase those from debug statements whenever there is time
 function debug() {
 	# It would be kinda awkward trying to write to a non-existent directory... Hate to run it every call but it is necessary
 	if [[ ! -d $debugPrefix ]]; then
@@ -218,24 +224,24 @@ function debug() {
 	
 	# Echoes the message if debug flag is on
 	if [[ $debugFlag -eq 1 ]]; then
-		echo "Debug: $1"
+		echo "Debug: $logFile"
 	fi
 	
-	if [[ ! -z $2 ]]; then
-		if [[ ! -f $2 ]]; then
-			touch "$2"
+	if [[ ! -z $logFile ]]; then
+		if [[ ! -f $logFile ]]; then
+			touch "$logFile"
 		fi
 	
 		# Initilize the log file
 		if [[ $debugInit -eq 0 ]]; then
 			export startTime=$(date)
-			echo " " >> "$2"
-			echo "*** Started at $startTime ***" >> "$2"
-			echo " " >> "$2"
+			echo " " >> "$logFile"
+			echo "*** Started at $startTime ***" >> "$logFile"
+			echo " " >> "$logFile"
 			export debugInit=1
 		fi
 		
-		echo "$1" >> "$2"
+		echo "$1" >> "$logFile"
 	fi
 }
 

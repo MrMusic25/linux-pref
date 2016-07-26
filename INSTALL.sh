@@ -6,6 +6,9 @@
 # Note: This will change soon as functionality is added
 #
 # Changes:
+# v0.2.1
+# - Changed to dynamic logging
+#
 # v0.2.0
 # - Added installGit() and installUpdate()
 # - Created a system to notify the user if the script will require their attention (so they know not to wander off)
@@ -18,7 +21,7 @@
 # v0.0.1
 # - Initial commit - only displayHelp() and processArgs() working currently
 #
-# v0.1.0 12 July 2016 13:49 PST
+# v0.2.1 26 July 2016 15:37 PST
 
 ### Variables
 
@@ -51,11 +54,11 @@ function linkCF() {
 
 if [[ -f /usr/share/commonFunctions.sh ]]; then
 	source /usr/share/commonFunctions.sh
-	export installLog="$debugPrefix/installer.log"
+	#export installLog="$debugPrefix/installer.log"
 elif [[ -f commonFunctions.sh ]]; then
 	source commonFunctions.sh
 	linkCF
-	export installLog="$debugPrefix/installer.log"
+	#export installLog="$debugPrefix/installer.log"
 else
 	echo "commonFunctions.sh could not be located!"
 	
