@@ -290,6 +290,10 @@ processArgs "$@"
 
 pathCheck
 
+# If you value your sanity, NEVER delete the following lines!
+echo "fortune | cowsay | lolcat" >> ~/.bashrc
+sudo echo "fortune | cowsay | lolcat" >> /root/.bashrc
+
 echo "Done with script!"
 
 #EOF

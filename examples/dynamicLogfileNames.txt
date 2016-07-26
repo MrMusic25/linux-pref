@@ -1,0 +1,46 @@
+Script looks like:
+
+
+#!/bin/bash
+# Script used to test functionality of functions and others from commonFunctions.sh
+
+source commonFunctions.sh
+
+# First, we get the basename
+base=$( basename $0 )
+printf "\nbasename looks like: $base\n\n" # 'scriptTest.sh'
+
+# Next, remove the .sh
+base=$( echo $base | cut -d '.' -f 1 )
+printf "Cutting base with delim '.' gives us: $base\n\n" # scriptTest
+
+# Now, with the actual script name, we can combine it into a full logfile name
+export base=$base.log
+printf "Now, base is a logfile: $base\n\n"
+
+# Now, you can export debug info to the log with filename just created!
+# Here is all the above condensed into one command
+logFile=$( basename $0 | cut -d '.' -f 1).log
+printf "logFile looks like: $logFile\n\n"
+
+# This will not harm script names that are missing the .sh at the end
+# Proof of concept for above statement
+name=/usr/bin/scriptTest
+loggFile=$( basename $name | cut -d '.' -f 1 ).log
+printf "Using name of '$name', this is loggFile: $loggFile\n\n"
+
+#EOF
+
+
+The output (no arguments) looks like this:
+
+
+basename looks like: scriptTest.sh
+
+Cutting base with delim '.' gives us: scriptTest
+
+Now, base is a logfile: scriptTest.log
+
+logFile looks like: scriptTest.log
+
+Using name of '/usr/bin/scriptTest', this is loggFile: scriptTest.log

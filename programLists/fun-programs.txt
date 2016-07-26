@@ -7,3 +7,4 @@ cmatrix
 fortune
 oneko
 espeak
+lolcat

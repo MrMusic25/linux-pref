@@ -8,6 +8,7 @@
 # Changes:
 # v1.1.8
 # - Not ready to add new "per-file" install functionality, so interim update that fixes current implementation
+#
 # v1.1.7
 # - Changed where $log was declared so script works properly again
 # - Added ending debug statement
