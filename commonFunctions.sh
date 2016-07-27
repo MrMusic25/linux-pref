@@ -8,6 +8,8 @@
 # v1.6.0
 # - Big update - now, all scripts have a dynamically assigned logFile based on the script name!
 # - All scripts have been updated to reflect this, they can still be found in '$HOME/.logs'
+# - MAJOR update to announce(), now looks much cleaner!
+# - announce() now checks to make sure an argument is given as well
 #
 # v1.5.1
 # - Turned off ctrl_c() trap because it doesn't work properly, will fix later
@@ -53,7 +55,7 @@
 # v1.1.0
 # - Added announce() and debug() functions
 #
-# v1.6.0 26 July 2016 15:35 PST
+# v1.6.0 26 July 2016 17:35 PST
 
 ### Variables
 
@@ -105,6 +107,7 @@ elif [[ ! -z $(which aptitude) ]]; then # Just in case apt-get is somehow not in
 	export program="aptitude"
 	aptitude update
 fi
+debug "Package manager found! $program"
 }
 
 ## universalInstaller()
@@ -166,9 +169,14 @@ done
 #
 # Output: None, no return values
 #
-# Other info: Try not to make text too long, it may not display correctly
+# Other info: Try not to make text too long, it may not display correctly. Includes a check in case no arguments given.
 function announce() {
 	# Determine highest amount of chars
+	if [[ -z $1 ]]; then
+		echo "ERROR: Incorrect call for announce()! Please read documentation and fix!"
+		return
+	fi
+	
 	stars=0
 		for j in "$@"; # Stupid quotation marks killed the whole thing.... ugh....
 	do
@@ -179,18 +187,73 @@ function announce() {
 	let "stars += 8" # 4 beginning characters and 4 trailing
 	
 	# Now print beginning set of stars
-	printf "\n\n"
+	printf "\n"
 	for l in `seq 1 $stars`;
 	do
 		printf "*"
 	done
-	printf "\n"
 	
 	# Now, print announcements
 	for i in `seq 1 $#`;
 	do
-		printf "\n*** ${!i} ***\n"
+		# First block prints the stars and spaces between statements
+		printf "\n***"
+		for q in `seq 1 $( expr $stars - 6 )`;
+		do
+			printf " "
+		done
+		printf "***\n"
+		printf "***" # Initial stars for the message...
+		
+		# Math block to find out spaces for centering, for both even and odd numbers
+		statement="${!i}"
+		x=$( expr $stars - ${#statement} - 6 )
+		if [[ $( expr $x % 2 ) -eq 0 ]]; then
+			evenFlag=1
+		else
+			evenFlag=0
+		fi
+		
+		# Now print stars and statement, centering with spaces, depending on if even or odd
+		case $evenFlag in
+			1)
+			for p in `seq 1 $( expr $x / 2 )`;
+			do
+				printf " "
+			done
+			printf "${!i}"
+			for r in `seq 1 $( expr $x / 2 )`;
+			do
+				printf " "
+			done
+			;;
+			0)
+			for a in `seq 1 $( expr $x / 2 )`;
+			do
+				printf " "
+			done
+			printf "${!i}"
+			for b in `seq 1 $( expr $x / 2 + 1 )`;
+			do
+				printf " "
+			done
+			;;
+			*)
+			export debugFlag=1
+			debug "Congratulations on breaking the script. Please escort yourself to the nearest mental institute."
+			exit 9009
+			;;
+		esac
+		printf "***"
 	done
+	
+	# One last line of spaces
+	printf "\n***"
+		for q in `seq 1 $( expr $stars - 6 )`;
+		do
+			printf " "
+		done
+	printf "***"
 	
 	#Finally, print ending stars
 	printf "\n"
