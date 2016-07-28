@@ -17,7 +17,7 @@
 # - Added some announce statements so the user knows if it's running or not
 #
 # v1.1.1
-# - Changed where $griveLog gets declared
+# - Changed where $logFile gets declared
 # - Added a "done" debug statement
 #
 # v1.1.0
@@ -30,7 +30,7 @@
 
 ### Variables
 
-#griveLog="$updatePrefix/griveLog.log" # Saves it in the grive directory unless otherwise specified
+#logFile="$updatePrefix/logFile.log" # Saves it in the grive directory unless otherwise specified
 griveDir="NULL"
 
 ### Functions
@@ -48,18 +48,18 @@ else
 fi
 
 ### Main Script
-#griveLog="$debugPrefix/griveLog.log"
-debug "Starting $0..." $griveLog
+#logFile="$debugPrefix/logFile.log"
+debug "Starting $0..." $logFile
 announce "Preparing to sync with Google Drive using grive!"
 
 # Determine runlevel for more debug
 rl=$( runlevel | cut -d ' ' -f2 ) # Determine runlevel for additional info
 case $rl in
 	0)
-	debug "Running script before shutdown!" $griveLog
+	debug "Running script before shutdown!" $logFile
 	;;
 	6)
-	debug "Running script before reboot!" $griveLog
+	debug "Running script before reboot!" $logFile
 	;;
 	*)
 	continue
@@ -77,14 +77,14 @@ fi
 # Check if directory exists
 if [[ ! -d $griveDir ]]; then
 	export debugFlag=1
-	debug "Directory given does not exist, please fix and setup Grive for this directory!" $griveLog
+	debug "Directory given does not exist, please fix and setup Grive for this directory!" $logFile
 	exit 1
 fi
 
 # Check if grive is installed
 if [[ ! -e /usr/bin/grive ]]; then
 	export debugFlag=1
-	debug "Grive is not installed! Please install and setup, and re-run script!" $griveLog
+	debug "Grive is not installed! Please install and setup, and re-run script!" $logFile
 	exit 2
 fi
 
@@ -99,15 +99,15 @@ fi
 # If checks pass, sync!
 announce "Computer and servers ready, now syncronizing!"
 cd $griveDir
-grive sync &>> $griveLog
+grive sync &>> $logFile
 
 if [[ $? != 0 ]]; then
-	debug "An error occurred with grive, check log for more info!" $griveLog
-	echo "Grive encountered an error while attempting to sync at $(date)! Please view $griveLog for more info." | mail -s "grive.sh" $USER
+	debug "An error occurred with grive, check log for more info!" $logFile
+	echo "Grive encountered an error while attempting to sync at $(date)! Please view $logFile for more info." | mail -s "grive.sh" $USER
 	exit 4
 fi
 
-announce "Done syncronizing!" "Please check $griveLog for more info!"
+announce "Done syncronizing!" "Please check $logFile for more info!"
 
-debug "Done with script!" $griveLog
+debug "Done with script!" $logFile
 #EOF

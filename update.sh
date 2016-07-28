@@ -7,6 +7,9 @@
 # If there are arguments, it will try to install the programs listed
 #
 # Changes:
+# v1.2.3
+# - Got rid of legacy logging statements
+#
 # v1.2.2
 # - Switched to dynamic logging
 #
@@ -21,7 +24,7 @@
 # - Note really an update, but small change from commonFunctions.sh. Leftover code commented out
 #
 # v1.1.5
-# - Had to change where $log was declared
+# - Had to change where $logFile was declared
 # - Added a debug statement at the end, log for this looks boring
 #
 # v1.1.4
@@ -40,7 +43,7 @@
 # - Script will now ask if you would like to reboot after updating, if it is needed
 # - Changed echoes to announce()
 #
-# v1.2.2, 26 July 2016 15:40 PST
+# v1.2.3, 28 July 2016 15:48 PST
 
 ### Variables
 
@@ -141,7 +144,7 @@ esac
 
 ### Main Script
 #log="$debugPrefix/update.log" # Needs to be declared down here apparently
-debug "Starting $0 ..." $log
+debug "Starting $0 ..."
 checkPrivilege "ask" # I will chuckle everytime I have to type this lol
 
 #if [[ $privilege -eq 777 ]]; then
@@ -202,5 +205,5 @@ if [[ -f /var/run/reboot-required ]]; then
 fi
 
 announce "Done!"
-debug "Finished at $(date) !" $log
+debug "Finished at $(date) !"
 #eof

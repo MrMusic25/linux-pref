@@ -48,7 +48,7 @@
 ### Variables
 
 file="NULL"
-runMode="directory" # Can be directory or file mode. File mode installs from given file. Directory mode install all files from directory. Both from $1
+programMode="directory" # Can be directory or file mode. File mode installs from given file. Directory mode install all files from directory. Both from $1
 #program="NULL"
 #log="$debugPrefix/pm.log"
 
@@ -76,7 +76,7 @@ checkPrivilege "exit" #lol
 if [[ -e $1 ]]; then
 	debug "$1 is a file, running in file mode!"
 	export file=$1
-	export runMode="file"
+	export programMode="file"
 elif [[ -d $1 ]]; then
 	debug "$1 is a folder, running in directory mode!"
 	export file=$1
@@ -96,7 +96,7 @@ debug "This distribution is using $program as it's package manager!"
 #announce "Now installing programs listed in $file!" "This may take a while depending on number of updates and internet speed" "Check $logFile for details"
 
 # Now we can install everything
-case runMode in
+case programMode in
 	file)
 	announce "Now installing programs listed in $file!" "This may take a while depending on number of updates and internet speed" "Check $logFile for details"
 	while read -r line; do

@@ -277,7 +277,7 @@ function installPrograms() {
 	fi
 	
 	announce "Installing programs using programInstaller.sh!" "Script is interactive, so pay attention!" "Look at the programLists folder to see what will be installed!"
-	
+	sudo ./programInstaller.sh $programsFile
 }
 
 function displayHelp() {
