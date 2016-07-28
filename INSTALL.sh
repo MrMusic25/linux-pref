@@ -27,8 +27,8 @@
 
 #sudoRequired=0 # Set to 0 by default - script will close if sudo is false and sudoRequired is true
 installOnly=0 # Used by -n|--no-run, if 1 then files will be copied and verified, but not executed
-programsFile="programs.txt"
-kaliFile=".kaliPrograms.txt"
+programsFile="programLists/programs.txt"
+#kaliFile=".kaliPrograms.txt"
 runMode="NULL" # Variable used to hold which install option will be run
 pathCheck=0 # Used to tell other functions if path check as be run or not
 pathLocation="/usr/bin"
@@ -70,7 +70,7 @@ fi
 function processArgs() {
 	if [[ $# -eq 0 ]]; then
 		export debugFlag=1
-		debug "ERROR: Script must be run with at least one argument!" $installLog
+		debug "ERROR: Script must be run with at least one argument!"
 		displayHelp
 		exit 1
 	fi
@@ -91,14 +91,14 @@ function processArgs() {
 			-e|--except)
 			if [[ $2 == "all" ]]; then
 				export debugFlag=1
-				debug "ERROR: -e | --except option cannot be used with install option 'all' !" $installLog
+				debug "ERROR: -e | --except option cannot be used with install option 'all' !"
 				displayHelp
 				exit 1
 			elif [[ ! -z $2 || $2 == "update" || $2 == "programs" || $2 == "kali" || $2 == "git" ]]; then
 				export except="$2"
 			else
 				export debugFlag=1
-				debug "ERROR: -e | --except must have an option following it! Please fix and re-run script!" $installLog
+				debug "ERROR: -e | --except must have an option following it! Please fix and re-run script!"
 				displayHelp
 				exit 1
 			fi
@@ -119,63 +119,63 @@ function processArgs() {
 			;;
 			programs)
 			if [[ -z $2 ]]; then
-				debug "No argument provided for 'programs' applet, assuming default file location" $installLog
+				debug "No argument provided for 'programs' applet, assuming default file location"
 				if [[ -f $programsFile ]]; then
-					debug "Default location of programs file is working, using for script..." $installLog
+					debug "Default location of programs file is working, using for script..."
 					export runMode="programs"
 					export loopFlag=1	
 				else
-					debug "Default location not valid, quitting script!" $installLog
+					debug "Default location not valid, quitting script!"
 					export debugFlag=1
-					debug "ERROR: Default file ($programsFile) not found, please locate or specify" $installLog
+					debug "ERROR: Default file ($programsFile) not found, please locate or specify"
 					displayHelp
 					exit 1
 				fi
-			elif [[ ! -f $2 ]]; then
-				export debugFlag=1
-				debug "ERROR: File provided for programs is invalid, or does not exist! Please fix and re-run script!" $installLog
-				displayHelp
-				exit 1
-			else
+			elif [[ ! -z $2 ]]; then
+				export programsFile="$2"
 				export runMode="programs"
-				debug "Programs mode set, file provided is valid!" $installLog
-				export programsFile="$2"
 				export loopFlag=1
+				debug "Running in programs mode, using file/directory $programsFile"
+			#else
+			#	export runMode="programs"
+			#	debug "Programs mode set, file provided is valid!"
+			#	export programsFile="$2"
+			#	export loopFlag=1
 			fi
 			;;
-			kali)
-			if [[ -z $2 ]]; then
-				debug "No argument provided for 'kali' applet, assuming default file location" $installLog
-				if [[ -f $kaliFile ]]; then
-					debug "Default location of kali file is working, using for script..." $installLog
-					export runMode="kali"
-					export loopFlag=1	
-				else
-					debug "Default location not valid, quitting script!" $installLog
-					export debugFlag=1
-					debug "ERROR: Default file ($kaliFile) not found, please locate or specify" $installLog
-					displayHelp
-					exit 1
-				fi
-			elif [[ ! -f $2 ]]; then
-				export debugFlag=1
-				debug "ERROR: File provided for kali is invalid, or does not exist! Please fix and re-run script!" $installLog
-				displayHelp
-				exit 1
-			else
-				export runMode="kali"
-				debug "Kali mode set, file provided is valid!" $installLog
-				export programsFile="$2"
-				export loopFlag=1
-			fi
-			;;
+			#kali)
+			#if [[ -z $2 ]]; then
+			#	debug "No argument provided for 'kali' applet, assuming default file location"
+			#	if [[ -f $kaliFile ]]; then
+			#		debug "Default location of kali file is working, using for script..."
+			#		export runMode="kali"
+			#		export loopFlag=1	
+			#	else
+			#		debug "Default location not valid, quitting script!"
+			#		export debugFlag=1
+			#		debug "ERROR: Default file ($kaliFile) not found, please locate or specify"
+			#		displayHelp
+			#		exit 1
+			#	fi
+			#elif [[ ! -f $2 ]]; then
+			#	export debugFlag=1
+			#	debug "ERROR: File provided for kali is invalid, or does not exist! Please fix and re-run script!"
+			#	displayHelp
+			#	exit 1
+			#else
+			#	export runMode="kali"
+			#	debug "Kali mode set, file provided is valid!"
+			#	export programsFile="$2"
+			#	export loopFlag=1
+			#fi
+			#;;
 			git)
 			export runMode="git"
 			export loopFlag=1
 			;;
 			*)
 			export debugFlag=1
-			debug "ERROR: Unknown option '$1' " $installLog
+			debug "ERROR: Unknown option '$1' "
 			displayHelp
 			exit 1
 		esac
@@ -256,6 +256,28 @@ function installGit() {
 	sudo ln gitCheck.sh /usr/bin/gitcheck
 	
 	announce "This script can be used for any git repository, read the documentation for more info!" "Make sure to add a cron job for any new directories!"
+	
+	getUserAnswer "Would you like to periodically update this directory?" gitTime "How many minutes would you like between updates? (0-60)"
+	if [[ $? -eq 0 ]]; then
+		addCronJob $gitTime min "/usr/bin/gitcheck $(pwd)"
+		debug "Cron job added, will check every $gitTime minutes."
+	fi
+}
+
+function installPrograms() {
+	# If no-run enabled, ask user if they want to continue
+	if [[ $installOnly -eq 1 ]]; then
+		#export debugFlag=1
+		debug "ERROR: User indicated not to run scripts, then tried to install programs! Asking for verification..."
+		getUserAnswer "You indicated not to run scripts! Do you still want to install programs?"
+		if [[ $? -eq 1 ]]; then
+			debug "Not installing programs, returning..."
+			return
+		fi
+	fi
+	
+	announce "Installing programs using programInstaller.sh!" "Script is interactive, so pay attention!" "Look at the programLists folder to see what will be installed!"
+	
 }
 
 function displayHelp() {
@@ -269,8 +291,8 @@ function displayHelp() {
 	echo " Install Options:"
 	echo "    all                                : Installs all the scripts below"
 	echo "    update                             : Installs update script"
-	echo "    programs [file]                    : Installs programs using programInstaller.sh, or provided text-based tab-delimited file"
-	echo "    kali [file]                        : Same as 'programs', but installs from .kaliPrograms.txt by default. Also accepts file input."
+	echo "    programs [file]                    : Installs programs using default locations, or provided text-based tab-delimited file"
+	#echo "    kali [file]                        : Same as 'programs', but installs from .kaliPrograms.txt by default. Also accepts file input."
 	echo "    git                                : Installs git monitoring script and sets up cron job to run at boot"
 	echo " "
 	echo " Options:"
@@ -290,6 +312,8 @@ if [[ ! -f /usr/share/commonFunctions.sh ]]; then
 fi
 
 processArgs "$@"
+
+announce "Please stay by your computer, there are interactive parts of this script!" "It moves fast though, so no need to worry about standing by for 20 mins!"
 
 pathCheck
 

@@ -6,6 +6,10 @@
 # Determines which package manager is being used, then installs all the packages listed in programs.txt (or argument, if provided)
 #
 # Changes:
+# v1.2.0
+# - Re-wrote most of the main script to support directory installs
+# - Input can now be either a directory or file, script will determine which and proceed accordingly
+#
 # v1.1.9
 # - Switched to dynamic logging
 #
@@ -39,11 +43,12 @@
 # - Changed most output to use announce() and debug()
 # - determinePM() redirects to /dev/null now because it is not important to view except on failure
 #
-# v1.1.8 25 July, 2016, 16:30 PST
+# v1.2.0 27 July, 2016, 17:53 PST
 
 ### Variables
 
-file="programLists/programs.txt"
+file="NULL"
+runMode="directory" # Can be directory or file mode. File mode installs from given file. Directory mode install all files from directory. Both from $1
 #program="NULL"
 #log="$debugPrefix/pm.log"
 
@@ -67,31 +72,59 @@ debug "Starting $0..." $log
 # First, check to see is user is root/sudo. Makes scripting easier
 checkPrivilege "exit" #lol
 
-# Checks for argument and sets as file location
-if [[ $# != 0 ]]; then
-	file=$1
+# Checks if argument is present, then tests if directory or file and sets options accordingly
+if [[ -e $1 ]]; then
+	debug "$1 is a file, running in file mode!"
+	export file=$1
+	export runMode="file"
+elif [[ -d $1 ]]; then
+	debug "$1 is a folder, running in directory mode!"
+	export file=$1
+elif [[ -d "programLists/" ]]; then
+	debug "No folder/file given, using default folder!"
+	export file="programLists"
+else
+	debug "Script is broken! Please fix!"
+	exit 592
 fi
-
-
-# Test to make sure file valid
-if [[ ! -e $file ]]; then
-	announce "$file could not be found! Please check and re-run script!"
-	exit 1
-fi
-
+	
 # Now that file is valid, determine program to use
 announce "Determining package manager and updating the package lists." "This may take time depending on internet speed and repo size."
 determinePM &>/dev/null
 
-debug "This distribution is using $program as it's package manager!" $log
-announce "Now installing programs listed in $file!" "This may take a while depending on number of updates and internet speed" "Check $log for details"
+debug "This distribution is using $program as it's package manager!"
+#announce "Now installing programs listed in $file!" "This may take a while depending on number of updates and internet speed" "Check $logFile for details"
 
 # Now we can install everything
-while read -r line; do
-	[[ $line = \#* ]] && continue # Skips comment lines
-	universalInstaller "$line"
-done < $file
+case runMode in
+	file)
+	announce "Now installing programs listed in $file!" "This may take a while depending on number of updates and internet speed" "Check $logFile for details"
+	while read -r line; do
+		[[ $line = \#* ]] && continue # Skips comment lines
+		universalInstaller "$line"
+	done <$file
+	;;
+	directory)
+	announce "Installing all directories from $file!" "This WILL take a long time!" "Don't go anywhere, you will be asked if each section should be installed!"
+	for list in $( ls $file );
+	do
+		getUserAnswer "Would you like to install the programs listed in $list?"
+		if [[ $? -eq 1 ]]; then
+			debug "Skipping $list at user's choice..."
+		else
+			while read -r line; do
+				[[ $line = \#* ]] && continue # Skips comment lines
+				universalInstaller "$line"
+			done <$list
+		fi
+	done
+	;;
+	*)
+	debug "Everything is broken. Why. At least you have unique debug messages for an easy CTRL+F."
+	exit 972
+	;;
+esac
 
 announce "Done installing programs!"
-debug "Finished $0 at $(date)" $log
+debug "Finished $0 at $(date)"
 #EOF

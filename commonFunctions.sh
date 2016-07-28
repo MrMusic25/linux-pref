@@ -311,9 +311,9 @@ function debug() {
 ## checkPrivilege()
 # Function: Simple function to check if this script is being run as root or sudo, in case it is necessary
 #
-# Call: checkPrivilege [exit]
+# Call: checkPrivilege [exit|ask]
 #
-# Input: Only accepts the word "exit" as an argument
+# Input: Putting "exit" as an argument will exit the script with code 777 if it fails; "ask" will re-run the script as root (be careful with this!).
 #
 # Output: stdout, sets privilege to 777 if not root; this allows you to call sudo <command>, or exit entire script
 #
@@ -365,7 +365,7 @@ function ctrl_c() {
 ## addCronJob()
 # Function: Like the name implies, creates a cron job for the current user
 #
-# Call: addCronJob <number> <min|hour> "/path/to/command.sh -in quotations" [no-null]
+# Call: addCronJob <number_of_mins> <min|hour> "/path/to/command.sh -in quotations" [no-null]
 #
 # Input: Number of minutes or hours to run script, min or hour indicator, and the command in quotation marks
 #
@@ -436,7 +436,7 @@ function getUserAnswer() {
 		read ans
 	done
 	
-	if [[ ! -z $2 ]]; then
+	if [[ ! -z $2 && $ans == "y" || $ans == "yes" ]]; then
 		if [[ -z $3 ]]; then
 			echo "ERROR: Incorrect call for function getUserAnswer()! Please look at documentation!"
 		else
