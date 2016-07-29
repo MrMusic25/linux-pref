@@ -5,6 +5,10 @@
 # Note: this script whould not be run by itself, as it only contains functions and variables
 #
 # Changes:
+# v1.6.2
+# - Added small 'function' that allows any script to have -v|--verbose as $1 to enable debugging
+# - Change to the way addCronJob() works, since it was non-functional before
+#
 # v1.6.1
 # - Finally got around to testing getUserAnswer, and it only half worked. Now works 97%.
 # - Other small changes I forgot to document and forgot hours later
@@ -59,7 +63,7 @@
 # v1.1.0
 # - Added announce() and debug() functions
 #
-# v1.6.1 28 July 2016 17:58 PST
+# v1.6.2 29 July 2016 16:22 PST
 
 ### Variables
 
@@ -383,7 +387,7 @@ function addCronJob() {
 	if [[ $1 -le 0 || $1 -gt 60 ]]; then
 		echo "ERROR: Call for addCronJob() is outside the natural time limits! (Num: $1)" # Don't you just LOVE cryptic messages?
 		return 1
-	elif [[ $1 -gt 24 ]]; then
+	elif [[ $2 == "hour" && $1 -gt 24 || $2 == "hours" && $1 -gt 24 ]]; then
 		echo "ERROR: There are not $1 hours in a day, please fix call!"
 		return 1
 	fi
@@ -393,20 +397,40 @@ function addCronJob() {
 		announce "Preparing job $3 for cron!" "Job will every $1 minutes from now on."
 		
 		if [[ ! -z $4 ]]; then
-			echo "cronjob will NOT redirect to /dev/null, expect lots of mail from cron!"
-			crontab -l 2>/dev/null; echo "*/$1 * * * * $3 " | crontab -
+			debug "cronjob will NOT redirect to /dev/null, expect lots of mail from cron!"
+			#crontab -l 2>/dev/null; echo "*/$1 * * * * $3 " | crontab -
+			touch tmpCron # Wasn't going to include this at first, but just in case user doesn't have write permission...
+			crontab -l 2>/dev/null > tmpCron
+			printf"\n# Added by $0 on $(date)\n*/$1 * * * * $3\n" >> tmpCron
+			crontab tmpCron
+			rm tmpCron
 		else
-			crontab -l 2>/dev/null; echo "*/$1 * * * * $3 &>/dev/null" | crontab -
+			#crontab -l 2>/dev/null; echo "*/$1 * * * * $3 &>/dev/null" | crontab -
+			touch tmpCron # Wasn't going to include this at first, but just in case user doesn't have write permission...
+			crontab -l 2>/dev/null > tmpCron
+			printf "\n# Added by $0 on $(date)\n*/$1 * * * * $3 &>/dev/null\n" >> tmpCron
+			crontab tmpCron
+			rm tmpCron
 		fi
 		;;
 		hour|hours)
 		announce "Preparing job $3 for cron!" "Job will run once per day at $1 o'clock, Military Time"
 		
 		if [[ ! -z $4 ]]; then
-			echo "cronjob will NOT redirect to /dev/null, expect lots of mail from cron!"
-			crontab -l 2>/dev/null; echo "* $1 * * * $3 " | crontab -
+			debug "cronjob will NOT redirect to /dev/null, expect lots of mail from cron!"
+			#crontab -l 2>/dev/null; echo "* $1 * * * $3 " | crontab -
+			touch tmpCron # Wasn't going to include this at first, but just in case user doesn't have write permission...
+			crontab -l 2>/dev/null > tmpCron
+			printf "\n# Added by $0 on $(date)\n* $1 * * * $3\n" >> tmpCron
+			crontab tmpCron
+			rm tmpCron
 		else
-			crontab -l 2>/dev/null; echo "* $1 * * * $3 &>/dev/null" | crontab -
+			#crontab -l 2>/dev/null; echo "* $1 * * * $3 &>/dev/null" | crontab -
+			touch tmpCron # Wasn't going to include this at first, but just in case user doesn't have write permission...
+			crontab -l 2>/dev/null > tmpCron
+			printf "\n# Added by $0 on $(date)\n* $1 * * * $3 &>/dev/null\n" >> tmpCron
+			crontab tmpCron
+			rm tmpCron
 		fi
 		;;
 		*)
@@ -470,5 +494,12 @@ function getUserAnswer() {
 		;;
 	esac
 }
+
+# This following, which SHOULD be run in every script, will enable debugging if -v|--verbose is enabled.
+# The 'shift' command let's the scripts use the rest of the arguments
+if [[ $1 == "-v" || $1 == "--verbose" ]]; then
+	export debugFlag=1
+	shift
+fi
 
 #EOF

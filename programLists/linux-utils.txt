@@ -6,3 +6,4 @@ python
 python3
 screen
 exfat-utils
+hardinfo fancontrol
