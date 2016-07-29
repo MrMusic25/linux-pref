@@ -6,6 +6,10 @@
 # Determines which package manager is being used, then installs all the packages listed in programs.txt (or argument, if provided)
 #
 # Changes:
+# v1.2.1
+# - Fixed many tiny errors keeping script from working, along with commonFunctions.sh
+# - Directory installation now works!
+#
 # v1.2.0
 # - Re-wrote most of the main script to support directory installs
 # - Input can now be either a directory or file, script will determine which and proceed accordingly
@@ -43,7 +47,7 @@
 # - Changed most output to use announce() and debug()
 # - determinePM() redirects to /dev/null now because it is not important to view except on failure
 #
-# v1.2.0 27 July, 2016, 17:53 PST
+# v1.2.1 28 July, 2016, 17:56 PST
 
 ### Variables
 
@@ -73,7 +77,7 @@ debug "Starting $0..." $log
 checkPrivilege "exit" #lol
 
 # Checks if argument is present, then tests if directory or file and sets options accordingly
-if [[ -e $1 ]]; then
+if [[ -f $1 ]]; then
 	debug "$1 is a file, running in file mode!"
 	export file=$1
 	export programMode="file"
@@ -96,7 +100,7 @@ debug "This distribution is using $program as it's package manager!"
 #announce "Now installing programs listed in $file!" "This may take a while depending on number of updates and internet speed" "Check $logFile for details"
 
 # Now we can install everything
-case programMode in
+case $programMode in
 	file)
 	announce "Now installing programs listed in $file!" "This may take a while depending on number of updates and internet speed" "Check $logFile for details"
 	while read -r line; do
@@ -108,6 +112,7 @@ case programMode in
 	announce "Installing all directories from $file!" "This WILL take a long time!" "Don't go anywhere, you will be asked if each section should be installed!"
 	for list in $( ls $file );
 	do
+		debug "Installing from $list"
 		getUserAnswer "Would you like to install the programs listed in $list?"
 		if [[ $? -eq 1 ]]; then
 			debug "Skipping $list at user's choice..."
@@ -115,7 +120,7 @@ case programMode in
 			while read -r line; do
 				[[ $line = \#* ]] && continue # Skips comment lines
 				universalInstaller "$line"
-			done <$list
+			done <$file/$list
 		fi
 	done
 	;;

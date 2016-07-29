@@ -5,6 +5,10 @@
 # Note: this script whould not be run by itself, as it only contains functions and variables
 #
 # Changes:
+# v1.6.1
+# - Finally got around to testing getUserAnswer, and it only half worked. Now works 97%.
+# - Other small changes I forgot to document and forgot hours later
+#
 # v1.6.0
 # - Big update - now, all scripts have a dynamically assigned logFile based on the script name!
 # - All scripts have been updated to reflect this, they can still be found in '$HOME/.logs'
@@ -55,7 +59,7 @@
 # v1.1.0
 # - Added announce() and debug() functions
 #
-# v1.6.0 26 July 2016 17:35 PST
+# v1.6.1 28 July 2016 17:58 PST
 
 ### Variables
 
@@ -427,23 +431,25 @@ function addCronJob() {
 #
 # Other info: Be careful which names you give to the variables, you may accidentally delete other variables!
 function getUserAnswer() {
-	export ans="NULL"
+	ans="NULL"
 	announce "$1"
 	
-	while [[ $ans == "NULL" || $ans != "y" || $ans != "yes" || $ans != "n" || $ans != "no" ]];
-	do
-		echo "Please answer yes/no: "
-		read ans
+	until [[ $ans == "y" || $ans == "yes" || $ans == "n" || $ans == "no" ]]; do
+		read -p "Please answer above prompt (y/n): " ans
 	done
 	
-	if [[ ! -z $2 && $ans == "y" || $ans == "yes" ]]; then
+	#while [[ $ans == "NULL" || $ans != "y" || $ans != "yes" || $ans != "n" || $ans != "no" ]];
+	#do
+	#	read -p "Please answer yes/no: " ans
+	#done
+	
+	if [[ ! -z $2 && $ans == "y" || ! -z $2 && $ans == "yes" ]]; then
 		if [[ -z $3 ]]; then
 			echo "ERROR: Incorrect call for function getUserAnswer()! Please look at documentation!"
 		else
 			announce "$3"
-			echo "Please assign a value to $2 : "
-			read ${1}
-			echo "${1} is now equal to ${!1}!"
+			read -p "Please assign a value to $2: " ${2}
+			#echo "${1} is now equal to ${!1}!"
 		fi
 	fi
 	

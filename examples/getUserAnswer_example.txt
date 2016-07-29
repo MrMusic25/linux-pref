@@ -1,0 +1,130 @@
+Function getUserAnswer(), from commonFunctions.sh, looks like:
+
+## getUserAnswer()
+#
+# Function: Asks a user for input, verifies input, then returns with the answer (0 for true/yes, 1 for false/no)
+#
+# Call: getUserAnswer "Question in quotation marks?" [variable_name] "Question for variable name, if present?"
+#
+# Input: User will be asked the question in quotes ($1). 
+#        If [variable_name] ($2) is present, it will ask the second question ($3) and assign response to that variable
+#
+# Output: stdout (obviously), return value of 0 for yes/true response, value of 1 for no/false response
+#
+# Other info: Be careful which names you give to the variables, you may accidentally delete other variables!
+function getUserAnswer() {
+	ans="NULL"
+	announce "$1"
+	
+	until [[ $ans == "y" || $ans == "yes" || $ans == "n" || $ans == "no" ]]; do
+		read -p "Please answer above prompt (y/n): " ans
+	done
+	
+	#while [[ $ans == "NULL" || $ans != "y" || $ans != "yes" || $ans != "n" || $ans != "no" ]];
+	#do
+	#	read -p "Please answer yes/no: " ans
+	#done
+	
+	if [[ ! -z $2 && $ans == "y" || ! -z $2 && $ans == "yes" ]]; then
+		if [[ -z $3 ]]; then
+			echo "ERROR: Incorrect call for function getUserAnswer()! Please look at documentation!"
+		else
+			announce "$3"
+			read -p "Please assign a value to $2: " ${2}
+			#echo "${1} is now equal to ${!1}!"
+		fi
+	fi
+	
+	case $ans in
+		y|yes)
+		return 0
+		;;
+		n|no)
+		return 1
+		;;
+		NULL)
+		announce "Congratulations, you somehow broke my script, Linux, and possibly the universe."
+		return 666
+		;;
+		*)
+		announce "You must not be very good at this if you made it here."
+		return 111
+		;;
+	esac
+}
+
+
+Test script looks like:
+
+#!/bin/bash
+# Script used to test functionality of functions and others from commonFunctions.sh
+
+source commonFunctions.sh
+
+function testReturn() {
+	if [[ $1 -eq 0 ]]; then
+		echo "Function returned $1, true/yes answer!"
+	elif [[ $1 -eq 1 ]]; then
+		echo "Function returned $1, false/no answer!"
+	else
+		echo "Function returned unknown value: $1"
+	fi
+}
+
+# First, make sure yes and no are not working
+getUserAnswer "Please type 'yes' or 'y' below."
+testReturn $?
+getUserAnswer "Now please enter 'no' or 'n'."
+testReturn $?
+
+# Next, test a value
+value=372
+getUserAnswer "Type yes at the next prompt." newValue "Type the following value at this prompt: $value"
+testReturn
+if [[ $value -eq $newValue ]]; then
+	echo "value and newValue are equal, $value and $newValue respectively!"
+else
+	echo "Incorrect value entered or returned: value is $value, newValue is $newValue."
+fi
+
+#EOF
+
+Output looks like:
+
+kyle@Kyle-Sniffer-OS4:~/linux-pref$ ./scriptTest.sh 
+
+***************************************
+***                                 ***
+*** Please type 'yes' or 'y' below. ***
+***                                 ***
+***************************************
+
+Please answer above prompt (y/n): yes
+Function returned 0, true/yes answer!
+
+*************************************
+***                               ***
+*** Now please enter 'no' or 'n'. ***
+***                               ***
+*************************************
+
+Please answer above prompt (y/n): no
+Function returned 1, false/no answer!
+
+************************************
+***                              ***
+*** Type yes at the next prompt. ***
+***                              ***
+************************************
+
+Please answer above prompt (y/n): yes
+
+****************************************************
+***                                              ***
+*** Type the following value at this prompt: 372 ***
+***                                              ***
+****************************************************
+
+Please assign a value to newValue: 372
+Function returned , true/yes answer!
+value and newValue are equal, 372 and 372 respectively!
