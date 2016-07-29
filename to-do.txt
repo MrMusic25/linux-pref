@@ -1,0 +1,3 @@
+- Add function that will echo arguments into the .bashrc, .zshrc, for both the current user AND root
+
+- Make INSTALL.sh check for .bash_aliases before linking file. If so, coppy file and rm, then link.
