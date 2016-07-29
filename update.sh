@@ -7,6 +7,9 @@
 # If there are arguments, it will try to install the programs listed
 #
 # Changes:
+# v1.2.4
+# - Distracted myself from updating README.md by changing this script to use getUserAnswer()
+#
 # v1.2.3
 # - Got rid of legacy logging statements
 #
@@ -43,7 +46,7 @@
 # - Script will now ask if you would like to reboot after updating, if it is needed
 # - Changed echoes to announce()
 #
-# v1.2.3, 28 July 2016 15:48 PST
+# v1.2.4, 29 July 2016 16:39 PST
 
 ### Variables
 
@@ -181,27 +184,25 @@ fi
 
 # Code that asks to reboot if it is required
 if [[ -f /var/run/reboot-required ]]; then
-	announce "A reboot is required after updating!" 
-	printf "\nWould you like the script to manually reboot for you? (y/n): "
-	answer="NULL"
-	while [[ $answer != "y" && $answer != "yes" && $answer != "n" && $answer != "no" ]]; do
-		read answer
-		case $answer in
-			y|yes)
-			announce "Script will reboot computer in 3 minutes! Please close your work!" "Press any key to reboot immediately!"
-			sleep 180
-			announce "Rebooting computer now!"
-			sleep 5
-			reboot
-			;;
-			n|no)
-			echo "Computer will not be rebooted. Please reboot manually later."
-			;;
-			*)
-			printf "\nWould you like the script to manually reboot for you? (y/n): "
-			;;
-		esac
-	done
+	debug "After installing updates, a reboot is required by the system!"
+	getUserAnswer "A reboot is required! Would you like to reboot now?"
+	
+	case $? in
+		0)
+		announce "System will reboot itself in 3 mins!" "Please save your work in preparation" "Press CTRL+C to reboot immediately."
+		sleep 180
+		debug "Rebooting computer after required update..."
+		reboot
+		;;
+		1)
+		debug "User decided not to reboot computer"
+		announce "Please reboot your computer at a tiem where it is convinient for you!"
+		;;
+		*)
+		debug "Unknown exit code: $?"
+		announce "An error occurred! Please consult the log!" "$logFile"
+		;;
+	esac
 fi
 
 announce "Done!"

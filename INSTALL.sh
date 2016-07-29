@@ -317,9 +317,11 @@ announce "Please stay by your computer, there are interactive parts of this scri
 
 pathCheck
 
+echo "source $(pwd)/$(readlink -f $(basename $0))" >>~/.bashrc
+sudo echo "source $(pwd)/$(readlink -f $(basename $0))" >>/root/.bashrc
 # If you value your sanity, NEVER delete the following lines!
-echo "fortune | cowsay | lolcat" >> ~/.bashrc
-sudo echo "fortune | cowsay | lolcat" >> /root/.bashrc
+echo "fortune | cowsay | lolcat" >>~/.bashrc
+sudo echo "fortune | cowsay | lolcat" >>/root/.bashrc
 
 echo "Done with script!"
 

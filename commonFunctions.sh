@@ -498,6 +498,7 @@ function getUserAnswer() {
 # This following, which SHOULD be run in every script, will enable debugging if -v|--verbose is enabled.
 # The 'shift' command let's the scripts use the rest of the arguments
 if [[ $1 == "-v" || $1 == "--verbose" ]]; then
+	echo "Running in verbose mode!"
 	export debugFlag=1
 	shift
 fi

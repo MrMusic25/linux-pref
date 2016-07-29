@@ -1,27 +1,25 @@
 # linux-pref
-A repository with all my favorite aliases, settings, scripts, and installer scripts
+A repository with all my favorite aliases, settings, scripts, and installer scripts.
 
 ## Scripts and Usage
 
 ### INSTALL.sh
 Meant to be the main installation script - run this, and it will do all the heavy lifting for you.
 
-Status: Script now runs, displays help, and accepts arguments. Also set it up to link commonFunctions.sh. Doesn't do anything else (yet).
+Status: Only missing one or two functions, running script still doesn't do much. 
+
+To-Do: bashrc() - Echo items to .bashrc AND/OR .zshrc for user AND root
 
 ### programInstaller.sh
-A multi-distro script that installs a list of programs.
+A multi-distro script that installs a list of programs, or a folder full of program lists.
 
 Usage: `./programInstaller.sh <list_of_programs>`
 
-Accepts a list of programs, seperated by breaks or whitespace, and attempts to install all programs.
-Note: Breaks are preferred over whitespace, so that one unavailable packages does not stop the whole installation.
-Programs list file my contain comments notated with #, those lines will be ignored.
-
-If no argument is given, it will look for 'programs.txt' in the same directory instead.
-Script exits with code 1 if no programs list is found.
+First argument should either be a single list of programs, or it can be a directory full of program lists.
+If none is given, it will default to programLists/ in the current directory.
 
 ### update.sh
-Another multi-distro script that updates the repos and upgrades all available packages
+Another multi-distro script that updates the repos and upgrades all available packages.
 
 Usage: `./update.sh <packages_to_install>`
 
@@ -39,7 +37,7 @@ Script will check to see if git upload info is present. If so, it will change in
 
 Add the following line to your crontab, since the script does not loop itself:
 `*/15 * * * * /home/$USER/linux-pref/gitCheck.sh <path_to_git_folder> &>/dev/null`
-This will check for an update every 15 minutes.
+Adding this line will check for an update every 15 minutes.
 
 ### grive.sh
 This script will update your Google Drive using the grive2 program.
@@ -85,9 +83,15 @@ In recent updates, debug() now touches the log file, and makes sure the log dire
 #### checkPrivilege()
 Checks to see if user has root privileges or not. Also has the option to exit script if privileges missing.
 
-#### ctrl_c()
-Meant to be used with the following line of code: `trap ctrl_c INT`
-User will be asked if they meant to press it, and if they press it again, processes will be stopped and script will exit with code 999.
+#### addCronJob()
+Like the name suggests, it will automatically add a job to your current crontab. Be careful which user this gets run as.
+Also, pay close attention to the documentation!
+
+#### getUserAnswer()
+Asks the user a given question, then can optionally have user assign a value to a variable for use. See documentation
+
+#### Other jobs
+There is now a small function that runs each time commonFunctions.sh is sourced - if $1 is -v|--verbose, it will enable debugging and shift arguments for use.
 
 ## Text Files and Data
 
