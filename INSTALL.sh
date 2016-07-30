@@ -94,8 +94,9 @@ function processArgs() {
 				debug "ERROR: -e | --except option cannot be used with install option 'all' !"
 				displayHelp
 				exit 1
-			elif [[ ! -z $2 || $2 == "update" || $2 == "programs" || $2 == "kali" || $2 == "git" ]]; then
+			elif [[ ! -z $2 || $2 == "update" || $2 == "programs" || $2 == "git" ]]; then
 				export except="$2"
+				export loopFlag=1
 			else
 				export debugFlag=1
 				debug "ERROR: -e | --except must have an option following it! Please fix and re-run script!"
@@ -298,7 +299,8 @@ function displayHelp() {
 	echo " Options:"
 	echo "    -h | --help                        : Displays this help message"
 	echo "    -s | --sudo                        : Makes script check for root privileges before running anything"
-	echo "    -e | --except <install_option>     : Installs everything except option specified. e.g './INSTALL.sh -e kali' "
+	echo "    -e | --except <install_option>     : Installs everything except option specified. e.g './INSTALL.sh -e git' "
+	echo "                                       : NOTE: Make sure to put -e <install_option> last! 
 	echo "    -n | --no-run                      : Only installs scripts to be used, does not execute scripts"
 	echo "    -v | --verbose                     : Displays additional debug info, also found in logfile"
 }
@@ -315,7 +317,29 @@ processArgs "$@"
 
 announce "Please stay by your computer, there are interactive parts of this script!" "It moves fast though, so no need to worry about standing by for 20 mins!"
 
-pathCheck
+pathCheck # Checks if /usr/bin is in the user's path, since scripts rely on it
+
+# Now, run the install mode!
+case $runMode in
+	update)
+	installUpdate
+	;;
+	programs)
+	installPrograms
+	;;
+	git)
+	installGit
+	;;
+	all)
+	installUpdate
+	installPrograms
+	installGit
+	;;
+	#except)
+	*)
+	echo "Not ready yet, sorry!"
+	;;
+esac
 
 echo "source $(pwd)/$(readlink -f $(basename $0))" >>~/.bashrc
 sudo echo "source $(pwd)/$(readlink -f $(basename $0))" >>/root/.bashrc

@@ -8,3 +8,6 @@ python3
 screen
 exfat-utils
 hardinfo fancontrol
+
+# Cool wireless connection wizard (by-channel!) I found with ArchStrike
+wicd-daemon
