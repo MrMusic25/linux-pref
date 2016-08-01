@@ -12,8 +12,9 @@ alias la='ls -l -a --color=auto'
 alias cls='clear'
 
 # A few safety ones, just cuz
-alias rm='rm -i'
-alias mv='mv -i'
+alias rm='rm -iv'
+alias mv='mv -iv'
+alias cp='cp -iv'
 
 # grep aliases
 alias grep='grep --color=auto'

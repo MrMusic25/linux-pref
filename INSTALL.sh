@@ -6,6 +6,9 @@
 # Note: This will change soon as functionality is added
 #
 # Changes:
+# v1.0.0
+# - Finally ready for a release version! Theoretically, everything should work and install properly
+#
 # v0.2.1
 # - Changed to dynamic logging
 #
@@ -21,7 +24,7 @@
 # v0.0.1
 # - Initial commit - only displayHelp() and processArgs() working currently
 #
-# v0.2.1 26 July 2016 15:37 PST
+# v1.0.0 01 Aug 2016 16:29 PST
 
 ### Variables
 
@@ -174,6 +177,10 @@ function processArgs() {
 			export runMode="git"
 			export loopFlag=1
 			;;
+			bash)
+			export runMode="bash"
+			export loopFlag=1
+			;;
 			*)
 			export debugFlag=1
 			debug "ERROR: Unknown option '$1' "
@@ -295,6 +302,7 @@ function displayHelp() {
 	echo "    programs [file]                    : Installs programs using default locations, or provided text-based tab-delimited file"
 	#echo "    kali [file]                        : Same as 'programs', but installs from .kaliPrograms.txt by default. Also accepts file input."
 	echo "    git                                : Installs git monitoring script and sets up cron job to run at boot"
+	echo "    bash                               : Links or sources the .bashrc and .bash_aliases from the git repo"
 	echo " "
 	echo " Options:"
 	echo "    -h | --help                        : Displays this help message"
@@ -303,6 +311,57 @@ function displayHelp() {
 	echo "                                       : NOTE: Make sure to put -e <install_option> last! 
 	echo "    -n | --no-run                      : Only installs scripts to be used, does not execute scripts"
 	echo "    -v | --verbose                     : Displays additional debug info, also found in logfile"
+}
+
+function installBash() {
+	# Install .bashrc and .bash_aliases for current user
+	announce "Installing .bashrc from the repo for current user!"
+	if [[ -f ~/.bashrc ]]; then
+		debug ".bashrc present, adding source argument"
+		printf "\n# Added by $0 at $(date), gets .bashrc from linux-pref git\nsource $(pwd)/$(readlink -f $(basename .bashrc))\n" >>~/.bashrc
+	else
+		ln .bashrc ~/
+	fi
+	if [[ -f ~/.bash_aliases ]]; then
+		debug ".bash_aliases present, adding source argument"
+		printf "\n# Added by $0 at $(date), gets aliases from linux-pref git\nsource $(pwd)/$(readlink -f $(basename .bash_aliases))\n" >>~/.bashrc
+	else
+		ln .bashrc ~/
+	fi
+	
+	# Now ask if they want it installed for root
+	checkPrivilege
+	if [[ $? -ne 0 ]]; then
+		getUserAnswer "Installed for current user, would you like to install .bashrc for root as well?
+		case $? in
+			0)
+			announce "Installing .bashrc from the repo for root user!"
+			# If either of these if statements fail, chmod the root directory to 744
+			if [[ -f /root/.bashrc ]]; then
+				debug "/root/.bashrc present, adding source argument"
+				sudo printf "\n# Added by $0 at $(date), gets .bashrc from linux-pref git\nsource $(pwd)/$(readlink -f $(basename .bashrc))\n" >>~/.bashrc
+			else
+				sudo ln .bashrc /root/
+			fi
+			if [[ -f /root/.bash_aliases ]]; then
+				debug "/root/.bash_aliases present, adding source argument"
+				sudo printf "\n# Added by $0 at $(date), gets aliases from linux-pref git\nsource $(pwd)/$(readlink -f $(basename .bash_aliases))\n" >>~/.bashrc
+			else
+				sudo ln .bashrc /root/
+			fi
+			;;
+			1)
+			debug "Not installing .bashrc for root user..."
+			;;
+			*)
+			debug "Something went wrong in the universe! Please call The Doctor and diagnose!"
+			exit 1
+			;;
+		esac
+	else
+		debug "User is root, no other installation is needed!"
+		announce "NOTE: If you ran script this as root, you will need to run it again as normal user!" "To save time, run '$0 bash'!"
+	fi
 }
 
 ### Main Script
@@ -329,23 +388,63 @@ case $runMode in
 	;;
 	git)
 	installGit
+	bash)
+	installBash
 	;;
 	all)
 	installUpdate
 	installPrograms
 	installGit
+	installBash
 	;;
-	#except)
+	except)
+	case $except in
+		programs)
+		installGit
+		installUpdate
+		installBash
+		;;
+		git)
+		installPrograms
+		installUpdate
+		installBash
+		;;
+		update)
+		installPrograms
+		installGit
+		installBash
+		bash)
+		installPrograms
+		installGit
+		installUpdate
+		*)
+		debug "Script has encountered a fatal error! Except has created an exception!"
+		exit 1
+		;;
+	esac
+	;;
 	*)
 	echo "Not ready yet, sorry!"
 	;;
 esac
 
-echo "source $(pwd)/$(readlink -f $(basename $0))" >>~/.bashrc
-sudo echo "source $(pwd)/$(readlink -f $(basename $0))" >>/root/.bashrc
-# If you value your sanity, NEVER delete the following lines!
-echo "fortune | cowsay | lolcat" >>~/.bashrc
-sudo echo "fortune | cowsay | lolcat" >>/root/.bashrc
+# Now, run all the lines in setupCommands.txt
+while read -r line; do
+		[[ $line = \#* ]] && continue
+		getUserAnswer "Would you like to run: '$line'?
+		case $? in
+			0)
+			debug "Running the following command: $line"
+			eval $line
+			;;
+			1)
+			echo "Continuing..."
+			*)
+			debug "ERROR: Unexpected input!"
+			exit 1
+			;;
+		esac
+done <setupCommands.txt
 
 echo "Done with script!"
 

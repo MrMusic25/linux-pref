@@ -5,6 +5,9 @@
 # Note: this script whould not be run by itself, as it only contains functions and variables
 #
 # Changes:
+# v1.6.3
+# - checkPrivilege() now returns 0 if you are root and 777 if not
+#
 # v1.6.2
 # - Added small 'function' that allows any script to have -v|--verbose as $1 to enable debugging
 # - Change to the way addCronJob() works, since it was non-functional before
@@ -63,7 +66,7 @@
 # v1.1.0
 # - Added announce() and debug() functions
 #
-# v1.6.2 29 July 2016 16:22 PST
+# v1.6.3 01 Aug. 2016 16:17 PST
 
 ### Variables
 
@@ -323,7 +326,7 @@ function debug() {
 #
 # Input: Putting "exit" as an argument will exit the script with code 777 if it fails; "ask" will re-run the script as root (be careful with this!).
 #
-# Output: stdout, sets privilege to 777 if not root; this allows you to call sudo <command>, or exit entire script
+# Output: stdout, sets privilege to 777 if not root, 0 if root; this allows you to call sudo <command>, or exit entire script
 #
 # Other info: Just calling will return 777; calling with the word "exit" at the end will kill the current script if not root
 function checkPrivilege() {
@@ -341,6 +344,11 @@ if [ "$EUID" -ne 0 ]; then
 		sudo $0
 		exit $?
 	fi
+	
+	return 777
+else
+	export privilege=0
+	return 0
 fi
 }
 

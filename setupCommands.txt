@@ -1,0 +1,5 @@
+# A file full of one-liners to improve the Linux experience
+
+# If you value your sanity, NEVER delete the following lines!
+echo "fortune | cowsay | lolcat" >>~/.bashrc
+sudo echo "fortune | cowsay | lolcat" >>/root/.bashrc
