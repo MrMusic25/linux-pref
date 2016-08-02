@@ -6,6 +6,10 @@
 # Note: This will change soon as functionality is added
 #
 # Changes:
+# v1.0.1
+# - 30 mins of debugging, and shellcheck found the error seconds. Amazing program.
+# - Script fully functional, just need to test on system now
+#
 # v1.0.0
 # - Finally ready for a release version! Theoretically, everything should work and install properly
 #
@@ -24,7 +28,7 @@
 # v0.0.1
 # - Initial commit - only displayHelp() and processArgs() working currently
 #
-# v1.0.0 01 Aug 2016 16:29 PST
+# v1.0.1 01 Aug 2016 17:13 PST
 
 ### Variables
 
@@ -35,7 +39,7 @@ programsFile="programLists/programs.txt"
 runMode="NULL" # Variable used to hold which install option will be run
 pathCheck=0 # Used to tell other functions if path check as be run or not
 pathLocation="/usr/bin"
-interactiveFlag=0 # Tells the script whether or not to inform the user that the script will require their interaction
+#interactiveFlag=0 # Tells the script whether or not to inform the user that the script will require their interaction
 
 ### Functions
 
@@ -201,7 +205,7 @@ function processArgs() {
 function pathCheck() {
 	echo $PATH | grep $pathLocation &>/dev/null # This shouldn't show anything, I hope
 	if [[ $? -eq 0 ]]; then
-		debug "$pathLocation is in the user's path!" $installLog
+		debug "$pathLocation is in the user's path!"
 		export pathCheck=1
 	else
 		announce "WARNING: $pathLocation is not in the PATH for $USER!"
@@ -209,15 +213,15 @@ function pathCheck() {
 		echo "Would you like to specify a different directory in your PATH? (y/n): "
 		
 		while [[ $answer != "y" && $answer != "n" && $answer != "yes" && $answer != "no" ]]; do
-			read answer
+			read -r answer
 			case $answer in
 				n|no)
-					debug "User chose not to specify new directory for PATH!" $installLog
+					debug "User chose not to specify new directory for PATH!"
 					announce "Not updating path!" "Please add $pathLocation to your PATH manually!"
 					exit 1
 					;;
 				y|yes)
-					announce "Please choose one of the following directories when prompted:" "$(echo $PATH)"
+					announce "Please choose one of the following directories when prompted:" "$PATH"
 					export pathLocation="NULL"
 					
 					echo "Which directory in your path would you like to use? "
@@ -229,7 +233,7 @@ function pathCheck() {
 							echo "$pathLocation is valid, continuing with script!"
 							export pathCheck=1
 						else
-							debug "ERROR: PATH given not valid!" $installLog
+							debug "ERROR: PATH given not valid!"
 							echo " Path given not valid, please try again: "
 						fi
 					done
@@ -308,7 +312,7 @@ function displayHelp() {
 	echo "    -h | --help                        : Displays this help message"
 	echo "    -s | --sudo                        : Makes script check for root privileges before running anything"
 	echo "    -e | --except <install_option>     : Installs everything except option specified. e.g './INSTALL.sh -e git' "
-	echo "                                       : NOTE: Make sure to put -e <install_option> last! 
+	echo "                                       : NOTE: Make sure to put -e <install_option> last!" 
 	echo "    -n | --no-run                      : Only installs scripts to be used, does not execute scripts"
 	echo "    -v | --verbose                     : Displays additional debug info, also found in logfile"
 }
@@ -332,7 +336,7 @@ function installBash() {
 	# Now ask if they want it installed for root
 	checkPrivilege
 	if [[ $? -ne 0 ]]; then
-		getUserAnswer "Installed for current user, would you like to install .bashrc for root as well?
+		getUserAnswer "Installed for current user, would you like to install .bashrc for root as well?"
 		case $? in
 			0)
 			announce "Installing .bashrc from the repo for root user!"
@@ -360,7 +364,7 @@ function installBash() {
 		esac
 	else
 		debug "User is root, no other installation is needed!"
-		announce "NOTE: If you ran script this as root, you will need to run it again as normal user!" "To save time, run '$0 bash'!"
+		announce "NOTE: If you ran script this as root, you will need to run it again as normal user!" "To save time, run: $0 bash!"
 	fi
 }
 
@@ -388,6 +392,7 @@ case $runMode in
 	;;
 	git)
 	installGit
+	;;
 	bash)
 	installBash
 	;;
@@ -413,10 +418,12 @@ case $runMode in
 		installPrograms
 		installGit
 		installBash
+		;;
 		bash)
 		installPrograms
 		installGit
 		installUpdate
+		;;
 		*)
 		debug "Script has encountered a fatal error! Except has created an exception!"
 		exit 1
@@ -431,14 +438,15 @@ esac
 # Now, run all the lines in setupCommands.txt
 while read -r line; do
 		[[ $line = \#* ]] && continue
-		getUserAnswer "Would you like to run: '$line'?
+		getUserAnswer "Would you like to run: $line?"
 		case $? in
 			0)
 			debug "Running the following command: $line"
-			eval $line
+			eval "$line"
 			;;
 			1)
 			echo "Continuing..."
+			;;
 			*)
 			debug "ERROR: Unexpected input!"
 			exit 1

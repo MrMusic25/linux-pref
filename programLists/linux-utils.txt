@@ -11,3 +11,6 @@ hardinfo fancontrol
 
 # Cool wireless connection wizard (by-channel!) I found with ArchStrike
 wicd-daemon
+
+# This saved me from hours of headaches. Website version of this rocks!
+shellcheck
