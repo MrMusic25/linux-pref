@@ -92,7 +92,7 @@ case $program in
 	rpm -F
 	;;
 	pacman)
-	pacman -Syu
+	pacman -Syyu
 	;;
 	aptitude)
 	announce "NOTE: aptitude will be doing a dist-upgrade!"

@@ -113,7 +113,7 @@ elif [[ ! -z $(which yast) ]]; then # YaST is annoying af, so look for rpm and y
 	export program="yast"
 elif [[ ! -z $(which pacman) ]]; then
 	export program="pacman"
-	pacman -yy # Refreshes the repos, always read the man pages!
+	pacman -Syy # Refreshes the repos, always read the man pages!
 elif [[ ! -z $(which aptitude) ]]; then # Just in case apt-get is somehow not installed with aptitude, happens
 	export program="aptitude"
 	aptitude update
