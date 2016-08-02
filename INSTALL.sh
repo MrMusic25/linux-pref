@@ -6,6 +6,10 @@
 # Note: This will change soon as functionality is added
 #
 # Changes:
+# v1.0.2
+# - Fixed multiple issues I found when trying to install yesterday
+# - Added a check to tell user not to run script as root
+#
 # v1.0.1
 # - 30 mins of debugging, and shellcheck found the error seconds. Amazing program.
 # - Script fully functional, just need to test on system now
@@ -28,7 +32,7 @@
 # v0.0.1
 # - Initial commit - only displayHelp() and processArgs() working currently
 #
-# v1.0.1 01 Aug 2016 17:13 PST
+# v1.0.2 02 Aug 2016 14:19 PST
 
 ### Variables
 
@@ -249,7 +253,7 @@ function pathCheck() {
 function installUpdate() {
 	announce "Now installing the update script!" "NOTE: This will require sudo permissions."
 	if [[ $installOnly -ne 0 ]]; then
-		debug "User indicated not to run scripts, only installing update script!" $installLog
+		debug "User indicated not to run scripts, only installing update script!"
 	fi
 	
 	sudo ln update.sh /usr/bin/update
@@ -262,7 +266,7 @@ function installUpdate() {
 function installGit() {
 	announce "Now installing the git auto-updating script!" "NOTE: This will require sudo premissions."
 	if [[ $installOnly -ne 0 ]]; then
-		debug "User indicated not to run scripts, so I will only install the script!" $installLog
+		debug "User indicated not to run scripts, so I will only install the script!"
 	fi
 	
 	sudo ln gitCheck.sh /usr/bin/gitcheck
@@ -271,7 +275,7 @@ function installGit() {
 	
 	getUserAnswer "Would you like to periodically update this directory?" gitTime "How many minutes would you like between updates? (0-60)"
 	if [[ $? -eq 0 ]]; then
-		addCronJob $gitTime min "/usr/bin/gitcheck $(pwd)"
+		addCronJob $gitTime min "/usr/bin/gitcheck $(pwd)" # Added as current user
 		debug "Cron job added, will check every $gitTime minutes."
 	fi
 }
@@ -319,18 +323,18 @@ function displayHelp() {
 
 function installBash() {
 	# Install .bashrc and .bash_aliases for current user
-	announce "Installing .bashrc from the repo for current user!"
-	if [[ -f ~/.bashrc ]]; then
+	announce "Installing .bashrc and aliases from the repo for current user!"
+	if [[ -e ~/.bashrc ]]; then
 		debug ".bashrc present, adding source argument"
-		printf "\n# Added by $0 at $(date), gets .bashrc from linux-pref git\nsource $(pwd)/$(readlink -f $(basename .bashrc))\n" >>~/.bashrc
+		printf "\n# Added by $0 at $(date), gets .bashrc from linux-pref git\nsource $(readlink -f $(basename .bashrc))\n" >>~/.bashrc
 	else
 		ln .bashrc ~/
 	fi
-	if [[ -f ~/.bash_aliases ]]; then
+	if [[ -e ~/.bash_aliases ]]; then
 		debug ".bash_aliases present, adding source argument"
-		printf "\n# Added by $0 at $(date), gets aliases from linux-pref git\nsource $(pwd)/$(readlink -f $(basename .bash_aliases))\n" >>~/.bashrc
+		printf "\n# Added by $0 at $(date), gets aliases from linux-pref git\nsource $(readlink -f $(basename .bash_aliases))\n" >>~/.bashrc
 	else
-		ln .bashrc ~/
+		ln .bash_aliases ~/
 	fi
 	
 	# Now ask if they want it installed for root
@@ -341,17 +345,17 @@ function installBash() {
 			0)
 			announce "Installing .bashrc from the repo for root user!"
 			# If either of these if statements fail, chmod the root directory to 744
-			if [[ -f /root/.bashrc ]]; then
+			if [[ -e /root/.bashrc ]]; then
 				debug "/root/.bashrc present, adding source argument"
-				sudo printf "\n# Added by $0 at $(date), gets .bashrc from linux-pref git\nsource $(pwd)/$(readlink -f $(basename .bashrc))\n" >>~/.bashrc
+				sudo printf "\n# Added by $0 at $(date), gets .bashrc from linux-pref git\nsource $(readlink -f $(basename .bashrc))\n" >>/root/.bashrc
 			else
 				sudo ln .bashrc /root/
 			fi
-			if [[ -f /root/.bash_aliases ]]; then
+			if [[ -e /root/.bash_aliases ]]; then
 				debug "/root/.bash_aliases present, adding source argument"
-				sudo printf "\n# Added by $0 at $(date), gets aliases from linux-pref git\nsource $(pwd)/$(readlink -f $(basename .bash_aliases))\n" >>~/.bashrc
+				sudo printf "\n# Added by $0 at $(date), gets aliases from linux-pref git\nsource $(readlink -f $(basename .bash_aliases))\n" >>/root/.bashrc
 			else
-				sudo ln .bashrc /root/
+				sudo ln .bash_aliases /root/
 			fi
 			;;
 			1)
@@ -379,6 +383,10 @@ fi
 processArgs "$@"
 
 announce "Please stay by your computer, there are interactive parts of this script!" "It moves fast though, so no need to worry about standing by for 20 mins!"
+
+if [[ "$EUID" -eq 0 ]]; then
+	announce "This script is meant to be run as local user, not root!" "Script will continue, but CTRL+C now if you want changes to effect current user!"
+fi
 
 pathCheck # Checks if /usr/bin is in the user's path, since scripts rely on it
 
@@ -437,7 +445,7 @@ esac
 
 # Now, run all the lines in setupCommands.txt
 while read -r line; do
-		[[ $line = \#* ]] && continue
+		[[ $line = \#* || -z $line ]] && continue
 		getUserAnswer "Would you like to run: $line?"
 		case $? in
 			0)

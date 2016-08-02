@@ -166,7 +166,7 @@ determinePM
 upgradeSystem
 
 if [[ $# -ne 0 ]]; then
-	universalInstaller $*
+	universalInstaller "$@"
 fi
 
 announce "Everything is installed and upgraded, cleaning up now!"
