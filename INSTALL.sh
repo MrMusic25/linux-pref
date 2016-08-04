@@ -42,7 +42,7 @@
 
 #sudoRequired=0 # Set to 0 by default - script will close if sudo is false and sudoRequired is true
 installOnly=0 # Used by -n|--no-run, if 1 then files will be copied and verified, but not executed
-programsFile="programLists/programs.txt"
+programsFile="programLists/"
 #kaliFile=".kaliPrograms.txt"
 runMode="NULL" # Variable used to hold which install option will be run
 pathCheck=0 # Used to tell other functions if path check as be run or not
