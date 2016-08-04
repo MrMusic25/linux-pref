@@ -5,6 +5,10 @@
 # Note: this script whould not be run by itself, as it only contains functions and variables
 #
 # Changes:
+# v1.6.4
+# - Found a huge error in debug(), fixed now
+# - Fixed all errors from shellcheck (minus the ones that don't need fixing (SC2034) and ones that would break the functions)
+#
 # v1.6.3
 # - checkPrivilege() now returns 0 if you are root and 777 if not
 # - Quick fix to universalInstaller() for apt-get, assumes yes for installation
@@ -67,7 +71,7 @@
 # v1.1.0
 # - Added announce() and debug() functions
 #
-# v1.6.3 01 Aug. 2016 16:17 PST
+# v1.6.4 04 Aug. 2016 13:44 PST
 
 ### Variables
 
@@ -76,7 +80,7 @@ debugFlag=0
 privilege=0 # 0 if root, 777 if not
 debugInit=0
 debugPrefix="$HOME/.logs" # Use: scriptLog="$debugPrefix/scriptLog.log", then include $scriptLog in debug() statements
-logFile=$debugPrefix/$( basename $0 | cut -d '.' -f 1 ).log # Now every script has a unique yet dynamic log name!
+logFile=$debugPrefix/$( basename "$0" | cut -d '.' -f 1 ).log # Now every script has a unique yet dynamic log name!
 
 cFlag=0 # Used with the ctrl_c function
 #trap ctrl_c INT # This will run the function ctrl_c() when it captures the key press
@@ -139,28 +143,28 @@ for var in "$@"
 do
 	case $program in
 		apt)
-		apt-get --assume-yes install $var  
+		apt-get --assume-yes install "$var"  
 		;;
 		dnf)
-		dnf -y install $var
+		dnf -y install "$var"
 		;;
 		yum)
-		yum install $var 
+		yum install "$var" 
 		;;
 		slackpkg)
-		slackpkg install $var
+		slackpkg install "$var"
 		;;
 		yast)
-		yast -i $var 
+		yast -i "$var" 
 		;;
 		rpm)
-		rpm -i $var 
+		rpm -i "$var" 
 		;;
 		pacman)
-		pacman -S $var 
+		pacman -S "$var" 
 		;;
 		aptitude)
-		aptitude -y install $var 
+		aptitude -y install "$var" 
 		;;
 		*)
 		announce "Package manager not found! Please update script or diagnose problem!"
@@ -200,17 +204,17 @@ function announce() {
 	
 	# Now print beginning set of stars
 	printf "\n"
-	for l in `seq 1 $stars`;
+	for l in $(seq 1 "$stars");
 	do
 		printf "*"
 	done
 	
 	# Now, print announcements
-	for i in `seq 1 $#`;
+	for i in $(seq 1 $#);
 	do
 		# First block prints the stars and spaces between statements
 		printf "\n***"
-		for q in `seq 1 $( expr $stars - 6 )`;
+		for q in $(seq 1 "$((stars-6))");
 		do
 			printf " "
 		done
@@ -219,8 +223,8 @@ function announce() {
 		
 		# Math block to find out spaces for centering, for both even and odd numbers
 		statement="${!i}"
-		x=$( expr $stars - ${#statement} - 6 )
-		if [[ $( expr $x % 2 ) -eq 0 ]]; then
+		x=$((stars-${#statement}-6))
+		if [[ $((x%2)) -eq 0 ]]; then
 			evenFlag=1
 		else
 			evenFlag=0
@@ -229,23 +233,23 @@ function announce() {
 		# Now print stars and statement, centering with spaces, depending on if even or odd
 		case $evenFlag in
 			1)
-			for p in `seq 1 $( expr $x / 2 )`;
+			for p in $(seq 1 "$((x/2))");
 			do
 				printf " "
 			done
-			printf "${!i}"
-			for r in `seq 1 $( expr $x / 2 )`;
+			printf "%s" "${!i}"
+			for r in $(seq 1 "$((x/2))");
 			do
 				printf " "
 			done
 			;;
 			0)
-			for a in `seq 1 $( expr $x / 2 )`;
+			for a in $(seq 1 "$((x/2))");
 			do
 				printf " "
 			done
-			printf "${!i}"
-			for b in `seq 1 $( expr $x / 2 + 1 )`;
+			printf "%s" "${!i}"
+			for b in $(seq 1 "$((x/2+1))");
 			do
 				printf " "
 			done
@@ -261,7 +265,7 @@ function announce() {
 	
 	# One last line of spaces
 	printf "\n***"
-		for q in `seq 1 $( expr $stars - 6 )`;
+		for q in $(seq 1 "$((stars-6))");
 		do
 			printf " "
 		done
@@ -269,7 +273,7 @@ function announce() {
 	
 	#Finally, print ending stars
 	printf "\n"
-	for k in `seq 1 $stars`;
+	for k in $(seq 1 "$stars");
 	do
 		printf "*"
 	done
@@ -294,12 +298,12 @@ function announce() {
 function debug() {
 	# It would be kinda awkward trying to write to a non-existent directory... Hate to run it every call but it is necessary
 	if [[ ! -d $debugPrefix ]]; then
-		mkdir $debugPrefix
+		mkdir "$debugPrefix"
 	fi
 	
 	# Echoes the message if debug flag is on
 	if [[ $debugFlag -eq 1 ]]; then
-		echo "Debug: $logFile"
+		echo "Debug: $@"
 	fi
 	
 	if [[ ! -z $logFile ]]; then
@@ -316,7 +320,7 @@ function debug() {
 			export debugInit=1
 		fi
 		
-		echo "$1" >> "$logFile"
+		echo "$@" >> "$logFile"
 	fi
 }
 
@@ -342,7 +346,7 @@ if [ "$EUID" -ne 0 ]; then
 	
 	if [[ "$1" == "ask" ]]; then
 		announce "Script will now re-run itself as root, please provide password when prompted!"
-		sudo $0
+		sudo "$0"
 		exit $?
 	fi
 	
@@ -410,14 +414,14 @@ function addCronJob() {
 			#crontab -l 2>/dev/null; echo "*/$1 * * * * $3 " | crontab -
 			touch tmpCron # Wasn't going to include this at first, but just in case user doesn't have write permission...
 			crontab -l 2>/dev/null > tmpCron
-			printf"\n# Added by $0 on $(date)\n*/$1 * * * * $3\n" >> tmpCron
+			printf "\n# Added by %s on %s\n*/%s * * * * %s\n" "$0" "$(date)" "$1" "$3" >> tmpCron
 			crontab tmpCron
 			rm tmpCron
 		else
 			#crontab -l 2>/dev/null; echo "*/$1 * * * * $3 &>/dev/null" | crontab -
 			touch tmpCron # Wasn't going to include this at first, but just in case user doesn't have write permission...
 			crontab -l 2>/dev/null > tmpCron
-			printf "\n# Added by $0 on $(date)\n*/$1 * * * * $3 &>/dev/null\n" >> tmpCron
+			printf "\n# Added by %s on %s\n*/%s * * * * %s &>/dev/null\n" "$0" "$(date)" "$1" "$3" >> tmpCron
 			crontab tmpCron
 			rm tmpCron
 		fi
@@ -430,14 +434,14 @@ function addCronJob() {
 			#crontab -l 2>/dev/null; echo "* $1 * * * $3 " | crontab -
 			touch tmpCron # Wasn't going to include this at first, but just in case user doesn't have write permission...
 			crontab -l 2>/dev/null > tmpCron
-			printf "\n# Added by $0 on $(date)\n* $1 * * * $3\n" >> tmpCron
+			printf "\n# Added by %s on %s\n* %s * * * %s\n" "$0" "$(date)" "$1" "$3" >> tmpCron
 			crontab tmpCron
 			rm tmpCron
 		else
 			#crontab -l 2>/dev/null; echo "* $1 * * * $3 &>/dev/null" | crontab -
 			touch tmpCron # Wasn't going to include this at first, but just in case user doesn't have write permission...
 			crontab -l 2>/dev/null > tmpCron
-			printf "\n# Added by $0 on $(date)\n* $1 * * * $3 &>/dev/null\n" >> tmpCron
+			printf "\n# Added by %s on %s\n* %s * * * %s &/dev/null\n" "$0" "$(date)" "$1" "$3" >> tmpCron
 			crontab tmpCron
 			rm tmpCron
 		fi

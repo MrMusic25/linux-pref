@@ -8,6 +8,7 @@
 # Changes:
 # v1.0.3
 # - installUpdate() now installs the newly created installPackages.sh as well
+# - Putting a lot of faith in shellcheck, fixed every error it gave me for this script (untested for now because a commit is necessary to test on RPi)
 #
 # v1.0.2
 # - Fixed multiple issues I found when trying to install yesterday
@@ -35,7 +36,7 @@
 # v0.0.1
 # - Initial commit - only displayHelp() and processArgs() working currently
 #
-# v1.0.2 02 Aug 2016 14:19 PST
+# v1.0.3 04 Aug 2016 12:57 PST
 
 ### Variables
 
@@ -54,6 +55,7 @@ pathLocation="/usr/bin"
 function linkCF() {
 	if [[ ! -f commonFunctions.sh ]]; then
 		echo "ERROR: commonFunctions.sh is somehow not available, please correct and re-run!"
+		echo "Please cd into the directoy containing $0 and commonFunctions.sh!"
 		exit 1
 	fi
 	
@@ -210,7 +212,7 @@ function processArgs() {
 }
 
 function pathCheck() {
-	echo $PATH | grep $pathLocation &>/dev/null # This shouldn't show anything, I hope
+	echo "$PATH" | grep "$pathLocation" &>/dev/null # This shouldn't show anything, I hope
 	if [[ $? -eq 0 ]]; then
 		debug "$pathLocation is in the user's path!"
 		export pathCheck=1
@@ -234,7 +236,7 @@ function pathCheck() {
 					echo "Which directory in your path would you like to use? "
 					while [[ ! -d $pathLocation ]]; do
 						read pathLocation
-						echo $PATH | grep $pathLocation &>/dev/null
+						echo "$PATH" | grep "$pathLocation" &>/dev/null
 						
 						if [[ -d $pathLocation && $? -eq 0 ]]; then
 							echo "$pathLocation is valid, continuing with script!"
@@ -283,7 +285,7 @@ function installGit() {
 	
 	getUserAnswer "Would you like to periodically update this directory?" gitTime "How many minutes would you like between updates? (0-60)"
 	if [[ $? -eq 0 ]]; then
-		addCronJob $gitTime min "/usr/bin/gitcheck $(pwd)" # Added as current user
+		addCronJob "$gitTime" min "/usr/bin/gitcheck $(pwd)" # Added as current user
 		debug "Cron job added, will check every $gitTime minutes."
 	fi
 }
@@ -301,7 +303,7 @@ function installPrograms() {
 	fi
 	
 	announce "Installing programs using programInstaller.sh!" "Script is interactive, so pay attention!" "Look at the programLists folder to see what will be installed!"
-	sudo ./programInstaller.sh $programsFile
+	sudo ./programInstaller.sh "$programsFile"
 }
 
 function displayHelp() {
@@ -333,14 +335,14 @@ function installBash() {
 	# Install .bashrc and .bash_aliases for current user
 	announce "Installing .bashrc and aliases from the repo for current user!"
 	if [[ -e ~/.bashrc ]]; then
-		debug ".bashrc present, adding source argument"
-		printf "\n# Added by $0 at $(date), gets .bashrc from linux-pref git\nsource $(readlink -f $(basename .bashrc))\n" >>~/.bashrc
+		debug ".bashrc present for $USER, adding source argument"
+		printf "\n# Added by %s at %s, gets .bashrc from linux-pref git\nsource %s\n" "$0" "$(date)" "$(readlink -f "$(basename .bashrc)")" >>~/.bashrc
 	else
 		ln .bashrc ~/
 	fi
 	if [[ -e ~/.bash_aliases ]]; then
-		debug ".bash_aliases present, adding source argument"
-		printf "\n# Added by $0 at $(date), gets aliases from linux-pref git\nsource $(readlink -f $(basename .bash_aliases))\n" >>~/.bashrc
+		debug ".bash_aliases present for $USER, adding source argument"
+		printf "\n# Added by %s at %s, gets aliases from linux-pref git\nsource %s\n" "$0" "$(date)" "$(readlink -f "$(basename .bash_aliases)")" >>~/.bashrc
 	else
 		ln .bash_aliases ~/
 	fi
@@ -355,13 +357,13 @@ function installBash() {
 			# If either of these if statements fail, chmod the root directory to 744
 			if [[ -e /root/.bashrc ]]; then
 				debug "/root/.bashrc present, adding source argument"
-				sudo printf "\n# Added by $0 at $(date), gets .bashrc from linux-pref git\nsource $(readlink -f $(basename .bashrc))\n" >>/root/.bashrc
+				printf "\n# Added by %s at %s, gets .bashrc from linux-pref git\nsource %s\n" "$0" "$(date)" "$(readlink -f "$(basename .bashrc)")" | sudo tee -a /root/.bashrc > /dev/null
 			else
 				sudo ln .bashrc /root/
 			fi
 			if [[ -e /root/.bash_aliases ]]; then
 				debug "/root/.bash_aliases present, adding source argument"
-				sudo printf "\n# Added by $0 at $(date), gets aliases from linux-pref git\nsource $(readlink -f $(basename .bash_aliases))\n" >>/root/.bashrc
+				printf "\n# Added by %s at %s, gets aliases from linux-pref git\nsource %s\n" "$0" "$(date)" "$(readlink -f "$(basename .bash_aliases)")" | sudo tee -a /root/.bashrc > /dev/null
 			else
 				sudo ln .bash_aliases /root/
 			fi
@@ -388,6 +390,7 @@ if [[ ! -f /usr/share/commonFunctions.sh ]]; then
 	linkCF
 fi
 
+debug "Processing arguments passed to script"
 processArgs "$@"
 
 announce "Please stay by your computer, there are interactive parts of this script!" "It moves fast though, so no need to worry about standing by for 20 mins!"
