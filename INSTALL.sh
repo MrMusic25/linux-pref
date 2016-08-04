@@ -6,6 +6,9 @@
 # Note: This will change soon as functionality is added
 #
 # Changes:
+# v1.0.3
+# - installUpdate() now installs the newly created installPackages.sh as well
+#
 # v1.0.2
 # - Fixed multiple issues I found when trying to install yesterday
 # - Added a check to tell user not to run script as root
@@ -251,12 +254,17 @@ function pathCheck() {
 }
 
 function installUpdate() {
-	announce "Now installing the update script!" "NOTE: This will require sudo permissions."
+	announce "Now installing the update and installer scripts!" "NOTE: This will require sudo permissions."
 	if [[ $installOnly -ne 0 ]]; then
 		debug "User indicated not to run scripts, only installing update script!"
 	fi
 	
 	sudo ln update.sh /usr/bin/update
+	announce "You can now update your system anywhere by running the command: sudo update" "You can also install packages by running: sudo update <packages_to_install>"
+	
+	sudo ln installPackages.sh /usr/bin/installPackages
+	announce "If all you want to do is install packages, you can run: installPackages <packages_to_install>"
+	sleep 5 # Give the user time to read before more script runs
 	
 	if [[ $installOnly -eq 0 ]]; then
 		sudo update

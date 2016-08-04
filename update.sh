@@ -7,6 +7,9 @@
 # If there are arguments, it will try to install the programs listed
 #
 # Changes:
+# v1.2.5
+# - Apparently I deleted 'yes' statements from apt-get, re-entered so script is non-interactive again
+#
 # v1.2.4
 # - Distracted myself from updating README.md by changing this script to use getUserAnswer()
 #
@@ -46,7 +49,7 @@
 # - Script will now ask if you would like to reboot after updating, if it is needed
 # - Changed echoes to announce()
 #
-# v1.2.4, 29 July 2016 16:39 PST
+# v1.2.5, 04 Aug 2016 11:37 PST
 
 ### Variables
 
@@ -72,7 +75,7 @@ function upgradeSystem() {
 case $program in
 	apt)
 	announce "NOTE: script will be running a dist-upgrade!"
-	apt-get dist-upgrade
+	apt-get --assume-yes dist-upgrade
 	;;
 	dnf)
 	dnf -y upgrade
@@ -96,7 +99,7 @@ case $program in
 	;;
 	aptitude)
 	announce "NOTE: aptitude will be doing a dist-upgrade!"
-	aptitude dist-upgrade
+	aptitude -y dist-upgrade
 	;;
 	*)
 	announce "Package manager not found! Please update script or diagnose problem!"
@@ -109,7 +112,7 @@ esac
 function cleanSystem() {
 case $program in
 	apt)
-	apt-get autoremove -y
+	apt-get --assume-yes autoremove
 	apt-get autoclean
 	;;
 	dnf)

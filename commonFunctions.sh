@@ -7,6 +7,7 @@
 # Changes:
 # v1.6.3
 # - checkPrivilege() now returns 0 if you are root and 777 if not
+# - Quick fix to universalInstaller() for apt-get, assumes yes for installation
 #
 # v1.6.2
 # - Added small 'function' that allows any script to have -v|--verbose as $1 to enable debugging
@@ -138,7 +139,7 @@ for var in "$@"
 do
 	case $program in
 		apt)
-		apt-get -y install $var  
+		apt-get --assume-yes install $var  
 		;;
 		dnf)
 		dnf -y install $var
