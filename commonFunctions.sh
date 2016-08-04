@@ -468,7 +468,7 @@ function addCronJob() {
 #
 # Other info: Be careful which names you give to the variables, you may accidentally delete other variables!
 function getUserAnswer() {
-	ans="NULL"
+	export ans="NULL" # Guess re-declaration doesn't work properly in bash...
 	announce "$1"
 	
 	until [[ $ans == "y" || $ans == "yes" || $ans == "n" || $ans == "no" ]]; do
