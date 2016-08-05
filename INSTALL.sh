@@ -45,7 +45,7 @@ installOnly=0 # Used by -n|--no-run, if 1 then files will be copied and verified
 programsFile="programLists/"
 #kaliFile=".kaliPrograms.txt"
 runMode="NULL" # Variable used to hold which install option will be run
-pathCheck=0 # Used to tell other functions if path check as be run or not
+pathCheck=0 # Used to tell other functions if path check has be run or not
 pathLocation="/usr/bin"
 #interactiveFlag=0 # Tells the script whether or not to inform the user that the script will require their interaction
 
@@ -92,16 +92,19 @@ function processArgs() {
 	fi
 	loopFlag=0
 	
+	debug "Processing arguments..."
 	while [[ $loopFlag -eq 0 ]];
 	do
 		key="$1"
 		
 		case $key in
 			-h|--help)
+			debug "Displaying help then exiting!"
 			displayHelp
 			exit 0
 			;;
 			-s|--sudo)
+			debug "Checking for root privileges"
 			checkPrivilege "exit" # This is why we make functions
 			;;
 			-e|--except)
@@ -454,25 +457,10 @@ case $runMode in
 	;;
 esac
 
-# Now, run all the lines in setupCommands.txt
-while read -r line; do
-		[[ $line = \#* || -z $line ]] && continue
-		getUserAnswer "Would you like to run: $line?"
-		case $? in
-			0)
-			debug "Running the following command: $line"
-			eval "$line"
-			;;
-			1)
-			echo "Continuing..."
-			;;
-			*)
-			debug "ERROR: Unexpected input!"
-			exit 1
-			;;
-		esac
-done <setupCommands.txt
+# Now install all my necessary and fun commands to user and root .bashrc
+debug "Running setupCommands.sh!"
+setupCommands.sh
 
-echo "Done with script!"
+debug "Done with script!"
 
 #EOF
