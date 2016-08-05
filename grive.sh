@@ -9,6 +9,9 @@
 #	*/5 * * * * /home/kyle/grive.sh
 #
 # Changes:
+# v1.1.4
+# - Made some small functional changes to make script more complaint with the others
+#
 # v1.1.3
 # - Switched to dynamic logging
 #
@@ -26,7 +29,7 @@
 # - Overhauled other parts of script to be 'self-friendly' (uses my own functions)
 # - Also updated to use $updatePrefix
 #
-# v1.1.3, 26 July 2016 15:41 PST
+# v1.1.4, 05 Aug. 2016 13:56 PST
 
 ### Variables
 
@@ -49,20 +52,20 @@ fi
 
 ### Main Script
 #logFile="$debugPrefix/logFile.log"
-debug "Starting $0..." $logFile
+#debug "Starting $0..." $logFile
 announce "Preparing to sync with Google Drive using grive!"
 
 # Determine runlevel for more debug
 rl=$( runlevel | cut -d ' ' -f2 ) # Determine runlevel for additional info
 case $rl in
 	0)
-	debug "Running script before shutdown!" $logFile
+	debug "Running script before shutdown!"
 	;;
 	6)
-	debug "Running script before reboot!" $logFile
+	debug "Running script before reboot!"
 	;;
 	*)
-	continue
+	debug "Normal operation mode, no reboot or shutdown detected."
 	;;
 esac
 
@@ -77,14 +80,14 @@ fi
 # Check if directory exists
 if [[ ! -d $griveDir ]]; then
 	export debugFlag=1
-	debug "Directory given does not exist, please fix and setup Grive for this directory!" $logFile
+	debug "Directory given does not exist, please fix and setup Grive for this directory!"
 	exit 1
 fi
 
 # Check if grive is installed
-if [[ ! -e /usr/bin/grive ]]; then
+if [[ -z $(which grive) ]]; then
 	export debugFlag=1
-	debug "Grive is not installed! Please install and setup, and re-run script!" $logFile
+	debug "Grive is not installed! Please install and setup, and re-run script!"
 	exit 2
 fi
 
@@ -102,12 +105,12 @@ cd $griveDir
 grive sync &>> $logFile
 
 if [[ $? != 0 ]]; then
-	debug "An error occurred with grive, check log for more info!" $logFile
+	debug "An error occurred with grive, check log for more info!"
 	echo "Grive encountered an error while attempting to sync at $(date)! Please view $logFile for more info." | mail -s "grive.sh" $USER
 	exit 4
 fi
 
 announce "Done syncronizing!" "Please check $logFile for more info!"
 
-debug "Done with script!" $logFile
+debug "Done with script!"
 #EOF

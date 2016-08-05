@@ -14,3 +14,6 @@ wicd-daemon
 
 # This saved me from hours of headaches. Website version of this rocks!
 shellcheck
+
+# Uncomment below if you are running a laptop
+#synaptics

@@ -6,6 +6,10 @@
 # Note: This will change soon as functionality is added
 #
 # Changes:
+# v1.1.0
+# - Added a function to install and setup grive
+# - Other small functionality changes
+#
 # v1.0.3
 # - installUpdate() now installs the newly created installPackages.sh as well
 # - Putting a lot of faith in shellcheck, fixed every error it gave me for this script (untested for now because a commit is necessary to test on RPi)
@@ -36,7 +40,7 @@
 # v0.0.1
 # - Initial commit - only displayHelp() and processArgs() working currently
 #
-# v1.0.3 04 Aug 2016 12:57 PST
+# v1.1.0 05 Aug 2016 15:02 PST
 
 ### Variables
 
@@ -135,6 +139,10 @@ function processArgs() {
 			;;
 			update)
 			export runMode="update"
+			export loopFlag=1
+			;;
+			grive)
+			export runMode="grive"
 			export loopFlag=1
 			;;
 			programs)
@@ -314,9 +322,9 @@ function displayHelp() {
 	echo " "
 	echo " Usage: $0 [options] <install_option>"
 	echo " "
-	echo " NOTE: Running any install option will check if /usr/share/commonFunctions.sh exists. If not, sudo permission will be requested to install."
-	echo "       Each script will be run after it is installed as well, to verify it is working properly."
-	echo " "
+	#echo " NOTE: Running any install option will check if /usr/share/commonFunctions.sh exists. If not, sudo permission will be requested to install."
+	#echo "       Each script will be run after it is installed as well, to verify it is working properly."
+	#echo " "
 	echo " Install Options:"
 	echo "    all                                : Installs all the scripts below"
 	echo "    update                             : Installs update script"
@@ -324,6 +332,7 @@ function displayHelp() {
 	#echo "    kali [file]                        : Same as 'programs', but installs from .kaliPrograms.txt by default. Also accepts file input."
 	echo "    git                                : Installs git monitoring script and sets up cron job to run at boot"
 	echo "    bash                               : Links or sources the .bashrc and .bash_aliases from the git repo"
+	echo "    grive                              : Helps create and sync Google Drive using grive2"
 	echo " "
 	echo " Options:"
 	echo "    -h | --help                        : Displays this help message"
@@ -385,6 +394,45 @@ function installBash() {
 	fi
 }
 
+function installGrive() {
+	if [[ $installOnly -eq 1 ]]; then
+		announce "You indicated not to run scripts, but are trying to install grive." "Would you like to run grive as well or just install?"
+		getUserAnswer "Answer yes if you want to run grive.sh: "
+		if [[ $? -eq 1 ]]; then
+			debug "User cose not to run grive"
+			#sudo ln grive.sh /usr/bin/grive.sh
+			return
+		fi
+	fi
+	debug "Installing and setting up Grive..."
+	
+	# Ask user which directory they would like to use
+	export griveSetupDir="$HOME/Grive"
+	getUserAnswer "Would you like to change grive directory from: $griveSetupDir ?" griveSetupDir "Please enter the location you would like to use: "
+	
+	# Check to see if directory exists, mkdir if not
+	if [[ -d $griveSetupDir ]]; then
+		debug "Directory already exists, moving on!"
+	else
+		debug "Directory does not exist, creating now!"
+		mkdir "$griveSetupDir"
+	fi
+	
+	# Tell user what to do then install grive
+	announce "Changing into directory and setting up grive." "Follow instructions given. Once installed, it may take some time to sync all your files."
+	cd "$griveSetupDir"
+	grive -a
+	
+	# Finally, setup a cronjob to sync grive every 5 mins
+	debug "Creating a cronjob for current user to update grive"
+	export griveSync=5
+	#sudo ln grive.sh /usr/bin/grive.sh
+	getUserAnswer "Grive will sync every $griveSync minutes, would you like to change this? " griveSync "Please enter how many mintues between updates you would like: "
+	addCronJob $griveSync min "$(pwd)/grive.sh $griveSetupDir"
+	
+	debug "Grive has been installed!"
+}
+
 ### Main Script
 
 # This doesn't really need to be here now, but double-checking never hurts!
@@ -418,11 +466,15 @@ case $runMode in
 	bash)
 	installBash
 	;;
+	grive)
+	installGrive
+	;;
 	all)
 	installUpdate
 	installPrograms
 	installGit
 	installBash
+	installGrive
 	;;
 	except)
 	case $except in
@@ -430,21 +482,31 @@ case $runMode in
 		installGit
 		installUpdate
 		installBash
+		installGrive
 		;;
 		git)
 		installPrograms
 		installUpdate
 		installBash
+		installGrive
 		;;
 		update)
 		installPrograms
 		installGit
 		installBash
+		installGrive
 		;;
 		bash)
 		installPrograms
 		installGit
 		installUpdate
+		installGrive
+		;;
+		grive)
+		installPrograms
+		installGit
+		installUpdate
+		installBash
 		;;
 		*)
 		debug "Script has encountered a fatal error! Except has created an exception!"
@@ -468,6 +530,7 @@ fi
 announce "The following commands cannot be scripted." "Manually install each command as they are given"
 while read -r lined;
 do
+	[[ $lined = \#* || -z $lined ]] && continue
 	echo "$lined"
 	sleep 5
 done < "nonScriptCommands.txt"
