@@ -8,6 +8,7 @@
 # v1.6.4
 # - Found a huge error in debug(), fixed now
 # - Fixed all errors from shellcheck (minus the ones that don't need fixing (SC2034) and ones that would break the functions)
+# - So many small changes I forgot to list
 #
 # v1.6.3
 # - checkPrivilege() now returns 0 if you are root and 777 if not
@@ -71,7 +72,7 @@
 # v1.1.0
 # - Added announce() and debug() functions
 #
-# v1.6.4 04 Aug. 2016 13:44 PST
+# v1.6.4 04 Aug. 2016 17:29 PST
 
 ### Variables
 
@@ -203,7 +204,7 @@ function announce() {
 	let "stars += 8" # 4 beginning characters and 4 trailing
 	
 	# Now print beginning set of stars
-	printf "\n"
+	printf "\n "
 	for l in $(seq 1 "$stars");
 	do
 		printf "*"
@@ -213,13 +214,13 @@ function announce() {
 	for i in $(seq 1 $#);
 	do
 		# First block prints the stars and spaces between statements
-		printf "\n***"
+		printf "\n ***"
 		for q in $(seq 1 "$((stars-6))");
 		do
 			printf " "
 		done
 		printf "***\n"
-		printf "***" # Initial stars for the message...
+		printf " ***" # Initial stars for the message...
 		
 		# Math block to find out spaces for centering, for both even and odd numbers
 		statement="${!i}"
@@ -264,7 +265,7 @@ function announce() {
 	done
 	
 	# One last line of spaces
-	printf "\n***"
+	printf "\n ***"
 		for q in $(seq 1 "$((stars-6))");
 		do
 			printf " "
@@ -272,13 +273,13 @@ function announce() {
 	printf "***"
 	
 	#Finally, print ending stars
-	printf "\n"
+	printf "\n "
 	for k in $(seq 1 "$stars");
 	do
 		printf "*"
 	done
 	printf "\n\n"
-	sleep 2
+	sleep 3
 }
 
 ## debug()

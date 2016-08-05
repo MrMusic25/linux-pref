@@ -459,7 +459,7 @@ esac
 
 # Now install all my necessary and fun commands to user and root .bashrc
 debug "Running setupCommands.sh!"
-setupCommands.sh
+./setupCommands.sh
 
 debug "Done with script!"
 
