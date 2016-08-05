@@ -2,3 +2,5 @@
 # If a program is uncommon, it will be installed from requires-ppa.txt
 gedit
 gksu
+brasero
+
