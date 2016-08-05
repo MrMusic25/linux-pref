@@ -4,7 +4,7 @@ sl
 cowsay
 toilet
 cmatrix
-fortune
+fortune-mod
 oneko
 espeak
 lolcat

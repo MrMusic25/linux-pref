@@ -1,0 +1,6 @@
+In keyboard settings, make CTRL+T open a terminal.
+In keyboard settings, make CTRL+SHIFT+ESCAPE open gnome-system-monitor.
+In keyboard settings, make SUPER+L lock the computer.
+In keyboard settings, make SUPER+D go to the desktop.
+If the terminal supports it, in keyboard settings, make CTRL+ALT+T open a drop-down terminal.
+Change power settings so screen doesn't unexpectedly turn off, and computer doesn't shut down.

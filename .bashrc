@@ -85,3 +85,11 @@ compile () {
         fi
     fi
 }
+
+# Uncomment the line below if aliases do not work. Change to '/root/.bash_aliases' for root user
+[[ -f ~/.bash_aliases ]] && source ~/.bash_aliases
+
+# The following two lines make nano the default editor. Comments if you use vim or others, or change it
+export VISUAL="nano"
+export EDITOR="$VISUAL"
+

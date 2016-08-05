@@ -120,6 +120,9 @@ elif [[ ! -z $(which yast) ]]; then # YaST is annoying af, so look for rpm and y
 elif [[ ! -z $(which pacman) ]]; then
 	export program="pacman"
 	pacman -Syy # Refreshes the repos, always read the man pages!
+	
+	# Conditional statement to install yaourt
+	[[ -z $(which yaourt) ]] && announce "pacman detected! yaourt will be installed as well!" "This insures all packages can be found and installed" && pacman -S base-devel yaourt
 elif [[ ! -z $(which aptitude) ]]; then # Just in case apt-get is somehow not installed with aptitude, happens
 	export program="aptitude"
 	aptitude update
@@ -162,7 +165,13 @@ do
 		rpm -i "$var" 
 		;;
 		pacman)
-		pacman -S "$var" 
+		pacman -S --noconfirm "$var"
+		
+		# If pacman can't install it, it can likely be found in AUR/yaourt
+		if [[ $? -eq 1 ]]; then
+			debug "$var not found with pacman, attempting install with yaourt!"
+			yaourt "$var"
+		fi 
 		;;
 		aptitude)
 		aptitude -y install "$var" 

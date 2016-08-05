@@ -8,11 +8,14 @@
 # Also like always, putting multiple items in quotes will install those items together
 #
 # Changes: 
+# v1.0.1
+# - Added a check to exit early if there are no arguments
+#
 # v1.0.0
 # - Initial commit
 # - Short and sweet, I would be suprised if I ever have to change this script
 #
-# v1.0.0 04 Aug. 2016 12:24 PST
+# v1.0.1 05 Aug. 2016 12:50 PST
 
 ### Variables
 
@@ -34,11 +37,18 @@ fi
 
 ### Main Script
 
+# Make sure there are arguments before running
+if [[ $# -eq 0 ]]; then
+	debug "No arguments given, quitting early!"
+	echo "ERROR: Please provide packages to install!"
+	echo "Usage: $0 <package_to_install> [package_to_install] . . . "
+	exit 1
+fi
+
 # Check if root, run as root if not already
-checkPrivilege "ask"
+checkPrivilege "quit"
 
 determinePM
-
 announce "Now attempting to install programs!"
 universalInstaller "$@"
 

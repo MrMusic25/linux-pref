@@ -465,6 +465,13 @@ else
 	debug "Not running setupCommands.sh because user specified not to"
 fi
 
+announce "The following commands cannot be scripted." "Manually install each command as they are given"
+while read -r lined;
+do
+	echo "$lined"
+	sleep 5
+done < "nonScriptCommands.txt"
+
 debug "Done with script!"
 
 #EOF

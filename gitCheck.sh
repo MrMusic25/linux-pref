@@ -12,6 +12,9 @@
 # Relies on the .git folder in the directory to be able to pull, therefore must be setup beforehand!
 #
 # Changes:
+# v1.0.5
+# - Script now does more auto-configuration
+#
 # v1.0.4
 # - Got rid of extra statements for debug in case it breaks script like grive.sh. Seems to be working now.
 #
@@ -25,7 +28,7 @@
 # v1.0.1
 # - Script now uses $debugPrefix
 #
-# v1.0.4, 28 July 2016 15:36 PST
+# v1.0.5, 05 Aug. 2016 13:36 PST
 
 ### Variables
 
@@ -75,10 +78,21 @@ announce "Preparing to sync with git directory $directory !"
 # Next, check to see if git credentials will be saved
 # Realized halfway through writing this the script will not be pushing, only pulling. Still useful as I forget things like this
 if [[ -e ~/.git-credentials || -e ~/.git-credential-cache ]]; then
-	debug "Password caching is enabled, moving to next step."
+	debug "Git has already been setup, moving to next step."
 else
-	announce "Credential storage for git is not enabled!" "This script will enable it for you for future use, as script does not push anything!"
-	git config credential.helper store
+	announce "Git has not been setup yet!" "This script will now help configure git for ease of use."
+	getUserAnswer "Would you like to setup your email and display name for git now?"
+	if [[ $? -eq 0 ]]; then
+		debug "Prompting for user's info..."
+		read -p "Please enter the email you would like to use: " varEmail
+		git config --global user.email "$varEmail"
+		read -p "Please enter the display name you would like to use: " varUser
+		git config --global user.name "$varUser"
+		debug "Git has been configured for user $varUser with email $varEmail"
+	fi
+		
+	git config --global credential.helper store
+	debug "Credential storage has been enabled"
 fi
 
 # Note: Script itself will not loop, just in case there are bugs. Instead, set a cronjob to run it
