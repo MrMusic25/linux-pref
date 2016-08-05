@@ -458,8 +458,12 @@ case $runMode in
 esac
 
 # Now install all my necessary and fun commands to user and root .bashrc
-debug "Running setupCommands.sh!"
-./setupCommands.sh
+if [[ $installOnly -eq 0 ]]; then
+	debug "Running setupCommands.sh!"
+	./setupCommands.sh
+else
+	debug "Not running setupCommands.sh because user specified not to"
+fi
 
 debug "Done with script!"
 
