@@ -8,6 +8,9 @@
 # Also like always, putting multiple items in quotes will install those items together
 #
 # Changes: 
+# v1.0.2
+# - Updated call for checkPrivilege()
+#
 # v1.0.1
 # - Added a check to exit early if there are no arguments
 #
@@ -15,7 +18,7 @@
 # - Initial commit
 # - Short and sweet, I would be suprised if I ever have to change this script
 #
-# v1.0.1 05 Aug. 2016 12:50 PST
+# v1.0.2 11 Aug. 2016 15:20 PST
 
 ### Variables
 
@@ -46,7 +49,7 @@ if [[ $# -eq 0 ]]; then
 fi
 
 # Check if root, run as root if not already
-checkPrivilege "quit"
+checkPrivilege "ask" "$@"
 
 determinePM
 announce "Now attempting to install programs!"

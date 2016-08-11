@@ -6,9 +6,18 @@ A repository with all my favorite aliases, settings, scripts, and installer scri
 ### INSTALL.sh
 Meant to be the main installation script - run this, and it will do all the heavy lifting for you.
 
-Status: Only missing one or two functions, running script still doesn't do much. 
+INSTALLATION INSTRUCTIONS:
 
-To-Do: bashrc() - Echo items to .bashrc AND/OR .zshrc for user AND root
+> 1. cd ~/ && git clone https://github.com/mrmusic25/linux-pref.git
+
+> 2. cd linux-pref/
+
+> 3. ./INSTALL.sh all
+
+`./INSTALL.sh all` will install everything for you. It is mostly interactive.
+
+Alternatively, you can use the different commands listed when running the script by itself.
+Also displays with `./INSTALL.sh -h` or `./INSTALL.sh --help`
 
 ### programInstaller.sh
 A multi-distro script that installs a list of programs, or a folder full of program lists.

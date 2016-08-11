@@ -7,6 +7,12 @@
 # If there are arguments, it will try to install the programs listed
 #
 # Changes:
+# v1.2.6
+# - Updated script to use new call for checkPrivilege()
+# - Cleaning with pacman is dangerous, so I put a warning instead of attempting the command
+# - Made the calls for 'which' quieter
+# - Added some more debug statements
+#
 # v1.2.5
 # - Apparently I deleted 'yes' statements from apt-get, re-entered so script is non-interactive again
 #
@@ -49,7 +55,7 @@
 # - Script will now ask if you would like to reboot after updating, if it is needed
 # - Changed echoes to announce()
 #
-# v1.2.5, 04 Aug 2016 11:37 PST
+# v1.2.6, 11 Aug 2016 15:04 PST
 
 ### Variables
 
@@ -72,6 +78,7 @@ fi
 
 # Upgrades the system based on PM
 function upgradeSystem() {
+debug "Preparing to upgrade $program"
 case $program in
 	apt)
 	announce "NOTE: script will be running a dist-upgrade!"
@@ -95,7 +102,7 @@ case $program in
 	rpm -F
 	;;
 	pacman)
-	pacman -Syyu
+	pacman -Syyu # Forces package refresh then upgrades
 	;;
 	aptitude)
 	announce "NOTE: aptitude will be doing a dist-upgrade!"
@@ -110,6 +117,7 @@ esac
 
 # Cleans system of unneeded downloaded packages and dependencies
 function cleanSystem() {
+debug "Preparing to clean $program"
 case $program in
 	apt)
 	apt-get --assume-yes autoremove
@@ -134,7 +142,8 @@ case $program in
 	# Nothing to be done
 	;;
 	pacman)
-	pacman -cq
+	#pacman -cq
+	announce "For your safety, please clean pacman yourself." "Use the command: pacman -Sc"
 	;;
 	aptitude)
 	#echo "NOTE: aptitude will be doing a dist-upgrade!"
@@ -150,8 +159,8 @@ esac
 
 ### Main Script
 #log="$debugPrefix/update.log" # Needs to be declared down here apparently
-debug "Starting $0 ..."
-checkPrivilege "ask" # I will chuckle everytime I have to type this lol
+#debug "Starting $0 ..."
+checkPrivilege "ask" "$@" # I will chuckle everytime I have to type this lol
 
 #if [[ $privilege -eq 777 ]]; then
 #	announce "Re-running script as sudo!"
@@ -175,12 +184,14 @@ fi
 announce "Everything is installed and upgraded, cleaning up now!"
 cleanSystem
 
-if [[ ! -z $(which msfupdate) ]]; then
+if [[ ! -z $(which msfupdate 2>/dev/null) ]]; then
+	debug "Metasploit is installed, running msfupdate..."
 	announce "Metasploit installed, updating as well!"
 	msfupdate
 fi
 
-if [[ ! -z $(which rpi-update) ]]; then
+if [[ ! -z $(which rpi-update 2>/dev/null) ]]; then
+	debug "rpi-update was found, running..."
 	announce "This is a Raspberry Pi, running rpi-update as well!"
 	rpi-update
 fi

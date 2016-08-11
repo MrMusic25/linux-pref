@@ -6,6 +6,9 @@
 # Note: This will change soon as functionality is added
 #
 # Changes:
+# v1.1.1
+# - Minor text fixes :3
+#
 # v1.1.0
 # - Added a function to install and setup grive
 # - Other small functionality changes
@@ -40,7 +43,7 @@
 # v0.0.1
 # - Initial commit - only displayHelp() and processArgs() working currently
 #
-# v1.1.0 05 Aug 2016 15:02 PST
+# v1.1.1 11 Aug 2016 15:11 PST
 
 ### Variables
 
@@ -515,7 +518,7 @@ case $runMode in
 	esac
 	;;
 	*)
-	echo "Not ready yet, sorry!"
+	echo "Command not found, please re-run script!"
 	;;
 esac
 

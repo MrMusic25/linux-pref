@@ -6,6 +6,9 @@
 # Determines which package manager is being used, then installs all the packages listed in programs.txt (or argument, if provided)
 #
 # Changes:
+# v1.2.2
+# - Updated call for checkPrivilege()
+#
 # v1.2.1
 # - Fixed many tiny errors keeping script from working, along with commonFunctions.sh
 # - Directory installation now works!
@@ -47,7 +50,7 @@
 # - Changed most output to use announce() and debug()
 # - determinePM() redirects to /dev/null now because it is not important to view except on failure
 #
-# v1.2.1 28 July, 2016, 17:56 PST
+# v1.2.2 11 Aug, 2016, 15:14 PST
 
 ### Variables
 
@@ -74,7 +77,7 @@ fi
 #log="$debugPrefix/pm.log"
 debug "Starting $0..." $log
 # First, check to see is user is root/sudo. Makes scripting easier
-checkPrivilege "exit" #lol
+checkPrivilege "ask" "$@" #lol
 
 # Checks if argument is present, then tests if directory or file and sets options accordingly
 if [[ -f $1 ]]; then

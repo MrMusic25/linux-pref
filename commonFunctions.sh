@@ -5,6 +5,12 @@
 # Note: this script whould not be run by itself, as it only contains functions and variables
 #
 # Changes:
+# v1.6.5
+# - Fixed determinePM() so 'which' is not so noisy
+# - Added some more debug statements
+# - Changed the way determinePrivilege() works due to a bug I discovered
+# - BIG (yet humble) CHANGE: debug() now redirects message to stderr instead of stdout if verbose is on
+#
 # v1.6.4
 # - Found a huge error in debug(), fixed now
 # - Fixed all errors from shellcheck (minus the ones that don't need fixing (SC2034) and ones that would break the functions)
@@ -72,7 +78,7 @@
 # v1.1.0
 # - Added announce() and debug() functions
 #
-# v1.6.4 04 Aug. 2016 17:29 PST
+# v1.6.5 11 Aug. 2016 14:45 PST
 
 ### Variables
 
@@ -100,30 +106,30 @@ cFlag=0 # Used with the ctrl_c function
 #
 # Other info: Updates repositories if possible, redirect to /dev/null if you don't want to see it
 function determinePM() {
-if [[ ! -z $(which apt-get) ]]; then # Most common, so it goes first
+if [[ ! -z $(which apt-get 2>/dev/null) ]]; then # Most common, so it goes first
 	export program="apt"
 	apt-get update
-elif [[ ! -z $(which dnf) ]]; then # This is why we love DistroWatch, learned about the 'replacement' to yum!
+elif [[ ! -z $(which dnf 2>/dev/null) ]]; then # This is why we love DistroWatch, learned about the 'replacement' to yum!
 	export program="dnf"
 	dnf check-update
-elif [[ ! -z $(which yum) ]]; then
+elif [[ ! -z $(which yum 2>/dev/null) ]]; then
 	export program="yum"
 	yum check-update
-elif [[ ! -z $(which slackpkg) ]]; then
+elif [[ ! -z $(which slackpkg 2>/dev/null) ]]; then
 	export program="slackpkg"
 	slackpkg update
-elif [[ ! -z $(which rpm) ]]; then
+elif [[ ! -z $(which rpm 2>/dev/null) ]]; then
 	export program="rpm"
 	rpm -F --justdb # Only updates the DB, not the system
-elif [[ ! -z $(which yast) ]]; then # YaST is annoying af, so look for rpm and yum first
+elif [[ ! -z $(which yast 2>/dev/null) ]]; then # YaST is annoying af, so look for rpm and yum first
 	export program="yast"
-elif [[ ! -z $(which pacman) ]]; then
+elif [[ ! -z $(which pacman 2>/dev/null) ]]; then
 	export program="pacman"
 	pacman -Syy # Refreshes the repos, always read the man pages!
 	
 	# Conditional statement to install yaourt
-	[[ -z $(which yaourt) ]] && announce "pacman detected! yaourt will be installed as well!" "This insures all packages can be found and installed" && pacman -S base-devel yaourt
-elif [[ ! -z $(which aptitude) ]]; then # Just in case apt-get is somehow not installed with aptitude, happens
+	[[ -z $(which yaourt 2>/dev/null) ]] && announce "pacman detected! yaourt will be installed as well!" "This insures all packages can be found and installed" && pacman -S base-devel yaourt
+elif [[ ! -z $(which aptitude 2>/dev/null) ]]; then # Just in case apt-get is somehow not installed with aptitude, happens
 	export program="aptitude"
 	aptitude update
 fi
@@ -313,7 +319,7 @@ function debug() {
 	
 	# Echoes the message if debug flag is on
 	if [[ $debugFlag -eq 1 ]]; then
-		echo "Debug: $@"
+		(>&2 echo "Debug: $@") # Sends the message to stderr in a subshell so other redirection isn't effected, in case user quiets stdout
 	fi
 	
 	if [[ ! -z $logFile ]]; then
@@ -337,7 +343,7 @@ function debug() {
 ## checkPrivilege()
 # Function: Simple function to check if this script is being run as root or sudo, in case it is necessary
 #
-# Call: checkPrivilege [exit|ask]
+# Call: checkPrivilege [exit|(ask "$@")]
 #
 # Input: Putting "exit" as an argument will exit the script with code 777 if it fails; "ask" will re-run the script as root (be careful with this!).
 #
@@ -346,22 +352,27 @@ function debug() {
 # Other info: Just calling will return 777; calling with the word "exit" at the end will kill the current script if not root
 function checkPrivilege() {
 if [ "$EUID" -ne 0 ]; then
+	debug "Script is not being run as root!"
 	announce "This script require root privileges, please run as root or sudo!"
 	export privilege=777
 	
 	# Only exits if the flag ($1) is set
 	if [[ "$1" == "exit" ]]; then
+		debug "Script set to exit mode, exiting with error code 777!"
 		exit 777
 	fi
 	
 	if [[ "$1" == "ask" ]]; then
+		debug "Script set to ask mode, re-running as sudo!"
 		announce "Script will now re-run itself as root, please provide password when prompted!"
-		sudo "$0"
+		shift # Gets rid of 'ask' argument when re-running script
+		sudo "$0" "$@"
 		exit $?
 	fi
 	
 	return 777
 else
+	debug "Script is being run as root"
 	export privilege=0
 	return 0
 fi
@@ -519,7 +530,7 @@ function getUserAnswer() {
 }
 
 # This following, which SHOULD be run in every script, will enable debugging if -v|--verbose is enabled.
-# The 'shift' command let's the scripts use the rest of the arguments
+# The 'shift' command lets the scripts use the rest of the arguments
 if [[ $1 == "-v" || $1 == "--verbose" ]]; then
 	echo "Running in verbose mode!"
 	export debugFlag=1
