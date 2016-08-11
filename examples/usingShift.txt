@@ -1,0 +1,30 @@
+An example on how the 'shift' command works.
+
+The script looks like:
+
+#!/bin/bash
+# Script used to test functionality of functions and others from commonFunctions.sh
+
+source commonFunctions.sh
+
+function testing123() {
+	echo "This is what it looks like right now:"
+	echo "$@"
+	echo "This is what 0-arg comes back as: $0"
+	shift
+	echo "Now, after a shift, @ looks like:"
+	echo "$@"
+}
+
+testing123 "disappear" "$@"
+
+#EOF
+
+When './scriptTest.sh ok working now' is run, this is the output:
+
+This is what it looks like right now:
+disappear ok working now
+This is what 0-arg comes back as: ./scriptTest.sh
+Now, after a shift, @ looks like:
+ok working now
+
