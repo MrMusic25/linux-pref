@@ -6,6 +6,9 @@
 # Note: This will change soon as functionality is added
 #
 # Changes:
+# v1.1.2
+# - Changed te way installBash() works - sources instead of linking now
+#
 # v1.1.1
 # - Minor text fixes :3
 #
@@ -43,7 +46,7 @@
 # v0.0.1
 # - Initial commit - only displayHelp() and processArgs() working currently
 #
-# v1.1.1 11 Aug 2016 15:11 PST
+# v1.1.2 11 Aug 2016 17:29 PST
 
 ### Variables
 
@@ -350,17 +353,17 @@ function installBash() {
 	# Install .bashrc and .bash_aliases for current user
 	announce "Installing .bashrc and aliases from the repo for current user!"
 	if [[ -e ~/.bashrc ]]; then
-		debug ".bashrc present for $USER, adding source argument"
+		debug ".bashrc present for $USER, adding source arguments"
 		printf "\n# Added by %s at %s, gets .bashrc from linux-pref git\nsource %s\n" "$0" "$(date)" "$(readlink -f "$(basename .bashrc)")" >>~/.bashrc
 	else
-		ln .bashrc ~/
+		debug "No .bashrc was would, creating one for user!"
+		touch ~/.bashrc
+		printf "\n# Added by %s at %s, gets .bashrc from linux-pref git\nsource %s\n" "$0" "$(date)" "$(readlink -f "$(basename .bashrc)")" >>~/.bashrc
+		#ln .bashrc ~/
 	fi
-	if [[ -e ~/.bash_aliases ]]; then
-		debug ".bash_aliases present for $USER, adding source argument"
-		printf "\n# Added by %s at %s, gets aliases from linux-pref git\nsource %s\n" "$0" "$(date)" "$(readlink -f "$(basename .bash_aliases)")" >>~/.bashrc
-	else
-		ln .bash_aliases ~/
-	fi
+	
+	# Script will now only source .bash_aliases, that way user can add their own ~/.bash_aliases if desired
+	printf "\n# Added by %s at %s, gets aliases from linux-pref git\nsource %s\n" "$0" "$(date)" "$(readlink -f "$(basename .bash_aliases)")" >>~/.bashrc
 	
 	# Now ask if they want it installed for root
 	checkPrivilege
@@ -370,18 +373,18 @@ function installBash() {
 			0)
 			announce "Installing .bashrc from the repo for root user!"
 			# If either of these if statements fail, chmod the root directory to 744
-			if [[ -e /root/.bashrc ]]; then
-				debug "/root/.bashrc present, adding source argument"
+			if sudo test -e /root/.bashrc; then
+				debug "/root/.bashrc present, adding source arguments"
 				printf "\n# Added by %s at %s, gets .bashrc from linux-pref git\nsource %s\n" "$0" "$(date)" "$(readlink -f "$(basename .bashrc)")" | sudo tee -a /root/.bashrc > /dev/null
 			else
-				sudo ln .bashrc /root/
+				#sudo ln .bashrc /root/
+				debug "/root/.bashrc not found, creating now!"
+				sudo touch /root/.bashrc
+				printf "\n# Added by %s at %s, gets .bashrc from linux-pref git\nsource %s\n" "$0" "$(date)" "$(readlink -f "$(basename .bashrc)")" | sudo tee -a /root/.bashrc > /dev/null
 			fi
-			if [[ -e /root/.bash_aliases ]]; then
-				debug "/root/.bash_aliases present, adding source argument"
-				printf "\n# Added by %s at %s, gets aliases from linux-pref git\nsource %s\n" "$0" "$(date)" "$(readlink -f "$(basename .bash_aliases)")" | sudo tee -a /root/.bashrc > /dev/null
-			else
-				sudo ln .bash_aliases /root/
-			fi
+			
+			# Script will now only source .bash_aliases, that way user can add their own .bash_aliases if desired
+			printf "\n# Added by %s at %s, gets aliases from linux-pref git\nsource %s\n" "$0" "$(date)" "$(readlink -f "$(basename .bash_aliases)")" | sudo tee -a /root/.bashrc > /dev/null
 			;;
 			1)
 			debug "Not installing .bashrc for root user..."
