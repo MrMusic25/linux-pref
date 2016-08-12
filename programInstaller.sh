@@ -8,6 +8,7 @@
 # Changes:
 # v1.2.2
 # - Updated call for checkPrivilege()
+# - Changed script so that a 'major' shellcheck error went away
 #
 # v1.2.1
 # - Fixed many tiny errors keeping script from working, along with commonFunctions.sh
@@ -50,7 +51,7 @@
 # - Changed most output to use announce() and debug()
 # - determinePM() redirects to /dev/null now because it is not important to view except on failure
 #
-# v1.2.2 11 Aug, 2016, 15:14 PST
+# v1.2.2 11 Aug, 2016, 17:47 PST
 
 ### Variables
 
@@ -75,7 +76,7 @@ fi
 
 ### Main script
 #log="$debugPrefix/pm.log"
-debug "Starting $0..." $log
+#debug "Starting $0..."
 # First, check to see is user is root/sudo. Makes scripting easier
 checkPrivilege "ask" "$@" #lol
 
@@ -113,7 +114,8 @@ case $programMode in
 	;;
 	directory)
 	announce "Installing all directories from $file!" "This WILL take a long time!" "Don't go anywhere, you will be asked if each section should be installed!"
-	for list in $( ls $file );
+	cd "$file"
+	for list in *.txt;
 	do
 		debug "Installing from $list"
 		getUserAnswer "Would you like to install the programs listed in $list?"
@@ -123,9 +125,10 @@ case $programMode in
 			while read -r line; do
 				[[ $line = \#* ]] && continue # Skips comment lines
 				universalInstaller "$line"
-			done <$file/$list
+			done <"$file"/"$list"
 		fi
 	done
+	cd .. # Return to previous location so other scripts don't break
 	;;
 	*)
 	debug "Everything is broken. Why. At least you have unique debug messages for an easy CTRL+F."
