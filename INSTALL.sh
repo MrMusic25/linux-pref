@@ -6,6 +6,9 @@
 # Note: This will change soon as functionality is added
 #
 # Changes:
+# v1.2.1
+# - Learned that lesson the hard way... Use full directory names when using symbolic links!
+#
 # v1.2.0
 # - Script now installs everything using symbolic links, as hard links don't update anymore
 # - Created a function to uninstall the changes this script makes
@@ -77,10 +80,10 @@ function linkCF() {
 	
 	if [[ "$EUID" -ne 0 ]]; then
 		echo "Linking to /usr/share requires root permissions, please login"
-		sudo ln -s commonFunctions.sh /usr/share/
+		sudo ln -s "$(pwd)"/commonFunctions.sh /usr/share/commonFunctions.sh
 	else
 		echo "Linking to commonFunctions.sh to /usr/share/ !"
-		sudo ln -s commonFunctions.sh /usr/share/
+		sudo ln -s "$(pwd)"/commonFunctions.sh /usr/share/commonFunctions.sh
 	fi
 }
 
@@ -292,10 +295,10 @@ function installUpdate() {
 		debug "User indicated not to run scripts, only installing update script!"
 	fi
 	
-	sudo ln -s update.sh /usr/bin/update
+	sudo ln -s $(pwd)/update.sh /usr/bin/update
 	announce "You can now update your system anywhere by running the command: sudo update" "You can also install packages by running: sudo update <packages_to_install>"
 	
-	sudo ln -s installPackages.sh /usr/bin/installPackages
+	sudo ln -s $(pwd)/installPackages.sh /usr/bin/installPackages
 	announce "If all you want to do is install packages, you can run: installPackages <packages_to_install>"
 	sleep 5 # Give the user time to read before more script runs
 	
@@ -310,7 +313,7 @@ function installGit() {
 		debug "User indicated not to run scripts, so I will only install the script!"
 	fi
 	
-	sudo ln -s gitCheck.sh /usr/bin/gitcheck
+	sudo ln -s $(pwd)/gitCheck.sh /usr/bin/gitcheck
 	
 	announce "This script can be used for any git repository, read the documentation for more info!" "Make sure to add a cron job for any new directories!"
 	
@@ -471,9 +474,9 @@ function uninstallScript() {
 		debug "Destroying links."
 		announce "Uninstalling links, this will require sudo permission!"
 		for link in "${links[@]}"; do
-			if sudo test -e "$link" && sudo test -h "$link"; then
+			if sudo test -e "$link"; then
 				debug "Deleting link located at $link"
-				sudo rm "$link"
+				sudo rm -v "$link"
 			else
 				debug "$link was either not found, or is not a link. Skipping..."
 			fi
@@ -503,7 +506,7 @@ function uninstallScript() {
 	esac
 	
 	# Do the same, but for root
-	if ! "$EUID" -eq 0 && test -e /root/.bashrc.bak; then # Only run this if user is NOT root AND backup exists
+	if ! [ "$EUID" -eq 0 ] && sudo test -e /root/.bashrc.bak; then # Only run this if user is NOT root AND backup exists
 		getUserAnswer "Would you like to restore .bashrc backup for root user as well?"
 		case $? in
 			1)
@@ -540,6 +543,8 @@ function uninstallScript() {
 	
 	# Too dangerous to try uninstalling Grive from script
 	announce "If you installed Grive, please uninstall manually by deleting folder and crontab entry" "Use rm -rf <Directory> to delete, but use extreme caution!"
+	
+	exit 0 # So that the rest of the script doesn't run
 }
 
 ### Main Script
