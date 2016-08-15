@@ -6,6 +6,12 @@
 # Note: This will change soon as functionality is added
 #
 # Changes:
+# v1.2.0
+# - Script now installs everything using symbolic links, as hard links don't update anymore
+# - Created a function to uninstall the changes this script makes
+# - installBash() now creates a backup (.bashrc.bak) in case the user tries to uninstall later
+# - Script now backs up the user's crontab, and can now restore said crontab
+#
 # v1.1.2
 # - Changed te way installBash() works - sources instead of linking now
 #
@@ -46,7 +52,7 @@
 # v0.0.1
 # - Initial commit - only displayHelp() and processArgs() working currently
 #
-# v1.1.2 11 Aug 2016 17:29 PST
+# v1.2.0 15 Aug 2016 15:47 PST
 
 ### Variables
 
@@ -71,10 +77,10 @@ function linkCF() {
 	
 	if [[ "$EUID" -ne 0 ]]; then
 		echo "Linking to /usr/share requires root permissions, please login"
-		sudo ln commonFunctions.sh /usr/share/
+		sudo ln -s commonFunctions.sh /usr/share/
 	else
 		echo "Linking to commonFunctions.sh to /usr/share/ !"
-		sudo ln commonFunctions.sh /usr/share/
+		sudo ln -s commonFunctions.sh /usr/share/
 	fi
 }
 
@@ -123,7 +129,11 @@ function processArgs() {
 				debug "ERROR: -e | --except option cannot be used with install option 'all' !"
 				displayHelp
 				exit 1
-			elif [[ ! -z $2 || $2 == "update" || $2 == "programs" || $2 == "git" ]]; then
+			elif [[ $2 == "uninstall" ]]; then
+				echo "The except option is not compatible with uninstall! Please run $0 uninstall instead!"
+				displayHelp
+				exit 1
+			elif [[ ! -z $2 || $2 == "update" || $2 == "programs" || $2 == "git" || $2 == "bash" || $2 == "grive" ]]; then
 				export except="$2"
 				export loopFlag=1
 			else
@@ -211,6 +221,10 @@ function processArgs() {
 			export runMode="bash"
 			export loopFlag=1
 			;;
+			uninstall)
+			export runMode="uninstall"
+			export loopFlag=1
+			;;
 			*)
 			export debugFlag=1
 			debug "ERROR: Unknown option '$1' "
@@ -278,10 +292,10 @@ function installUpdate() {
 		debug "User indicated not to run scripts, only installing update script!"
 	fi
 	
-	sudo ln update.sh /usr/bin/update
+	sudo ln -s update.sh /usr/bin/update
 	announce "You can now update your system anywhere by running the command: sudo update" "You can also install packages by running: sudo update <packages_to_install>"
 	
-	sudo ln installPackages.sh /usr/bin/installPackages
+	sudo ln -s installPackages.sh /usr/bin/installPackages
 	announce "If all you want to do is install packages, you can run: installPackages <packages_to_install>"
 	sleep 5 # Give the user time to read before more script runs
 	
@@ -296,7 +310,7 @@ function installGit() {
 		debug "User indicated not to run scripts, so I will only install the script!"
 	fi
 	
-	sudo ln gitCheck.sh /usr/bin/gitcheck
+	sudo ln -s gitCheck.sh /usr/bin/gitcheck
 	
 	announce "This script can be used for any git repository, read the documentation for more info!" "Make sure to add a cron job for any new directories!"
 	
@@ -339,6 +353,7 @@ function displayHelp() {
 	echo "    git                                : Installs git monitoring script and sets up cron job to run at boot"
 	echo "    bash                               : Links or sources the .bashrc and .bash_aliases from the git repo"
 	echo "    grive                              : Helps create and sync Google Drive using grive2"
+	echo "    uninstall                          : Uninstalls any file or settings that may have been installed, highly interactive"
 	echo " "
 	echo " Options:"
 	echo "    -h | --help                        : Displays this help message"
@@ -353,13 +368,14 @@ function installBash() {
 	# Install .bashrc and .bash_aliases for current user
 	announce "Installing .bashrc and aliases from the repo for current user!"
 	if [[ -e ~/.bashrc ]]; then
-		debug ".bashrc present for $USER, adding source arguments"
+		debug ".bashrc present for $USER, backing up and adding source arguments"
+		cp ~/.bashrc ~/.bashrc.bak # Creates a backup in case it is needed later
 		printf "\n# Added by %s at %s, gets .bashrc from linux-pref git\nsource %s\n" "$0" "$(date)" "$(readlink -f "$(basename .bashrc)")" >>~/.bashrc
 	else
 		debug "No .bashrc was would, creating one for user!"
 		touch ~/.bashrc
 		printf "\n# Added by %s at %s, gets .bashrc from linux-pref git\nsource %s\n" "$0" "$(date)" "$(readlink -f "$(basename .bashrc)")" >>~/.bashrc
-		#ln .bashrc ~/
+		#ln -s .bashrc ~/
 	fi
 	
 	# Script will now only source .bash_aliases, that way user can add their own ~/.bash_aliases if desired
@@ -374,10 +390,11 @@ function installBash() {
 			announce "Installing .bashrc from the repo for root user!"
 			# If either of these if statements fail, chmod the root directory to 744
 			if sudo test -e /root/.bashrc; then
-				debug "/root/.bashrc present, adding source arguments"
+				debug "/root/.bashrc present, backing up and adding source arguments"
+				sudo cp /root/.bashrc /root/.bashrc.bak
 				printf "\n# Added by %s at %s, gets .bashrc from linux-pref git\nsource %s\n" "$0" "$(date)" "$(readlink -f "$(basename .bashrc)")" | sudo tee -a /root/.bashrc > /dev/null
 			else
-				#sudo ln .bashrc /root/
+				#sudo ln -s .bashrc /root/
 				debug "/root/.bashrc not found, creating now!"
 				sudo touch /root/.bashrc
 				printf "\n# Added by %s at %s, gets .bashrc from linux-pref git\nsource %s\n" "$0" "$(date)" "$(readlink -f "$(basename .bashrc)")" | sudo tee -a /root/.bashrc > /dev/null
@@ -406,7 +423,7 @@ function installGrive() {
 		getUserAnswer "Answer yes if you want to run grive.sh: "
 		if [[ $? -eq 1 ]]; then
 			debug "User cose not to run grive"
-			#sudo ln grive.sh /usr/bin/grive.sh
+			#sudo ln -s grive.sh /usr/bin/grive.sh
 			return
 		fi
 	fi
@@ -432,11 +449,97 @@ function installGrive() {
 	# Finally, setup a cronjob to sync grive every 5 mins
 	debug "Creating a cronjob for current user to update grive"
 	export griveSync=5
-	#sudo ln grive.sh /usr/bin/grive.sh
+	#sudo ln -s grive.sh /usr/bin/grive.sh
 	getUserAnswer "Grive will sync every $griveSync minutes, would you like to change this? " griveSync "Please enter how many mintues between updates you would like: "
 	addCronJob $griveSync min "$(pwd)/grive.sh $griveSetupDir"
 	
 	debug "Grive has been installed!"
+}
+
+function uninstallScript() {
+	# Remove all the links created
+	links=( "/usr/share/commonFunctions.sh" "/usr/bin/update" "/usr/bin/grive.sh" "/usr/bin/gitcheck" "/usr/bin/installPackages" )
+	
+	debug "Running uninstaller function."
+	getUserAnswer "Would you like to uninstall all the program links that have been made?"
+	case $? in
+		1)
+		debug "Not destroying links as per user choice."
+		# Don't return, see if they want to uninstall other options
+		;;
+		0)
+		debug "Destroying links."
+		announce "Uninstalling links, this will require sudo permission!"
+		for link in "${links[@]}"; do
+			if sudo test -e "$link" && sudo test -h "$link"; then
+				debug "Deleting link located at $link"
+				sudo rm "$link"
+			else
+				debug "$link was either not found, or is not a link. Skipping..."
+			fi
+		done
+		;;
+		*)
+		debug "Unknown option received"
+		exit 1
+		;;
+	esac
+	
+	# Offer to fix bash settings
+	getUserAnswer "Would you like to restore the backup .bashrc for current user?"
+	case $? in
+		1)
+		debug "Not restoring .bashrc backup - user decision"
+		;;
+		0)
+		debug "Restoring .bashrc from backup"
+		rm ~/.bashrc
+		cp ~/.bachrc.bak ~/.bashrc # ALWAYS keep the backup
+		;;
+		*)
+		debug "Unknown option received!"
+		exit 1
+		;;
+	esac
+	
+	# Do the same, but for root
+	if ! "$EUID" -eq 0 && test -e /root/.bashrc.bak; then # Only run this if user is NOT root AND backup exists
+		getUserAnswer "Would you like to restore .bashrc backup for root user as well?"
+		case $? in
+			1)
+			debug "Not restoring root's .bashrc"
+			;;
+			0)
+			debug "Restoring .bashrc for root user!"
+			sudo rm /root/.bashrc
+			sudo cp /root/.bashrc.bak /root/.bashrc
+			;;
+			*)
+			debug "Unknown option received!"
+			exit 1
+			;;
+		esac
+	fi
+	
+	# Restore the user's crontab
+	getUserAnswer "Would you like to restore the original crontab?"
+	case $? in
+		1)
+		debug "Keeping the current crontab, be careful as links may have been destroyed!"
+		;;
+		0)
+		debug "Restoring the original crontab from backup"
+		cp ~/.crontab.bak ~/.crontab.txt # Once again, always keep the backup
+		crontab ~/.crontab.txt
+		;;
+		*)
+		debug "Unknown option received!"
+		exit 1
+		;;
+	esac
+	
+	# Too dangerous to try uninstalling Grive from script
+	announce "If you installed Grive, please uninstall manually by deleting folder and crontab entry" "Use rm -rf <Directory> to delete, but use extreme caution!"
 }
 
 ### Main Script
@@ -458,6 +561,9 @@ fi
 
 pathCheck # Checks if /usr/bin is in the user's path, since scripts rely on it
 
+# Backup the crontab, used for uninstallation
+crontab -l > ~/.crontab.bak
+
 # Now, run the install mode!
 case $runMode in
 	update)
@@ -474,6 +580,9 @@ case $runMode in
 	;;
 	grive)
 	installGrive
+	;;
+	uninstall)
+	uninstallScript
 	;;
 	all)
 	installUpdate

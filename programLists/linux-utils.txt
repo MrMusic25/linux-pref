@@ -16,4 +16,7 @@ wicd-daemon
 shellcheck
 
 # Uncomment below if you are running a laptop
-#synaptics
+synaptics
+
+# Uncomment if you plan on installing some Windows programs
+wine
