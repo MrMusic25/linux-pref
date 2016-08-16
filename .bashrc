@@ -93,5 +93,5 @@ compile () {
 export VISUAL
 VISUAL="nano"
 export EDITOR
-EDITOR="$VISUAL"
+EDITOR="nano"
 
