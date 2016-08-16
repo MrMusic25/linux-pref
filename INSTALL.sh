@@ -8,6 +8,7 @@
 # Changes:
 # v1.2.1
 # - Learned that lesson the hard way... Use full directory names when using symbolic links!
+# - Apparently I never tested -e, but it should work now
 #
 # v1.2.0
 # - Script now installs everything using symbolic links, as hard links don't update anymore
@@ -138,6 +139,7 @@ function processArgs() {
 				exit 1
 			elif [[ ! -z $2 || $2 == "update" || $2 == "programs" || $2 == "git" || $2 == "bash" || $2 == "grive" ]]; then
 				export except="$2"
+				export runMode="except" # I forgot tis statement for like 3 weeks until I finally tested this functionality
 				export loopFlag=1
 			else
 				export debugFlag=1

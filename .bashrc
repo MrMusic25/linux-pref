@@ -90,6 +90,8 @@ compile () {
 [[ -f ~/.bash_aliases ]] && source ~/.bash_aliases
 
 # The following two lines make nano the default editor. Comments if you use vim or others, or change it
-export VISUAL="nano"
-export EDITOR="$VISUAL"
+export VISUAL
+VISUAL="nano"
+export EDITOR
+EDITOR="$VISUAL"
 
