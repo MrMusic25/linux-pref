@@ -8,6 +8,9 @@
 # Also like always, putting multiple items in quotes will install those items together
 #
 # Changes: 
+# v1.0.3
+# - Script now quits when run as sudo on Arch-based systems
+#
 # v1.0.2
 # - Updated call for checkPrivilege()
 #
@@ -18,7 +21,7 @@
 # - Initial commit
 # - Short and sweet, I would be suprised if I ever have to change this script
 #
-# v1.0.2 11 Aug. 2016 15:20 PST
+# v1.0.3 16 Aug. 2016 21:27 PST
 
 ### Variables
 
@@ -49,9 +52,16 @@ if [[ $# -eq 0 ]]; then
 fi
 
 # Check if root, run as root if not already
-checkPrivilege "ask" "$@"
 
+# Comment out this block if you login as root by default on Arch
 determinePM
+if [[ "$program" == "pacman" && "$EUID" -eq 0 ]]; then
+	announce "Arch-based distributions do not require root privilege." "Please re-run script without sudo, or as normal user!"
+	exit 1
+else
+	[[ ! "$program" == "pacman" ]] && checkPrivilege "ask" "$@" # I will chuckle everytime I have to type this lol
+fi
+
 announce "Now attempting to install programs!"
 universalInstaller "$@"
 

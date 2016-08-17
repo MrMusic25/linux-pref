@@ -7,6 +7,10 @@
 # If there are arguments, it will try to install the programs listed
 #
 # Changes:
+# v1.2.7
+# - Script now exit if being run as root on Arch-based distributions - yaourt doesn't like sudo
+# - Random little changes
+#
 # v1.2.6
 # - Updated script to use new call for checkPrivilege()
 # - Cleaning with pacman is dangerous, so I put a warning instead of attempting the command
@@ -55,7 +59,7 @@
 # - Script will now ask if you would like to reboot after updating, if it is needed
 # - Changed echoes to announce()
 #
-# v1.2.6, 11 Aug 2016 15:04 PST
+# v1.2.7, 16 Aug 2016 20:42 PST
 
 ### Variables
 
@@ -102,7 +106,8 @@ case $program in
 	rpm -F
 	;;
 	pacman)
-	pacman -Syyu # Forces package refresh then upgrades
+	sudo pacman -Syyu # Forces package refresh then upgrades
+	yaourt -Syu --aur # Remember to refresh the AUR as well
 	;;
 	aptitude)
 	announce "NOTE: aptitude will be doing a dist-upgrade!"
@@ -117,7 +122,7 @@ esac
 
 # Cleans system of unneeded downloaded packages and dependencies
 function cleanSystem() {
-debug "Preparing to clean $program"
+debug "Preparing to clean with $program"
 case $program in
 	apt)
 	apt-get --assume-yes autoremove
@@ -160,21 +165,26 @@ esac
 ### Main Script
 #log="$debugPrefix/update.log" # Needs to be declared down here apparently
 #debug "Starting $0 ..."
-checkPrivilege "ask" "$@" # I will chuckle everytime I have to type this lol
 
-#if [[ $privilege -eq 777 ]]; then
-#	announce "Re-running script as sudo!"
-#	sudo $0
-#	exit $?
-#fi
+determinePM # Do this first, arch doesn't like sudo...
 
+# Arch doesn't like sudo with yaourt, hence this block
+# Comment out this block if you login as root by default on Arch
+if [[ "$program" == "pacman" && "$EUID" -eq 0 ]]; then
+	announce "Arch-based distributions do not require root privilege." "Please re-run script without sudo, or as normal user!"
+	exit 1
+else
+	[[ ! "$program" == "pacman" ]] && checkPrivilege "ask" "$@" # I will chuckle everytime I have to type this lol
+fi
+
+# Tell user what is happening
 if [[ $# -ne 0 ]]; then
 	announce "Script will upgrade system, then attempt to install packages from arguments."
 else
 	announce "Script will now upgrade your system."
 fi
 
-determinePM
+#determinePM
 upgradeSystem
 
 if [[ $# -ne 0 ]]; then
@@ -214,11 +224,11 @@ if [[ -f /var/run/reboot-required ]]; then
 		;;
 		*)
 		debug "Unknown exit code: $?"
-		announce "An error occurred! Please consult the log!" "$logFile"
+		announce "An error occurred! Please consult the log!"
 		;;
 	esac
 fi
 
 announce "Done!"
-debug "Finished at $(date) !"
+#debug "Finished at $(date) !"
 #eof

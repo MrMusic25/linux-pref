@@ -6,6 +6,9 @@
 # Determines which package manager is being used, then installs all the packages listed in programs.txt (or argument, if provided)
 #
 # Changes:
+# v1.2.3
+# - Script now quits if root when on Arch-based systems
+#
 # v1.2.2
 # - Updated call for checkPrivilege()
 # - Changed script so that a 'major' shellcheck error went away
@@ -51,7 +54,7 @@
 # - Changed most output to use announce() and debug()
 # - determinePM() redirects to /dev/null now because it is not important to view except on failure
 #
-# v1.2.2 11 Aug, 2016, 17:47 PST
+# v1.2.3 16 Aug, 2016, 21:25 PST
 
 ### Variables
 
@@ -75,10 +78,18 @@ else
 fi
 
 ### Main script
-#log="$debugPrefix/pm.log"
-#debug "Starting $0..."
+
 # First, check to see is user is root/sudo. Makes scripting easier
-checkPrivilege "ask" "$@" #lol
+announce "Determining package manager and updating the package lists." "This may take time depending on internet speed and repo size."
+determinePM &>/dev/null
+
+# Comment out this block if you login as root by default on Arch
+if [[ "$program" == "pacman" && "$EUID" -eq 0 ]]; then
+	announce "Arch-based distributions do not require root privilege." "Please re-run script without sudo, or as normal user!"
+	exit 1
+else
+	[[ ! "$program" == "pacman" ]] && checkPrivilege "ask" "$@" # I will chuckle everytime I have to type this lol
+fi
 
 # Checks if argument is present, then tests if directory or file and sets options accordingly
 if [[ -f $1 ]]; then
@@ -95,10 +106,6 @@ else
 	debug "Script is broken! Please fix!"
 	exit 592
 fi
-	
-# Now that file is valid, determine program to use
-announce "Determining package manager and updating the package lists." "This may take time depending on internet speed and repo size."
-determinePM &>/dev/null
 
 debug "This distribution is using $program as it's package manager!"
 #announce "Now installing programs listed in $file!" "This may take a while depending on number of updates and internet speed" "Check $logFile for details"

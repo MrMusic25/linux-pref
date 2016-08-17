@@ -5,6 +5,9 @@
 # Note: this script whould not be run by itself, as it only contains functions and variables
 #
 # Changes:
+# v1.6.6
+# - Changed the way updating and installing with pacman works
+#
 # v1.6.5
 # - Fixed determinePM() so 'which' is not so noisy
 # - Added some more debug statements
@@ -78,7 +81,7 @@
 # v1.1.0
 # - Added announce() and debug() functions
 #
-# v1.6.5 11 Aug. 2016 14:45 PST
+# v1.6.6 16 Aug. 2016 21:05 PST
 
 ### Variables
 
@@ -128,7 +131,7 @@ elif [[ ! -z $(which pacman 2>/dev/null) ]]; then
 	pacman -Syy # Refreshes the repos, always read the man pages!
 	
 	# Conditional statement to install yaourt
-	[[ -z $(which yaourt 2>/dev/null) ]] && announce "pacman detected! yaourt will be installed as well!" "This insures all packages can be found and installed" && pacman -S base-devel yaourt
+	[[ -z $(which yaourt 2>/dev/null) ]] && announce "pacman detected! yaourt will be installed as well!" "This insures all packages can be found and installed" && sudo pacman -S base-devel yaourt
 elif [[ ! -z $(which aptitude 2>/dev/null) ]]; then # Just in case apt-get is somehow not installed with aptitude, happens
 	export program="aptitude"
 	aptitude update
@@ -171,11 +174,12 @@ do
 		rpm -i "$var" 
 		;;
 		pacman)
-		pacman -S --noconfirm "$var"
+		sudo pacman -S --noconfirm "$var"
 		
 		# If pacman can't install it, it can likely be found in AUR/yaourt
 		if [[ $? -eq 1 ]]; then
 			debug "$var not found with pacman, attempting install with yaourt!"
+			announce "$var not found with pacman, trying yaourt!" "This is interactive because it could potentially break your system."
 			yaourt "$var"
 		fi 
 		;;
