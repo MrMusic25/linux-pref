@@ -20,3 +20,7 @@ synaptics
 
 # Uncomment if you plan on installing some Windows programs
 wine
+
+# Couple of monitoring programs I found on Reddit
+iftop
+htop
