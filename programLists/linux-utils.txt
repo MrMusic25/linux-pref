@@ -24,3 +24,6 @@ wine
 # Couple of monitoring programs I found on Reddit
 iftop
 htop
+
+# Added from an issue of Distrowatch Weekly, looks interesting and helpful
+moreutils

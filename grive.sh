@@ -9,6 +9,10 @@
 #	*/5 * * * * /home/kyle/grive.sh
 #
 # Changes:
+# v1.2.0
+# - Script will now check to see if there are Conflict files and notify user
+# - Turned mailing back on since this script is run more often as a cron job. Check mail daily for cron notifications!
+#
 # v1.1.4
 # - Made some small functional changes to make script more complaint with the others
 #
@@ -29,7 +33,7 @@
 # - Overhauled other parts of script to be 'self-friendly' (uses my own functions)
 # - Also updated to use $updatePrefix
 #
-# v1.1.4, 05 Aug. 2016 13:56 PST
+# v1.2.0, 23 Aug. 2016 12:14 PST
 
 ### Variables
 
@@ -108,6 +112,21 @@ if [[ $? != 0 ]]; then
 	debug "An error occurred with grive, check log for more info!"
 	echo "Grive encountered an error while attempting to sync at $(date)! Please view $logFile for more info." | mail -s "grive.sh" $USER
 	exit 4
+fi
+
+# Function that checks for conflicts, then notifies the user
+conflictList="$( find *Conflict* 2>/dev/null )"
+conflictCount="$( echo "$conflictList" | wc -l )" # Quotes are necessary for this to work
+if [[ ! -z $conflictList ]]; then
+	n=1 # cut does not work with numbers less than 1
+	debug "Conflicting files found in Grive folder! Notifying user via mail..."
+	echo "Grive has found conflicting files at $(date)! Please view $logFile for more info. Must be fixed manually." | mail -s "grive.sh" $USER
+	until [[ $n -gt $conflictCount ]];
+	do
+		announce "Conflicting files found! Please fix manually!" "File: $(echo $conflictList | cut -d' ' -f $n )"
+		debug "Conflicting filename: $(echo $conflictList | cut -d' ' -f $n )"
+		((n++))
+	done
 fi
 
 announce "Done syncronizing!" "Please check $logFile for more info!"
