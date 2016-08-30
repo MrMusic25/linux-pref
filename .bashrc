@@ -95,3 +95,6 @@ VISUAL="nano"
 export EDITOR
 EDITOR="nano"
 
+# A fun little program I found on Reddit one day, change city to official list at wttr.in!
+wttrCity="los_angeles"
+alias weather='curl wttr.in/$wttrCity'
