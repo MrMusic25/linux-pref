@@ -1,0 +1,10 @@
+# Programs that can be used to learn and play guitar
+
+# Lets you view guitar tablature files (.gp5, .gp4, etc) - Needs a plugin to open .gpx, Google it!
+tuxguitar
+
+# Required for rakarrack
+jack
+
+# A program that does effect processing for a plugged in guitar
+rakarrack
