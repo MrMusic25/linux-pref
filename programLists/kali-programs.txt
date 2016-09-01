@@ -1,4 +1,5 @@
 # All of my favorite pentesting programs from kali, backbox, etc...
+nmap
 zenmap
 theharvester
 metasploit-framework
@@ -16,3 +17,4 @@ btscanner
 aircrack-ng
 wifite
 pyrit
+nbtscan
