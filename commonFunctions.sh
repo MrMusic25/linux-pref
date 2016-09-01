@@ -5,6 +5,10 @@
 # Note: this script whould not be run by itself, as it only contains functions and variables
 #
 # Changes:
+# v1.6.7
+# - Added a very tiny function that pauses the script (can't believe it took me this long to do something so simple...)
+# - Fixed a few issues found with shellcheck
+#
 # v1.6.6
 # - Changed the way updating and installing with pacman works
 #
@@ -81,7 +85,7 @@
 # v1.1.0
 # - Added announce() and debug() functions
 #
-# v1.6.6 16 Aug. 2016 21:05 PST
+# v1.6.7 01 Sep. 2016 15:31 PST
 
 ### Variables
 
@@ -213,6 +217,7 @@ function announce() {
 		return
 	fi
 	
+	# For everyting below, you can ignore SC2034. Too much work to change
 	stars=0
 		for j in "$@"; # Stupid quotation marks killed the whole thing.... ugh....
 	do
@@ -323,7 +328,7 @@ function debug() {
 	
 	# Echoes the message if debug flag is on
 	if [[ $debugFlag -eq 1 ]]; then
-		(>&2 echo "Debug: $@") # Sends the message to stderr in a subshell so other redirection isn't effected, in case user quiets stdout
+		(>&2 echo "Debug: $*") # Sends the message to stderr in a subshell so other redirection isn't effected, in case user quiets stdout
 	fi
 	
 	if [[ ! -z $logFile ]]; then
@@ -374,7 +379,7 @@ if [ "$EUID" -ne 0 ]; then
 		exit $?
 	fi
 	
-	return 777
+	return 77
 else
 	debug "Script is being run as root"
 	export privilege=0
@@ -524,13 +529,32 @@ function getUserAnswer() {
 		;;
 		NULL)
 		announce "Congratulations, you somehow broke my script, Linux, and possibly the universe."
-		return 666
+		return 66 #used to be 666, but apparently that isn't allowed. not that it should happene ANYWAYS...
 		;;
 		*)
 		announce "You must not be very good at this if you made it here."
 		return 111
 		;;
 	esac
+}
+
+## pause()
+#
+# Function: Prompts the user to press Enter to continue the script (or any message)
+#
+# Call: pause "prompt"
+#
+# Input: By including a prompt as $1, it will display that (make sure to tell user to press [Enter]!)
+#
+# Output: stdout
+#
+# Other info: If $1 is missing, it will use default prompt ot "Press [Enter] to continue..."
+function pause() {
+	if [[ -z $1 ]]; then
+		read -p "Press [Enter] to continue..."
+	else
+		read -p "$@"
+	fi
 }
 
 # This following, which SHOULD be run in every script, will enable debugging if -v|--verbose is enabled.

@@ -134,6 +134,9 @@ Also, pay close attention to the documentation! Incorrect calls can kill!
 #### getUserAnswer()
 Asks the user a given question, then can optionally have user assign a value to a variable for use. See documentation for more info.
 
+#### pause()
+Simply prompts the user to press [Enter] to continue. Can also use custom prompt.
+
 #### Other jobs
 There is now a small function that runs each time commonFunctions.sh is sourced - `if $1 is -v|--verbose`, it will enable debugging and shift arguments for use.
 
