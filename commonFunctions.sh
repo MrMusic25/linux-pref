@@ -5,6 +5,9 @@
 # Note: this script whould not be run by itself, as it only contains functions and variables
 #
 # Changes:
+# v1.7.1
+# - Fixed checkRequirements() so it accepts "program|installer" as an argument
+#
 # v1.7.0
 # - Added checkRequirements()
 #
@@ -88,7 +91,7 @@
 # v1.1.0
 # - Added announce() and debug() functions
 #
-# v1.7.0 17 Sep. 2016 17:51 PST
+# v1.7.1 22 Sep. 2016 12:46 PST
 
 ### Variables
 
@@ -571,6 +574,7 @@ function pause() {
 # Output: None if successful, asks to install if anything is found. If it must be manually installed, script will exit.
 #
 # Other: Except for rare cases, this will not work for libraries ( e.g. anything with "lib" in it). These must be done manually.
+#        Note: Now you can use "program|installer" to install program, in case the program is part of a larger package
 function checkRequirements() {
 	# Determine package manager before doing anything else
 	if [[ -z $program || "$program" == "NULL" ]]; then
@@ -579,17 +583,25 @@ function checkRequirements() {
 	
 	for req in "$@"
 	do
+		if [[ "$req" == "*|*" ]]; then
+			reqm="$(echo "$req" | cut -d'|' -f1)"
+			reqt="$(echo "$req" | cut -d'|' -f2)"
+		else
+			reqm="$req"
+			reqt="$req"
+		fi
+		
 		# No debug messages on success, keeps things silent
-		if [[ -z "$(which $req &>/dev/null)" ]]; then
-			debug "$req is not installed for $0, notifying user for install"
-			getUserAnswer "$req is not installed, would you like to do so now?"
+		if [[ -z "$(which $reqm &>/dev/null)" ]]; then
+			debug "$reqt is not installed for $0, notifying user for install"
+			getUserAnswer "$reqt is not installed, would you like to do so now?"
 			case $? in
 				0)
-				debug "Installing $req based on user input"
-				universalInstaller "$req"
+				debug "Installing $reqt based on user input"
+				universalInstaller "$reqt"
 				;;
 				1)
-				debug "User chose not to install required program $req, quitting!"
+				debug "User chose not to install required program $reqt, quitting!"
 				announce "Please install the program manually before running this script!"
 				exit 1
 				;;
