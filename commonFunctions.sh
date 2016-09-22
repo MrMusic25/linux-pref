@@ -5,6 +5,9 @@
 # Note: this script whould not be run by itself, as it only contains functions and variables
 #
 # Changes:
+# v1.7.0
+# - Added checkRequirements()
+#
 # v1.6.7
 # - Added a very tiny function that pauses the script (can't believe it took me this long to do something so simple...)
 # - Fixed a few issues found with shellcheck
@@ -85,7 +88,7 @@
 # v1.1.0
 # - Added announce() and debug() functions
 #
-# v1.6.7 01 Sep. 2016 15:31 PST
+# v1.7.0 17 Sep. 2016 17:51 PST
 
 ### Variables
 
@@ -556,6 +559,55 @@ function pause() {
 		read -p "$@"
 	fi
 }
+
+## checkRequirements()
+#
+# Function: Check to make sure programs are installed before running script
+#
+# Call: checkRequirements <program_1> [program_2] [program_3] ...
+#
+# Input: Each argument should be the proper name of a command or program to be searched for
+#
+# Output: None if successful, asks to install if anything is found. If it must be manually installed, script will exit.
+#
+# Other: Except for rare cases, this will not work for libraries ( e.g. anything with "lib" in it). These must be done manually.
+function checkRequirements() {
+	# Determine package manager before doing anything else
+	if [[ -z $program || "$program" == "NULL" ]]; then
+		determinePM
+	fi
+	
+	for req in "$@"
+	do
+		# No debug messages on success, keeps things silent
+		if [[ -z "$(which $req &>/dev/null)" ]]; then
+			debug "$req is not installed for $0, notifying user for install"
+			getUserAnswer "$req is not installed, would you like to do so now?"
+			case $? in
+				0)
+				debug "Installing $req based on user input"
+				universalInstaller "$req"
+				;;
+				1)
+				debug "User chose not to install required program $req, quitting!"
+				announce "Please install the program manually before running this script!"
+				exit 1
+				;;
+				*)
+				debug "Unknown return option from getUserAnswer: $?"
+				announce "Invalid response, quitting"
+				exit 123
+				;;
+			esac
+		fi
+	done
+	
+	# If everything is installed, it will reach this point
+	debug "All requirements met, continuing with script."
+}
+
+
+
 
 # This following, which SHOULD be run in every script, will enable debugging if -v|--verbose is enabled.
 # The 'shift' command lets the scripts use the rest of the arguments

@@ -137,6 +137,9 @@ Asks the user a given question, then can optionally have user assign a value to 
 #### pause()
 Simply prompts the user to press [Enter] to continue. Can also use custom prompt.
 
+#### checkRequirements()
+If programs are require for a script, add them as an argument to this command. It will check that they are installed and quit if not.
+
 #### Other jobs
 There is now a small function that runs each time commonFunctions.sh is sourced - `if $1 is -v|--verbose`, it will enable debugging and shift arguments for use.
 
