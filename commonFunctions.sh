@@ -606,9 +606,6 @@ function checkRequirements() {
 	debug "All requirements met, continuing with script."
 }
 
-
-
-
 # This following, which SHOULD be run in every script, will enable debugging if -v|--verbose is enabled.
 # The 'shift' command lets the scripts use the rest of the arguments
 if [[ "$1" == "-v" || "$1" == "--verbose" ]]; then

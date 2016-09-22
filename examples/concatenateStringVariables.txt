@@ -1,0 +1,30 @@
+If you want to combine string variables into one big string, you must concatenate (combine) them.
+e.g If you want to combine the options for a command, then call it all at once
+
+Note the whitespace in front of the "options" It is necessary if you wish to do things this way, as are the quotation 
+marks.
+
+Script looks like:
+
+#!/bin/bash
+# scriptTest.sh - A script for testing theories and code snippets
+
+source commonFunctions.sh
+
+options="empty"
+option1=" -a"
+option2=" --no-output"
+
+echo "Option: $options"
+options="$options""$option1"
+echo "With option 1: $options"
+options="$options""$option2"
+echo "With option 2: $options"
+
+#EOF
+
+Output looks like:
+
+Option: empty
+With option 1: empty -a
+With option 2: empty -a --no-output
