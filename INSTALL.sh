@@ -1,11 +1,15 @@
 #!/bin/bash
 #
 # INSTALL.sh - A script meant to automatically install and setup my personal favorite options
-# Usage: ./INSTALL.sh
+# Usage: ./INSTALL.sh [options] <install_option>
 #
-# Note: This will change soon as functionality is added
+# There are too many things to display here, so please look at displayHelp() to see the options and install options
 #
 # Changes:
+# v1.2.2
+# - Made some minor changes
+# - setupCommands and nonScriptCommands now ask before running, and don't run in "except" mode
+#
 # v1.2.1
 # - Learned that lesson the hard way... Use full directory names when using symbolic links!
 # - Apparently I never tested -e, but it should work now
@@ -56,7 +60,7 @@
 # v0.0.1
 # - Initial commit - only displayHelp() and processArgs() working currently
 #
-# v1.2.0 15 Aug 2016 15:47 PST
+# v1.2.2 22 Sept 2016 21:14 PST
 
 ### Variables
 
@@ -642,20 +646,46 @@ case $runMode in
 esac
 
 # Now install all my necessary and fun commands to user and root .bashrc
-if [[ $installOnly -eq 0 ]]; then
+if [[ $installOnly -eq 0 && "$runMode" != "except" ]]; then
+	getUserAnswer "Would you like to run setup commands?"
+	case $? in
+	0)
 	debug "Running setupCommands.sh!"
 	./setupCommands.sh
+	;;
+	1)
+	debug "User chose not to run setupCommands.sh"
+	;;
+	*)
+	debug "Unknown option! $?"
+	announce "An error occurred! Please consult log!"
+	exit 1
+	;;
+	esac
+	getUserAnswer "Would you like to have the nonScriptCommands read to you?"
+	case $? in
+	0)
+	debug "Reading nonScriptCommands.txt to user"
+	announce "The following commands cannot be scripted." "Manually install each command as they are given"
+	while read -r lined;
+	do
+		[[ $lined = \#* || -z $lined ]] && continue
+		echo "$lined"
+		sleep 5
+	done < "nonScriptCommands.txt"
+	;;
+	1)
+	debug "User chose not to have nonScriptCommands read to them"
+	;;
+	*)
+	debug "Unkown option received: $?"
+	announce "Unknown erropr has occurred! Please look at your log!"
+	exit 1
+	;;
+	esac
 else
 	debug "Not running setupCommands.sh because user specified not to"
 fi
-
-announce "The following commands cannot be scripted." "Manually install each command as they are given"
-while read -r lined;
-do
-	[[ $lined = \#* || -z $lined ]] && continue
-	echo "$lined"
-	sleep 5
-done < "nonScriptCommands.txt"
 
 debug "Done with script!"
 
