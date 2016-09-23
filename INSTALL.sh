@@ -688,5 +688,6 @@ else
 fi
 
 debug "Done with script!"
+announce "Everything was installed successfully!"
 
 #EOF

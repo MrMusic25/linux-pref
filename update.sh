@@ -7,6 +7,9 @@
 # If there are arguments, it will try to install the programs listed
 #
 # Changes:
+# v1.2.8
+# - Made a minor change. Brought the version up one. Yup.
+#
 # v1.2.7
 # - Script now exit if being run as root on Arch-based distributions - yaourt doesn't like sudo
 # - Random little changes
@@ -59,7 +62,7 @@
 # - Script will now ask if you would like to reboot after updating, if it is needed
 # - Changed echoes to announce()
 #
-# v1.2.7, 16 Aug 2016 20:42 PST
+# v1.2.8, 23 Sept 2016 00:16 PST
 
 ### Variables
 
@@ -220,7 +223,7 @@ if [[ -f /var/run/reboot-required ]]; then
 		;;
 		1)
 		debug "User decided not to reboot computer"
-		announce "Please reboot your computer at a tiem where it is convinient for you!"
+		announce "Please reboot your computer at a time where it is convinient for you!"
 		;;
 		*)
 		debug "Unknown exit code: $?"

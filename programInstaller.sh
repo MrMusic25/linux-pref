@@ -6,6 +6,10 @@
 # Determines which package manager is being used, then installs all the packages listed in programs.txt (or argument, if provided)
 #
 # Changes:
+# v1.3.1
+# - Fixed runtime error
+# - Mother. Flippin. Minor. Text. Changes. =D
+#
 # v1.3.0
 # - Had a wake up call - you can now edit programs  you want in the script itself before installing
 # - Using the new function in cF you can edit text fiels without leaving script
@@ -58,7 +62,7 @@
 # - Changed most output to use announce() and debug()
 # - determinePM() redirects to /dev/null now because it is not important to view except on failure
 #
-# v1.2.3 16 Aug, 2016, 21:25 PST
+# v1.3.1, 23 Sept. 2016 00:14 PST
 
 ### Variables
 
@@ -137,10 +141,10 @@ case $programMode in
 			getUserAnswer "Would you like to edit $list before installing?"
 			case $? in
 			0)
-			editTextFile "$1"
+			editTextFile "$list"
 			;;
 			1)
-			debug "User chose not to edit $1"
+			debug "User chose not to edit $list"
 			;;
 			*)
 			debug "Unknown option: $?"
@@ -152,10 +156,10 @@ case $programMode in
 			while read -r line; do
 				[[ $line = \#* ]] && continue # Skips comment lines
 				universalInstaller "$line"
-			done <"$file"/"$list"
+			done <"$list"
 		fi
 	done
-	cd .. # Return to previous location so other scripts don't break
+	[[ ! -z $OLDPWD ]] && cd "$OLDPWD" || cd .. # Return to previous location so other scripts don't break
 	;;
 	*)
 	debug "Everything is broken. Why. At least you have unique debug messages for an easy CTRL+F."
