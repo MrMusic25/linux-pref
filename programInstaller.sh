@@ -6,6 +6,10 @@
 # Determines which package manager is being used, then installs all the packages listed in programs.txt (or argument, if provided)
 #
 # Changes:
+# v1.3.0
+# - Had a wake up call - you can now edit programs  you want in the script itself before installing
+# - Using the new function in cF you can edit text fiels without leaving script
+#
 # v1.2.3
 # - Script now quits if root when on Arch-based systems
 #
@@ -104,7 +108,7 @@ elif [[ -d "programLists/" ]]; then
 	export file="programLists"
 else
 	debug "Script is broken! Please fix!"
-	exit 592
+	exit 59
 fi
 
 debug "This distribution is using $program as it's package manager!"
@@ -124,11 +128,27 @@ case $programMode in
 	cd "$file"
 	for list in *.txt;
 	do
-		debug "Installing from $list"
+		debug "Asking user if they would like to install $list"
 		getUserAnswer "Would you like to install the programs listed in $list?"
 		if [[ $? -eq 1 ]]; then
 			debug "Skipping $list at user's choice..."
 		else
+			# Ask if user wants to edit file before installing
+			getUserAnswer "Would you like to edit $list before installing?"
+			case $? in
+			0)
+			editTextFile "$1"
+			;;
+			1)
+			debug "User chose not to edit $1"
+			;;
+			*)
+			debug "Unknown option: $?"
+			announce "Error occurred! Please consult log!"
+			exit 1
+			;;
+			esac
+			
 			while read -r line; do
 				[[ $line = \#* ]] && continue # Skips comment lines
 				universalInstaller "$line"
@@ -139,7 +159,7 @@ case $programMode in
 	;;
 	*)
 	debug "Everything is broken. Why. At least you have unique debug messages for an easy CTRL+F."
-	exit 972
+	exit 72
 	;;
 esac
 

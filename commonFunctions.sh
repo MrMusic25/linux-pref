@@ -5,6 +5,10 @@
 # Note: this script whould not be run by itself, as it only contains functions and variables
 #
 # Changes:
+# v1.7.3
+# - Didn't want to change major version since I was working on it today
+# - Added function editTextFile() that was originally built for improved programInstaller.sh
+#
 # v1.7.2
 # - Don't use pipes to separate variables... Changed to slashes, and this time I tested before uploading
 # - Small change to determinePM() to prevent pacman errors
@@ -96,7 +100,7 @@
 # v1.1.0
 # - Added announce() and debug() functions
 #
-# v1.7.2 22 Sep. 2016 13:36 PST
+# v1.7.3 22 Sep. 2016 23:43 PST
 
 ### Variables
 
@@ -621,6 +625,45 @@ function checkRequirements() {
 	
 	# If everything is installed, it will reach this point
 	debug "All requirements met, continuing with script."
+}
+
+## editTextFile()
+#
+# Function: Let the user edit a text file, then return to the script
+#
+# Call: editTextFile <text_file>
+#
+# Input: A text file to be edited
+#
+# Output: Opens editor with the provided file. Some stdout
+#
+# Other: Defaults to nano. If user is over 40 years old, it will use vi instead (lol). Uses $EDITOR and $VISUAL first.
+function editTextFile() {
+	# First, check if file was provided. Return error if not.
+	if [[ -z $1 ]]; then
+		debug "Incorrect call for editTextFile, please consult commonFunctions.sh"
+		announce "Incorrect call for editTextFile!" "Please read documentation and fix script." "Script will continue without editing, press CTRL+C to quit"
+		return 1
+	fi
+	
+	# Now, find the editor and run it
+	if [[ -z $EDITOR && -z $VISUAL ]]; then
+		if [[ -z $(which nano 2>/dev/null) ]]; then
+			debug "User error has lead to vi being the only editor, using it as a last resort!"
+			announce "It seems vi is your only editor. Strange choice, or new installation?" "When done editing, press :wq to exit vi"
+			vi "$1"
+		else
+			debug "Letting user edit $1 with nano"
+			nano "$1"
+		fi
+	elif [[ -z $EDITOR ]]; then
+		debug "Letting user edit $1 with $VISUAL"
+		"$VISUAL" "$1"
+	else
+		debug "Letting user edit $1 with $EDITOR"
+		"$EDITOR" "$1"
+	fi
+	return 0
 }
 
 # This following, which SHOULD be run in every script, will enable debugging if -v|--verbose is enabled.
