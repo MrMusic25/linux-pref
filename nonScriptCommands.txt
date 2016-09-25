@@ -7,4 +7,5 @@ If the terminal supports it, in keyboard settings, make CTRL+ALT+T open a drop-d
 Change power settings so screen doesn't unexpectedly turn off, and computer doesn't shut down.
 Run a program like rankmirror or pacman-mirror -g to get the fastest downloads for updates and installs.
 If on a laptop, change mouse to two-finger scrolling.
+Install the .nanorc from this repo: https://github.com/scopatz/nanorc
 #EOF
