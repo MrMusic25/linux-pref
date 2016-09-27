@@ -26,4 +26,9 @@ alias push='git push'
 alias pull='git pull'
 alias commit='git commit -a'
 
+# Found this on reddit one day from u/TheHamitron
+# https://gist.github.com/hamitron/53aed9089f224727cf28917b6b573e9d
+#alias catass="curl http://catfacts-api.appspot.com/api/facts | sed 's/.*\["\(.*\)"\].*/\1/' | sed -e 
+'s/cat/asshole/g' | espeak -s 150"
+
 #EOF
