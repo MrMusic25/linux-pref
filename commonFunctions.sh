@@ -100,6 +100,17 @@
 # v1.1.0
 # - Added announce() and debug() functions
 #
+# TODO:
+# - Add hello()/bye() OR script(start/stop) function to initialize scripts
+#   ~ Start debugger, log the start time, source files that are needed according to script
+#     ~ Each script has "sourceVar" which is an array of required scripts to source before running. Quit if can't be found.
+#   ~ Put exit debug message, "Script completed in x.yz seconds", announce "Done with script!" or "Script exited successfully!"
+#     ~ Exit with included code, don't print success message if code > 0
+# - debug()
+#   ~ MAYBE start doing log levels (1 log only, 2 stderr+log, 3 stdout+stderr+log)
+#   ~ If $1 == "echo", send debug message to stdout as well
+#     ~ Eliminates need for "export debugFlag=1" statements for exiting, cleaner execution
+#
 # v1.7.3 22 Sep. 2016 23:43 PST
 
 ### Variables

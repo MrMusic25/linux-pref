@@ -25,7 +25,8 @@
 # - Make new cF.sh specifically for this script
 #   ~ Add this script to cF.sh so other functions that depend on universalInstaller or determinePM can still use them
 #     ~ For that matter, DON'T BREAK COMPATIBILITY! COPY+PASTE!
-#   ~ Possibly add them to a folder of common functions, source all of them with a for loop or conditionally (C++ style!)
+#   ~ Possibly add them to a folder of common functions, source all of them with a for loop or conditionally (ifdef, C++ style!)
+#     ~ http://unix.stackexchange.com/questions/253805/ifdef-style-conditional-inclusions-for-shell
 #   ~ Note: you might have to fix linking once everything is ready
 #     ~ Idea: Script that sources everything from the $LP/commonFunctions.sh folder, solves a lot of issues
 #       ~ You would have to export the location of $LP, but that's pretty easy to include with INSTALL.sh
