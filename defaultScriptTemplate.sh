@@ -6,6 +6,11 @@
 # v0.0.1
 # - Initial version
 #
+# TODO:
+# - Things to do go here
+#   ~ Use spaces because I said so
+#     ~ Separate levels like this
+#
 # v0.0.1, <Insert date here>
 
 ### Variables
