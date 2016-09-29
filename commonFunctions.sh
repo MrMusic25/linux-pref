@@ -110,6 +110,9 @@
 #   ~ MAYBE start doing log levels (1 log only, 2 stderr+log, 3 stdout+stderr+log)
 #   ~ If $1 == "echo", send debug message to stdout as well
 #     ~ Eliminates need for "export debugFlag=1" statements for exiting, cleaner execution
+# - announce()
+#   ~ If announce() reaches $MAX_CHAR_LIMIT, output extra data to second line
+#   ~ Disable stars and printf statements when -v|--verbose is on, makes debugging cleaner
 #
 # v1.7.3 22 Sep. 2016 23:43 PST
 

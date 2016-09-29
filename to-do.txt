@@ -1,5 +1,0 @@
-- Add function that will echo arguments into the .bashrc, .zshrc, for both the current user AND root
-
-- Add debug statements EVERYWHERE so verbose and logging is not as meaningless as it is now
-
-- Make a function for INSTALL.sh for install grive and offer to set it up to default directory ($HOME/Grive)
