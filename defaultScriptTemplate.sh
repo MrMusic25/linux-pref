@@ -15,6 +15,10 @@
 
 ### Variables
 
+
+
+### Functions
+
 if [[ -f commonFunctions.sh ]]; then
 	source commonFunctions.sh
 elif [[ -f /usr/share/commonFunctions.sh ]]; then
@@ -26,10 +30,6 @@ else
 	echo "Script will now exit, please put file in same directory as script, or link to /usr/share!"
 	exit 1
 fi
-
-### Functions
-
-
 
 ### Main Script
 
