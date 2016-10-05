@@ -59,6 +59,7 @@ fi
 # Output: Exports variable 'program'; no return value (yet)
 #
 # Other info: Updates repositories if possible, redirect to /dev/null if you don't want to see it
+# https://linuxconfig.org/comparison-of-major-linux-package-management-systems
 function determinePM() {
 	if [[ ! -z $(which apt-get 2>/dev/null) ]]; then # Most common, so it goes first
 		export program="apt"
