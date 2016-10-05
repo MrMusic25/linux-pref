@@ -62,6 +62,10 @@
 # - Script will now ask if you would like to reboot after updating, if it is needed
 # - Changed echoes to announce()
 #
+# TODO:
+# - Add ability to update other managers (pip, npm, node, etc)
+# - Once getUserAnswer() is updated, change script to ask w/timeout to update 'other' PMs
+#
 # v1.2.8, 23 Sept 2016 00:16 PST
 
 ### Variables

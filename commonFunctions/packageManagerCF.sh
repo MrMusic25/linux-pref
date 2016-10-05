@@ -37,8 +37,6 @@ else
 	exit 1
 fi
 
-### Main Script
-
 
 
 #EOF

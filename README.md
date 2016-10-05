@@ -8,7 +8,7 @@ i.e. OSX, BSD, UNIX, and soon Windows 10!
 - If a script requires root privileges, it will notify you and attempt to re-run itself as root.
 - All scripts will save their logs to `~/.logs/`, look there for additional debug info if submitting a ticket or diagnosing errors.
 - Please feel free to fork this for yourself, or leave a note here. I accept any input or suggestions on improvements or bug fixes.
-- If you are interested in writing scripts like these, you can begin learning the syntax from the [Bash Hackers Wiki] (http://wiki.bash-hackers.org/), or look at the files in `exapmples/`
+- If you are interested in writing scripts like these, you can begin learning the syntax from the [Bash Hackers Wiki] (http://wiki.bash-hackers.org/), or look at the files in `examples/`
 
 ## Scripts and Usage
 

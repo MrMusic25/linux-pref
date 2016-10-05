@@ -113,6 +113,10 @@
 # - announce()
 #   ~ If announce() reaches $MAX_CHAR_LIMIT, output extra data to second line
 #   ~ Disable stars and printf statements when -v|--verbose is on, makes debugging cleaner
+# - getUserAnswer()
+#   ~ For y/n answers, add an option that assumes a default option ( y/N or Y/n)
+#   ~ If the option times out, assum the answer and return that value
+#     ~ This allows for user input while still being non-interactive
 #
 # v1.7.3 22 Sep. 2016 23:43 PST
 
