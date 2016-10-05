@@ -3,6 +3,12 @@
 # packageManagerCF.sh - Common functions for package managers and similar functions
 #
 # Changes:
+# v0.2.0
+# - Changes to order of determining order of PM based on popularity online
+# - Added cleanPM(), upgradePM()
+# - Added a few more debug statements
+# - All functions now check if program is set before running (unneeded safety measure, but I hate complaints; not like it wastes cycles)
+#
 # v0.1.0
 # - Added updatePM()
 # - determinePM() no longer updates packages
@@ -22,7 +28,7 @@
 #   ~ Separate updating databases from this function
 #   ~ In cases like Arch with pacman/yaourt, inform user of dual-package managers
 #
-# v0.1.0, 05 Oct. 2016 00:11 PST
+# v0.2.0, 05 Oct. 2016 00:49 PST
 
 ### Variables
 
@@ -63,22 +69,21 @@ function determinePM() {
 	elif [[ ! -z $(which yum 2>/dev/null) ]]; then
 		export program="yum"
 		#yum check-update
-	elif [[ ! -z $(which slackpkg 2>/dev/null) ]]; then
-		export program="slackpkg"
-		#slackpkg update
-	elif [[ ! -z $(which zypper 2>/dev/null) ]]; then # Main PM for openSUSE
-		export program="zypper" 
-	elif [[ ! -z $(which rpm 2>/dev/null) ]]; then
-		export program="rpm"
-		#rpm -F --justdb # Only updates the DB, not the system
-	elif [[ ! -z $(which yast 2>/dev/null) ]]; then # YaST is annoying af, so look for rpm and yum first
-		export program="yast"
 	elif [[ ! -z $(which pacman 2>/dev/null) ]]; then
 		export program="pacman"
 		#sudo pacman -Syy &>/dev/null # Refreshes the repos, always read the man pages!
 		
 		# Conditional statement to install yaourt
 		[[ -z $(which yaourt 2>/dev/null) ]] && announce "pacman detected! yaourt will be installed as well!" "This insures all packages can be found and installed" && sudo pacman -S base-devel yaourt
+	elif [[ ! -z $(which slackpkg 2>/dev/null) ]]; then
+		export program="slackpkg"
+		#slackpkg update
+	elif [[ ! -z $(which zypper 2>/dev/null) ]]; then # Main PM for openSUSE
+		export program="zypper" 
+		# https://en.opensuse.org/SDB:Zypper_usage for more info
+	elif [[ ! -z $(which rpm 2>/dev/null) ]]; then
+		export program="rpm"
+		#rpm -F --justdb # Only updates the DB, not the system
 	fi
 	debug "Package manager found! $program"
 }
@@ -104,6 +109,7 @@ function updatePM() {
 	fi
 	
 	# Now, do the proper update command
+	debug "Refreshing the package manager's database"
 	case $program in
 		apt)
 		apt-get update
@@ -145,48 +151,158 @@ function updatePM() {
 # Other info: Loops through arguments and installs one at a time, encapsulate in ' ' if you want some installed together
 #             e.g. universalInstaller wavemon gpm 'zsh ssh' -> wavemon and gpm installed by themselves, zsh and ssh installed together
 function universalInstaller() {
-for var in "$@"
-do
+	# Check to make sure $program is set
+	if [[ -z $program || "$program" == "NULL" ]]; then
+		debug "Attempted to install with package manager without setting program! Fixing..."
+		announce "You are attempting to run universalInstaller() without setting \$program!" "Script will fix this for you, but please fix your script."
+		determinePM
+	fi
+	
+	for var in "$@"
+	do
+		debug "Attempting to install $var"
+		case $program in
+			apt)
+			apt-get --assume-yes install "$var"  
+			;;
+			dnf)
+			dnf -y install "$var"
+			;;
+			yum)
+			yum install "$var" 
+			;;
+			slackpkg)
+			slackpkg install "$var"
+			;;
+			zypper)
+			zypper --non-interactive install "$var"
+			;;
+			rpm)
+			rpm -i "$var" 
+			;;
+			pacman)
+			sudo pacman -S --noconfirm "$var"
+			
+			# If pacman can't install it, it can likely be found in AUR/yaourt
+			if [[ $? -eq 1 ]]; then
+				debug "$var not found with pacman, attempting install with yaourt!"
+				announce "$var not found with pacman, trying yaourt!" "This is interactive because it could potentially break your system."
+				yaourt "$var"
+			fi 
+			;;
+			*)
+			announce "Package manager not found! Please update script or diagnose problem!"
+			#exit 300
+			;;
+		esac
+	done
+}
+
+## upgradePM()
+#
+# Function: Upgrade all packages in the system with newer version available
+# PreReq: $program must be set OR determinePM() must be run first
+#
+# Call: upgradePM
+#
+# Input: None
+#
+# Output: stdout
+#
+# Other info: None, simple function
+function upgradePM() {
+	# Check to make sure $program is set
+	if [[ -z $program || "$program" == "NULL" ]]; then
+		debug "Attempted to upgrade package manager without setting program! Fixing..."
+		announce "You are attempting to upgradePM() without setting \$program!" "Script will fix this for you, but please fix your script."
+		determinePM
+	fi
+	
+	debug "Preparing to upgrade $program"
 	case $program in
 		apt)
-		apt-get --assume-yes install "$var"  
+		announce "NOTE: script will be running a dist-upgrade!"
+		apt-get --assume-yes dist-upgrade
 		;;
 		dnf)
-		dnf -y install "$var"
+		dnf -y upgrade
 		;;
 		yum)
-		yum install "$var" 
+		yum upgrade
 		;;
 		slackpkg)
-		slackpkg install "$var"
+		slackpkg install-new # Required line
+		slackpkg upgrade-all
 		;;
-		yast)
-		yast -i "$var" 
+		zypper)
+		zypper --non-interactive update
 		;;
 		rpm)
-		rpm -i "$var" 
+		rpm -F
 		;;
 		pacman)
-		sudo pacman -S --noconfirm "$var"
-		
-		# If pacman can't install it, it can likely be found in AUR/yaourt
-		if [[ $? -eq 1 ]]; then
-			debug "$var not found with pacman, attempting install with yaourt!"
-			announce "$var not found with pacman, trying yaourt!" "This is interactive because it could potentially break your system."
-			yaourt "$var"
-		fi 
-		;;
-		aptitude)
-		aptitude -y install "$var" 
+		sudo pacman -Syu
+		yaourt -Syu --aur # Remember to refresh the AUR as well
 		;;
 		*)
 		announce "Package manager not found! Please update script or diagnose problem!"
-		#exit 300
+		exit 1
 		;;
 	esac
-done
-	# Insert code dealing with failed installs here
 }
 
+## cleanPM()
+#
+# Function: Cleans the systme of stale packages and wasted space
+# PreReq: $program must be set OR determinePM() must be run first
+#
+# Call: cleanPM
+#
+# Input: None
+#
+# Output: stdout
+#
+# Other info: Some functions do not have a clean option, it will notify the user if so
+function cleanPM() {
+	# Check to make sure $program is set
+	if [[ -z $program || "$program" == "NULL" ]]; then
+		debug "Attempted to clean package manager without setting program! Fixing..."
+		announce "You are attempting to cleanPM() without setting \$program!" "Script will fix this for you, but please fix your script."
+		determinePM
+	fi
+	
+	debug "Preparing to clean with $program"
+	case $program in
+		apt)
+		apt-get --assume-yes autoremove
+		apt-get autoclean
+		;;
+		dnf)
+		dnf -y clean all
+		dnf -y autoerase
+		;;
+		yum)
+		yum clean all
+		;;
+		slackpkg)
+		slackpkg clean-system
+		;;
+		rpm)
+		announce "RPM has no clean function"
+		# Nothing to be done
+		;;
+		pacman)
+		#pacman -cq
+		announce "For your safety, please clean pacman yourself." "Use the command: pacman -Sc"
+		;;
+		zypper)
+		announce "Zypper has no clean function"
+		;;
+		*)
+		announce "Package manager not found! Please update script or diagnose problem!"
+		exit 3
+		;;
+	esac
+}
 
 #EOF
