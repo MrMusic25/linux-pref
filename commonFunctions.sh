@@ -107,7 +107,8 @@
 #   ~ Put exit debug message, "Script completed in x.yz seconds", announce "Done with script!" or "Script exited successfully!"
 #     ~ Exit with included code, don't print success message if code > 0
 # - debug()
-#   ~ MAYBE start doing log levels (1 log only, 2 stderr+log, 3 stdout+stderr+log)
+#   ~ MAYBE start doing log levels (1 log only, 2 stderr+log, 3 stdout+log, 4 stderr+stdout+log)
+#     ~ If $tmpLevel != 0, echo to stderr||stdout, then set $tmpLevel=0 every time function is called
 #   ~ If $1 == "echo", send debug message to stdout as well
 #     ~ Eliminates need for "export debugFlag=1" statements for exiting, cleaner execution
 # - announce()
