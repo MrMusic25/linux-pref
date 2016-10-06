@@ -30,6 +30,7 @@
 #   ~ Note: you might have to fix linking once everything is ready
 #     ~ Idea: Script that sources everything from the $LP/commonFunctions.sh folder, solves a lot of issues
 #       ~ You would have to export the location of $LP, but that's pretty easy to include with INSTALL.sh
+# - If PM is Arch, make sure it is NOT running as sudo. Otherwise, checkPrivilege "quit"
 #
 #
 # v0.0.1, Sept. 28 2016 18:08 PST

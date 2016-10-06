@@ -3,6 +3,10 @@
 # packageManagerCF.sh - Common functions for package managers and similar functions
 #
 # Changes:
+# v0.4.0
+# - Finished queryPM()
+# - Added a completed removePM()
+#
 # v0.3.0
 # - Added queryPM()
 # - Started adding support for Portage/emerge for Gentoo based systems
@@ -32,7 +36,7 @@
 #   ~ Separate updating databases from this function
 #   ~ In cases like Arch with pacman/yaourt, inform user of dual-package managers
 #
-# v0.3.0, 06 Oct. 2016 13:29 PST
+# v0.4.0, 06 Oct. 2016 16:26 PST
 
 ### Variables
 
@@ -358,6 +362,75 @@ function queryPM() {
 			emerge)
 			emerge --search "$var" # Like yum, use 'emerge --searchdesc' if the results aren't enough
 			;;
+			zypper)
+			zypper search "$var"
+			;;
+			dnf)
+			dnf search "$var"
+			;;
+			rpm)
+			rpm -q "$var"
+			;;
+			slackpkg)
+			slackpkg search "$var"
+			;;
+		esac
+	done
+}
+
+## removePM()
+#
+# Function: Remove given packages
+# PreReq: Set $program, or run determinePM()
+#
+# Call: removePM <program> [program] ...
+#
+# Input: Names of packages to remove
+#
+# Output: stdout
+#
+# Other info: No --assume-yes, just in case. Pay attention!
+function removePM() {
+	# Check to make sure $program is set
+	if [[ -z $program || "$program" == "NULL" ]]; then
+		debug "Attempted to remove packages without setting program! Fixing..."
+		announce "You are attempting to removePM() without setting \$program!" "Script will fix this for you, but please fix your script."
+		determinePM
+	fi
+	
+	for var in "$@"
+	do
+		debug "l3" "Attempting to remove $var..."
+		case $program in
+			apt)
+			apt-get remove "$var"
+			;;
+			pacman)
+			sudo pacman -R "$var"
+			if [[ $? -ne 0 ]]; then
+				debug "l3" "Couldn't find package $var with pacman, trying yaourt"
+				sudo yaourt -R "$var"
+			fi
+			;;
+			yum)
+			yum remove "$var"
+			;;
+			emerge)
+			emerge --remove --depclean "$var"
+			;;
+			dnf)
+			dnf remove "$var"
+			;;
+			rpm)
+			rpm -e "$var"
+			;;
+			slackpkg)
+			slackpkg remove "$var"
+			;;
+			zypper)
+			zypper remove "$var"
+			;;
+		esac
 	done
 }
 
