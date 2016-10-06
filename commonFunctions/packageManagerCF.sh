@@ -3,6 +3,10 @@
 # packageManagerCF.sh - Common functions for package managers and similar functions
 #
 # Changes:
+# v0.3.0
+# - Added queryPM()
+# - Started adding support for Portage/emerge for Gentoo based systems
+#
 # v0.2.0
 # - Changes to order of determining order of PM based on popularity online
 # - Added cleanPM(), upgradePM()
@@ -28,7 +32,7 @@
 #   ~ Separate updating databases from this function
 #   ~ In cases like Arch with pacman/yaourt, inform user of dual-package managers
 #
-# v0.2.0, 05 Oct. 2016 00:49 PST
+# v0.3.0, 06 Oct. 2016 13:29 PST
 
 ### Variables
 
@@ -82,6 +86,8 @@ function determinePM() {
 	elif [[ ! -z $(which zypper 2>/dev/null) ]]; then # Main PM for openSUSE
 		export program="zypper" 
 		# https://en.opensuse.org/SDB:Zypper_usage for more info
+	elif [[ ! -z $(wich emerge 2>/dev/null) ]]; then # Portage, PM for Gentoo (command is emerge)
+		export program="emerge"
 	elif [[ ! -z $(which rpm 2>/dev/null) ]]; then
 		export program="rpm"
 		#rpm -F --justdb # Only updates the DB, not the system
@@ -126,6 +132,9 @@ function updatePM() {
 		;;
 		slackpkg)
 		slackpkg update
+		;;
+		emerge)
+		emerge --sync
 		;;
 		rpm)
 		rpm -F --justdb # Only updates the DB, not the system
@@ -180,6 +189,9 @@ function universalInstaller() {
 			;;
 			rpm)
 			rpm -i "$var" 
+			;;
+			emerge)
+			emerge "$var"
 			;;
 			pacman)
 			sudo pacman -S --noconfirm "$var"
@@ -329,6 +341,23 @@ function queryPM() {
 	for var in "$@"
 	do
 		debug "l3" "Querying packagage database for: $var"
+		case $program in
+			apt)
+			apt-cache search "$var"
+			;;
+			pacman)
+			pacman -Ss "$var" # No sudo required for this one, same for yaourt
+			if [[ $? -ne 0 ]]; then
+				debug "l3" "Package $var not found in pacman, searching AUR via yaourt instead."
+				yaourt -Ss "$var"
+			fi
+			;;
+			yum)
+			yum search "$var" # Change to 'yum search all' if the results aren't good enough
+			;;
+			emerge)
+			emerge --search "$var" # Like yum, use 'emerge --searchdesc' if the results aren't enough
+			;;
 	done
 }
 

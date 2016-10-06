@@ -122,7 +122,7 @@
 #   ~ If the option times out, assum the answer and return that value
 #     ~ This allows for user input while still being non-interactive
 #
-# v1.7.3, 22 Sep. 2016 23:43 PST
+# v1.7.4, 06 Oct. 2016 12:22 PST
 
 ### Variables
 
