@@ -3,6 +3,9 @@
 # packageManagerCF.sh - Common functions for package managers and similar functions
 #
 # Changes:
+# v0.4.1
+# - Finished adding missing commands for emerge to other functions
+#
 # v0.4.0
 # - Finished queryPM()
 # - Added a completed removePM()
@@ -36,7 +39,7 @@
 #   ~ Separate updating databases from this function
 #   ~ In cases like Arch with pacman/yaourt, inform user of dual-package managers
 #
-# v0.4.0, 06 Oct. 2016 16:26 PST
+# v0.4.1, 06 Oct. 2016 16:50 PST
 
 ### Variables
 
@@ -261,6 +264,9 @@ function upgradePM() {
 		sudo pacman -Syu
 		yaourt -Syu --aur # Remember to refresh the AUR as well
 		;;
+		emerge)
+		emerge --update --deep world # Gentoo is strange
+		;;
 		*)
 		announce "Package manager not found! Please update script or diagnose problem!"
 		exit 1
@@ -314,6 +320,10 @@ function cleanPM() {
 		;;
 		zypper)
 		announce "Zypper has no clean function"
+		;;
+		emerge)
+		emerge --clean
+		emerge --depclean # Couldn't tell which was the only one necessary, so I included both
 		;;
 		*)
 		announce "Package manager not found! Please update script or diagnose problem!"
