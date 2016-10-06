@@ -5,6 +5,9 @@
 # Note: this script whould not be run by itself, as it only contains functions and variables
 #
 # Changes:
+# v1.7.4
+# - Debug now supports levels! See function for more info (legacy calls are not effected)
+#
 # v1.7.3
 # - Didn't want to change major version since I was working on it today
 # - Added function editTextFile() that was originally built for improved programInstaller.sh
@@ -119,7 +122,7 @@
 #   ~ If the option times out, assum the answer and return that value
 #     ~ This allows for user input while still being non-interactive
 #
-# v1.7.3 22 Sep. 2016 23:43 PST
+# v1.7.3, 22 Sep. 2016 23:43 PST
 
 ### Variables
 
@@ -129,6 +132,7 @@ privilege=0 # 0 if root, 777 if not
 debugInit=0
 debugPrefix="$HOME/.logs" # Use: scriptLog="$debugPrefix/scriptLog.log", then include $scriptLog in debug() statements
 logFile=$debugPrefix/$( basename "$0" | cut -d '.' -f 1 ).log # Now every script has a unique yet dynamic log name!
+debugLevel=1 # Default, directs to log; see debug() for more info
 
 cFlag=0 # Used with the ctrl_c function
 #trap ctrl_c INT # This will run the function ctrl_c() when it captures the key press
@@ -360,10 +364,45 @@ function debug() {
 		mkdir "$debugPrefix"
 	fi
 	
-	# Echoes the message if debug flag is on
-	if [[ $debugFlag -eq 1 ]]; then
-		(>&2 echo "Debug: $*") # Sends the message to stderr in a subshell so other redirection isn't effected, in case user quiets stdout
+	oldLevel="$debugLevel" # Respect user's choice, reset at the end of the script
+	# Set the debug level, if it is present. This way not all legacy calls ave to be changed
+	if [[ "$1" == l* ]]; then
+		case $1 in
+			l1)
+			debugLevel=1 # Log only
+			;;
+			l2)
+			debugLevel=2 # Log + stderr
+			;;
+			l3)
+			debugLevel=3 # Log + stdout (using announce)
+			;;
+			l4)
+			debugLevel=4 # Log + stdout + stderr (this probably won't be used often, but coded it in anyways
+			;;
+		esac
+		shift # So that the level doesn't get included in the debug message
 	fi
+	
+	# Now, redirect output based on debugLevel
+	case $debugLevel in
+		2)
+		(>&2 echo "Debug: $*")
+		;;
+		3)
+		announce "Debug: $@"
+		;;
+		4)
+		(>&2 echo "Debug: $*")
+		announce "Debug: $@"
+		;;
+	esac
+	debugLevel="$oldLevel"
+	
+	# Echoes the message if debug flag is on
+	#if [[ $debugFlag -eq 1 ]]; then
+	#	(>&2 echo "Debug: $*") # Sends the message to stderr in a subshell so other redirection isn't effected, in case user quiets stdout
+	#fi
 	
 	if [[ ! -z $logFile ]]; then
 		if [[ ! -f $logFile ]]; then
@@ -690,6 +729,7 @@ function editTextFile() {
 if [[ "$1" == "-v" || "$1" == "--verbose" ]]; then
 	echo "Running in verbose mode!"
 	export debugFlag=1
+	export debugLevel=2
 	shift
 fi
 

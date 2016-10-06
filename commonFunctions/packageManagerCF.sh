@@ -306,4 +306,30 @@ function cleanPM() {
 	esac
 }
 
+## queryPM()
+#
+# Function: Check for packages with a similar name in package database
+# PreReq: $program must be set, or run determinePM() must be run first
+#
+# Call: queryPM <package_name> [package_name] ...
+#
+# Input: Will search and return info for each argument
+#
+# Output: stdout
+#
+# Other info: It will print which package it is looking for before displaying information
+function queryPM() {
+	# Check to make sure $program is set
+	if [[ -z $program || "$program" == "NULL" ]]; then
+		debug "Attempted to query package manager without setting program! Fixing..."
+		announce "You are attempting to queryPM() without setting \$program!" "Script will fix this for you, but please fix your script."
+		determinePM
+	fi
+	
+	for var in "$@"
+	do
+		debug "l3" "Querying packagage database for: $var"
+	done
+}
+
 #EOF
