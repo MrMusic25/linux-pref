@@ -5,6 +5,10 @@
 # Note: this script whould not be run by itself, as it only contains functions and variables
 #
 # Changes:
+# v1.7.5
+# - A comment required a version change... Script now relies on $program not being set
+# - Added as close to an '#ifndef' statement as I could for sourcing
+#
 # v1.7.4
 # - Debug now supports levels! See function for more info (legacy calls are not effected)
 #
@@ -122,13 +126,14 @@
 #   ~ If the option times out, assum the answer and return that value
 #     ~ This allows for user input while still being non-interactive
 #
-# v1.7.4, 06 Oct. 2016 12:22 PST
+# v1.7.5, 08 Oct. 2016 00:45 PST
 
 ### Variables
 
-program="NULL" # This should be the start point for most scripts
+#program="NULL" # This should be the start point for most scripts
 debugFlag=0
 privilege=0 # 0 if root, 777 if not
+cfVar=0 # Used for '#ifndef', sourcing
 debugInit=0
 debugPrefix="$HOME/.logs" # Use: scriptLog="$debugPrefix/scriptLog.log", then include $scriptLog in debug() statements
 logFile=$debugPrefix/$( basename "$0" | cut -d '.' -f 1 ).log # Now every script has a unique yet dynamic log name!

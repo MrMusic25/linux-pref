@@ -3,6 +3,13 @@
 # packageManagerCF.sh - Common functions for package managers and similar functions
 #
 # Changes:
+# v1.0.0
+# - First release version
+# - Added completed pkgInfo()
+# - Added failsafes to all functions
+# - determinePM() will now state if no package manager was found, then quit
+# - Added as close to an '#ifndef' statement as I could for sourcing this script
+#
 # v0.4.1
 # - Finished adding missing commands for emerge to other functions
 #
@@ -39,11 +46,11 @@
 #   ~ Separate updating databases from this function
 #   ~ In cases like Arch with pacman/yaourt, inform user of dual-package managers
 #
-# v0.4.1, 06 Oct. 2016 16:50 PST
+# v1.0.0, 08 Oct. 2016 00:45 PST
 
 ### Variables
 
-
+pmCFvar=0 # Ignore shellcheck saying this isn't used. Lets script know if this has been sourced or not.
 
 ### Functions
 
@@ -72,7 +79,9 @@ fi
 # Other info: Updates repositories if possible, redirect to /dev/null if you don't want to see it
 # https://linuxconfig.org/comparison-of-major-linux-package-management-systems
 function determinePM() {
-	if [[ ! -z $(which apt-get 2>/dev/null) ]]; then # Most common, so it goes first
+	if [[ ! -z $program || "$program" != "NULL" ]]; then
+		# nothing to be done!
+	elif [[ ! -z $(which apt-get 2>/dev/null) ]]; then # Most common, so it goes first
 		export program="apt"
 		#apt-get update
 	elif [[ ! -z $(which dnf 2>/dev/null) ]]; then # This is why we love DistroWatch, learned about the 'replacement' to yum!
@@ -98,6 +107,9 @@ function determinePM() {
 	elif [[ ! -z $(which rpm 2>/dev/null) ]]; then
 		export program="rpm"
 		#rpm -F --justdb # Only updates the DB, not the system
+	else
+		debug "l2" "ERROR: Package manager not found! Please contact script maintainter!"
+		exit 1
 	fi
 	debug "Package manager found! $program"
 }
@@ -150,7 +162,7 @@ function updatePM() {
 		zypper refresh
 		;;
 		*)
-		debug "Unsupported package manager detected! Please contact script maintainer to get your added to the list!"
+		debug "Unsupported package manager detected! Please contact script maintainer to get yours added to the list!"
 		;;
 	esac
 }
@@ -211,8 +223,7 @@ function universalInstaller() {
 			fi 
 			;;
 			*)
-			announce "Package manager not found! Please update script or diagnose problem!"
-			#exit 300
+			debug "Unsupported package manager detected! Please contact script maintainer to get yours added to the list!"
 			;;
 		esac
 	done
@@ -268,8 +279,7 @@ function upgradePM() {
 		emerge --update --deep world # Gentoo is strange
 		;;
 		*)
-		announce "Package manager not found! Please update script or diagnose problem!"
-		exit 1
+		debug "Unsupported package manager detected! Please contact script maintainer to get yours added to the list!"
 		;;
 	esac
 }
@@ -326,8 +336,7 @@ function cleanPM() {
 		emerge --depclean # Couldn't tell which was the only one necessary, so I included both
 		;;
 		*)
-		announce "Package manager not found! Please update script or diagnose problem!"
-		exit 3
+		debug "Unsupported package manager detected! Please contact script maintainer to get yours added to the list!"
 		;;
 	esac
 }
@@ -384,6 +393,9 @@ function queryPM() {
 			slackpkg)
 			slackpkg search "$var"
 			;;
+			*)
+			debug "Unsupported package manager detected! Please contact script maintainer to get yours added to the list!"
+			;;
 		esac
 	done
 }
@@ -393,7 +405,7 @@ function queryPM() {
 # Function: Remove given packages
 # PreReq: Set $program, or run determinePM()
 #
-# Call: removePM <program> [program] ...
+# Call: removePM <package_name> [package_name] ...
 #
 # Input: Names of packages to remove
 #
@@ -439,6 +451,75 @@ function removePM() {
 			;;
 			zypper)
 			zypper remove "$var"
+			;;
+			*)
+			debug "Unsupported package manager detected! Please contact script maintainer to get yours added to the list!"
+			;;
+		esac
+	done
+}
+
+## pkgInfo()
+#
+# Function: Display info about a package (dependencies, version, maintainer, etc)
+# PreReq: Have $program set, or run determinePM()
+#
+# Call: pkgInfo <package_name> [package_name] ...
+#
+# Input: Package names
+#
+# Output: stdout
+#
+# Other info: None, simple function
+function pkgInfo() {
+	# Check to make sure $program is set
+	if [[ -z $program || "$program" == "NULL" ]]; then
+		debug "Attempted to remove packages without setting program! Fixing..."
+		announce "You are attempting to removePM() without setting \$program!" "Script will fix this for you, but please fix your script."
+		determinePM
+	fi
+	
+	for var in "$@"
+	do
+		debug "l3" "Displaying package info of: $var"
+		case "$program" in
+			pacman)
+			pacman -Qi "$var"
+			if [[ $? -ne 0 ]]; then
+				debug "l3" "$var could not be found in pacman, trying yaourt!"
+				yaourt -Qi "$var"
+			fi
+			;;
+			apt)
+			apt-cache show "$var"
+			;;
+			rpm)
+			# This allows to check a .rpm file for data info
+			if [[ -f "$var" ]]; then
+				debug "$var is a file, checking contents for documentation"
+				rpm -qip "$var"
+			else
+				rpm -qi "$var"
+			fi
+			;;
+			yum)
+			yum info "$var"
+			;;
+			emerge)
+			equery meta "$var"
+			equery depends "$var" # Shows dependencies
+			;;
+			slackpkg)
+			slackpkg info "$var"
+			;;
+			dnf)
+			dnf info "$var"
+			;;
+			zypper)
+			zypper info "$var"
+			;;
+			*)
+			debug "Unsupported package manager detected! Please contact script maintainer to get yours added to the list!"
 			;;
 		esac
 	done

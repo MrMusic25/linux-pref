@@ -33,6 +33,11 @@ Alternatively, you can use the different commands listed when running the script
 
 Also displays with `./INSTALL.sh -h` or `./INSTALL.sh --help`
 
+### packageManager.sh
+A script capable of managing packages on most of the common distributions.
+
+More info to come once this script is ready, but it will replace programInstaller.sh, update.sh, and installPackages.sh
+
 ### programInstaller.sh
 A multi-distro script that installs a list of programs, or a folder full of program lists.
 
@@ -93,6 +98,9 @@ Usage: `./setupCommands.sh`
 
 No arguments needed. The script will always ask before installing a line to the .bashrc file.
 
+### defaultScriptTemplate.sh
+This file is the template file I use for all of my scripts. Simply copy+paste and rename, and use as a new script!
+
 ### commonFunctions.sh
 A file I use to store all my functions that multiple scripts may need to use. Not meant to be run on its own, but rather imported by other scripts.
 
@@ -142,6 +150,10 @@ If programs are require for a script, add them as an argument to this command. I
 
 #### Other jobs
 There is now a small function that runs each time commonFunctions.sh is sourced - `if $1 is -v|--verbose`, it will enable debugging and shift arguments for use.
+
+### packageManagerCF.sh
+This is a file containing functions pertaining to package management. commonFunctions.sh will automatically import this file.
+Below is a list and brief description for each function. Like with cF.sh, look at the script comments for detailed info.
 
 ## Text Files and Data
 
