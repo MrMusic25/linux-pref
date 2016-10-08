@@ -3,6 +3,11 @@
 # packageManagerCF.sh - Common functions for package managers and similar functions
 #
 # Changes:
+# v1.1.0
+# - That was a quick major version... Moved checkRequirements() to this script from cF.sh
+# - Added a recursive call for sourcing commonFunctions, just in case...
+# - Fixed SC1048
+#
 # v1.0.0
 # - First release version
 # - Added completed pkgInfo()
@@ -46,7 +51,7 @@
 #   ~ Separate updating databases from this function
 #   ~ In cases like Arch with pacman/yaourt, inform user of dual-package managers
 #
-# v1.0.0, 08 Oct. 2016 00:45 PST
+# v1.1.0, 08 Oct. 2016 01:32 PST
 
 ### Variables
 
@@ -54,16 +59,18 @@ pmCFvar=0 # Ignore shellcheck saying this isn't used. Lets script know if this h
 
 ### Functions
 
-if [[ -f commonFunctions.sh ]]; then
-	source commonFunctions.sh
-elif [[ -f /usr/share/commonFunctions.sh ]]; then
-	source /usr/share/commonFunctions.sh
-else
-	echo "commonFunctions.sh could not be located!"
-	
-	# Comment/uncomment below depending on if script actually uses common functions
-	echo "Script will now exit, please put file in same directory as script, or link to /usr/share!"
-	exit 1
+if [[ -z $cfVar ]]; then
+	if [[ -f commonFunctions.sh ]]; then
+		source commonFunctions.sh
+	elif [[ -f /usr/share/commonFunctions.sh ]]; then
+		source /usr/share/commonFunctions.sh
+	else
+		echo "commonFunctions.sh could not be located!"
+
+		# Comment/uncomment below depending on if script actually uses common functions
+		echo "Script will now exit, please put file in same directory as script, or link to /usr/share!"
+		exit 1
+	fi
 fi
 
 ## determinePM()
@@ -80,7 +87,7 @@ fi
 # https://linuxconfig.org/comparison-of-major-linux-package-management-systems
 function determinePM() {
 	if [[ ! -z $program || "$program" != "NULL" ]]; then
-		# nothing to be done!
+		true
 	elif [[ ! -z $(which apt-get 2>/dev/null) ]]; then # Most common, so it goes first
 		export program="apt"
 		#apt-get update
@@ -523,6 +530,61 @@ function pkgInfo() {
 			;;
 		esac
 	done
+}
+
+## checkRequirements()
+#
+# Function: Check to make sure programs are installed before running script
+#
+# Call: checkRequirements <program_1> [program_2] [program_3] ...
+#
+# Input: Each argument should be the proper name of a command or program to be searched for
+#
+# Output: None if successful, asks to install if anything is found. If it must be manually installed, script will exit.
+#
+# Other: Except for rare cases, this will not work for libraries ( e.g. anything with "lib" in it). These must be done manually.
+#        Note: Now you can use "program/installer" to install program, in case the program is part of a larger package
+function checkRequirements() {
+	# Determine package manager before doing anything else
+	if [[ -z $program || "$program" == "NULL" ]]; then
+		determinePM
+	fi
+	
+	for req in "$@"
+	do
+		if [[ "$req" == */* ]]; then
+			reqm="$(echo "$req" | cut -d'/' -f1)"
+			reqt="$(echo "$req" | cut -d'/' -f2)"
+		else
+			reqm="$req"
+			reqt="$req"
+		fi
+		
+		# No debug messages on success, keeps things silent
+		if [[ -z "$(which $reqm 2>/dev/null)" ]]; then
+			debug "$reqt is not installed for $0, notifying user for install"
+			getUserAnswer "$reqt is not installed, would you like to do so now?"
+			case $? in
+				0)
+				debug "Installing $reqt based on user input"
+				universalInstaller "$reqt"
+				;;
+				1)
+				debug "User chose not to install required program $reqt, quitting!"
+				announce "Please install the program manually before running this script!"
+				exit 1
+				;;
+				*)
+				debug "Unknown return option from getUserAnswer: $?"
+				announce "Invalid response, quitting"
+				exit 123
+				;;
+			esac
+		fi
+	done
+	
+	# If everything is installed, it will reach this point
+	debug "All requirements met, continuing with script."
 }
 
 #EOF

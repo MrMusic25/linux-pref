@@ -5,6 +5,11 @@
 # Note: this script whould not be run by itself, as it only contains functions and variables
 #
 # Changes:
+# v1.7.6
+# - Moved checkRequirements() to pmCF.sh
+# - Added a source argument for pmCF.sh
+# - Fixed SC2145
+#
 # v1.7.5
 # - A comment required a version change... Script now relies on $program not being set
 # - Added as close to an '#ifndef' statement as I could for sourcing
@@ -126,7 +131,7 @@
 #   ~ If the option times out, assum the answer and return that value
 #     ~ This allows for user input while still being non-interactive
 #
-# v1.7.5, 08 Oct. 2016 00:45 PST
+# v1.7.6, 08 Oct. 2016 01:32 PST
 
 ### Variables
 
@@ -143,104 +148,6 @@ cFlag=0 # Used with the ctrl_c function
 #trap ctrl_c INT # This will run the function ctrl_c() when it captures the key press
 
 ### Functions
-
-## determinePM()
-# Function: Determine package manager (PM) and export for script use
-# PreReq: None
-#
-# Call: determinePM
-#
-# Input: No input necessary; ignored
-#
-# Output: Exports variable 'program'; no return value (yet)
-#
-# Other info: Updates repositories if possible, redirect to /dev/null if you don't want to see it
-function determinePM() {
-if [[ ! -z $(which apt-get 2>/dev/null) ]]; then # Most common, so it goes first
-	export program="apt"
-	apt-get update
-elif [[ ! -z $(which dnf 2>/dev/null) ]]; then # This is why we love DistroWatch, learned about the 'replacement' to yum!
-	export program="dnf"
-	dnf check-update
-elif [[ ! -z $(which yum 2>/dev/null) ]]; then
-	export program="yum"
-	yum check-update
-elif [[ ! -z $(which slackpkg 2>/dev/null) ]]; then
-	export program="slackpkg"
-	slackpkg update
-elif [[ ! -z $(which rpm 2>/dev/null) ]]; then
-	export program="rpm"
-	rpm -F --justdb # Only updates the DB, not the system
-elif [[ ! -z $(which yast 2>/dev/null) ]]; then # YaST is annoying af, so look for rpm and yum first
-	export program="yast"
-elif [[ ! -z $(which pacman 2>/dev/null) ]]; then
-	export program="pacman"
-	sudo pacman -Syy &>/dev/null # Refreshes the repos, always read the man pages!
-	
-	# Conditional statement to install yaourt
-	[[ -z $(which yaourt 2>/dev/null) ]] && announce "pacman detected! yaourt will be installed as well!" "This insures all packages can be found and installed" && sudo pacman -S base-devel yaourt
-elif [[ ! -z $(which aptitude 2>/dev/null) ]]; then # Just in case apt-get is somehow not installed with aptitude, happens
-	export program="aptitude"
-	aptitude update
-fi
-debug "Package manager found! $program"
-}
-
-## universalInstaller()
-# Function: Attempt to install all programs listed in called args
-# PreReq: Must run determinePM() beforehand, or have $program set to a valid option
-#
-# Call: universalInstaller <program1> [program2] [program3] ...
-#
-# Input: As many arguments as you want, each one a valid package name
-#
-# Output: stdout, no return values at this time
-#
-# Other info: Loops through arguments and installs one at a time, encapsulate in ' ' if you want some installed together
-#             e.g. universalInstaller wavemon gpm 'zsh ssh' -> wavemon and gpm installed by themselves, zsh and ssh installed together
-function universalInstaller() {
-for var in "$@"
-do
-	case $program in
-		apt)
-		apt-get --assume-yes install "$var"  
-		;;
-		dnf)
-		dnf -y install "$var"
-		;;
-		yum)
-		yum install "$var" 
-		;;
-		slackpkg)
-		slackpkg install "$var"
-		;;
-		yast)
-		yast -i "$var" 
-		;;
-		rpm)
-		rpm -i "$var" 
-		;;
-		pacman)
-		sudo pacman -S --noconfirm "$var"
-		
-		# If pacman can't install it, it can likely be found in AUR/yaourt
-		if [[ $? -eq 1 ]]; then
-			debug "$var not found with pacman, attempting install with yaourt!"
-			announce "$var not found with pacman, trying yaourt!" "This is interactive because it could potentially break your system."
-			yaourt "$var"
-		fi 
-		;;
-		aptitude)
-		aptitude -y install "$var" 
-		;;
-		*)
-		announce "Package manager not found! Please update script or diagnose problem!"
-		#exit 300
-		;;
-	esac
-done
-	# Insert code dealing with failed installs here
-}
 
 ## announce()
 # Function: Make a visible notice to display text - catch the user's eye
@@ -395,11 +302,11 @@ function debug() {
 		(>&2 echo "Debug: $*")
 		;;
 		3)
-		announce "Debug: $@"
+		announce "Debug: $*"
 		;;
 		4)
 		(>&2 echo "Debug: $*")
-		announce "Debug: $@"
+		announce "Debug: $*"
 		;;
 	esac
 	debugLevel="$oldLevel"
@@ -635,61 +542,6 @@ function pause() {
 	fi
 }
 
-## checkRequirements()
-#
-# Function: Check to make sure programs are installed before running script
-#
-# Call: checkRequirements <program_1> [program_2] [program_3] ...
-#
-# Input: Each argument should be the proper name of a command or program to be searched for
-#
-# Output: None if successful, asks to install if anything is found. If it must be manually installed, script will exit.
-#
-# Other: Except for rare cases, this will not work for libraries ( e.g. anything with "lib" in it). These must be done manually.
-#        Note: Now you can use "program/installer" to install program, in case the program is part of a larger package
-function checkRequirements() {
-	# Determine package manager before doing anything else
-	if [[ -z $program || "$program" == "NULL" ]]; then
-		determinePM
-	fi
-	
-	for req in "$@"
-	do
-		if [[ "$req" == */* ]]; then
-			reqm="$(echo "$req" | cut -d'/' -f1)"
-			reqt="$(echo "$req" | cut -d'/' -f2)"
-		else
-			reqm="$req"
-			reqt="$req"
-		fi
-		
-		# No debug messages on success, keeps things silent
-		if [[ -z "$(which $reqm 2>/dev/null)" ]]; then
-			debug "$reqt is not installed for $0, notifying user for install"
-			getUserAnswer "$reqt is not installed, would you like to do so now?"
-			case $? in
-				0)
-				debug "Installing $reqt based on user input"
-				universalInstaller "$reqt"
-				;;
-				1)
-				debug "User chose not to install required program $reqt, quitting!"
-				announce "Please install the program manually before running this script!"
-				exit 1
-				;;
-				*)
-				debug "Unknown return option from getUserAnswer: $?"
-				announce "Invalid response, quitting"
-				exit 123
-				;;
-			esac
-		fi
-	done
-	
-	# If everything is installed, it will reach this point
-	debug "All requirements met, continuing with script."
-}
-
 ## editTextFile()
 #
 # Function: Let the user edit a text file, then return to the script
@@ -736,6 +588,20 @@ if [[ "$1" == "-v" || "$1" == "--verbose" ]]; then
 	export debugFlag=1
 	export debugLevel=2
 	shift
+fi
+
+if [[ -z $pmCFvar ]]; then
+	if [[ -f packageManagerCF.sh ]]; then
+		source packageManagerCF.sh
+	elif [[ -f /usr/share/packageManagerCF.sh ]]; then
+		source /usr/share/packageManagerCF.sh
+	else
+		echo "packageManagerCF.sh could not be located!"
+
+		# Comment/uncomment below depending on if script actually uses common functions
+		#echo "Script will now exit, please put file in same directory as script, or link to /usr/share!"
+		#exit 1
+	fi
 fi
 
 #EOF
