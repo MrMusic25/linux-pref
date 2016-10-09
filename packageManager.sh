@@ -3,25 +3,14 @@
 # packageManager.sh, a.k.a pm - A universal package manager script
 #
 # Changes:
+# v0.1.0
+# - Added displayHelp()
+#
 # v0.0.1
 # - No real scripting, but added a long list of things to-do
 # - Initial version
 #
 # TODO:
-# - Add the following functions, and copy over functions from other scripts
-#   ~ For all functions: find a way to do a "did you mean: $package?" type thing
-#   ~ Update (refresh DB and install updates, also make refresh-only mode) with alias of Upgrade
-#     ~ Separate determinePM() and refreshDB(), use conditional calling
-#     ~ Find a way to detect multiple PMs
-#   ~ Install (using universalInstaller() )
-#     ~ For dists like arch with multiple PMs, ask before installing
-#     ~ Package name, text file, and folder of text files should be supported
-#   ~ Remove (alias uninstall)
-#   ~ Clean/'autoremove'
-#   ~ Query
-#     ~ Check database for packages matching name given (apt-cache search, pacsearch, etc)
-#   ~ pkgInfo (find a better alias)
-#     ~ Display info for the package given (pacman -Qi, etc.)
 # - Make new cF.sh specifically for this script
 #   ~ Add this script to cF.sh so other functions that depend on universalInstaller or determinePM can still use them
 #     ~ For that matter, DON'T BREAK COMPATIBILITY! COPY+PASTE!
@@ -33,7 +22,7 @@
 # - If PM is Arch, make sure it is NOT running as sudo. Otherwise, checkPrivilege "quit"
 #
 #
-# v0.0.1, Sept. 28 2016 18:08 PST
+# v0.1.0, 09 Oct. 2016 14:55 PST
 
 ### Variables
 
@@ -52,6 +41,27 @@ else
 	echo "Script will now exit, please put file in same directory as script, or link to /usr/share!"
 	exit 1
 fi
+
+function displayHelp() {
+read -d helpVar <<"endHelp"
+
+Usage: pm [options] <mode> [package(s)]
+
+Run Modes:
+   Update                                  : Refresh the list of packages on the system
+   Upgrade                                 : Refresh the package list, and then install all available upgrades
+   Install <package_1> [package_2] ...     : Attempt to install all given packages
+   Remove <package_1> [package_2] ...      : Remove given installed packages
+   Query <package_1> [package_2] ...       : Search package databases for matching package names (does not install)
+   Pkginfo <package_1> [package_2] ...     : Display detailed info (dependencies, version, etc) about packages
+   Clean                                   : Clean the system of stale and unnecessary packages
+
+Options:
+   -v | --verbose                          : Display detailed debugging info (note: MUST be first argument!)
+
+endHelp
+echo "$helpVar"
+}
 
 ### Main Script
 
