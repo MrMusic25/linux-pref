@@ -3,6 +3,9 @@
 # packageManagerCF.sh - Common functions for package managers and similar functions
 #
 # Changes:
+# v1.1.1
+# - Changed a couple debug calls
+#
 # v1.1.0
 # - That was a quick major version... Moved checkRequirements() to this script from cF.sh
 # - Added a recursive call for sourcing commonFunctions, just in case...
@@ -51,7 +54,7 @@
 #   ~ Separate updating databases from this function
 #   ~ In cases like Arch with pacman/yaourt, inform user of dual-package managers
 #
-# v1.1.0, 08 Oct. 2016 01:32 PST
+# v1.1.1, 09 Oct. 2016 20:28 PST
 
 ### Variables
 
@@ -224,8 +227,7 @@ function universalInstaller() {
 			
 			# If pacman can't install it, it can likely be found in AUR/yaourt
 			if [[ $? -eq 1 ]]; then
-				debug "$var not found with pacman, attempting install with yaourt!"
-				announce "$var not found with pacman, trying yaourt!" "This is interactive because it could potentially break your system."
+				debug "l2" "$var not found with pacman, attempting install with yaourt!"
 				yaourt "$var"
 			fi 
 			;;

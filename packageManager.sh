@@ -3,6 +3,12 @@
 # packageManager.sh, a.k.a pm - A universal package manager script
 #
 # Changes:
+# v0.2.0
+# - Updated displayHelp()
+# - Prep for -o|--option
+# - Runtime options can now be a single letter
+# - Added privilege check for arch-based distros
+#
 # v0.1.0
 # - Added displayHelp()
 #
@@ -22,11 +28,11 @@
 # - If PM is Arch, make sure it is NOT running as sudo. Otherwise, checkPrivilege "quit"
 #
 #
-# v0.1.0, 09 Oct. 2016 14:55 PST
+# v0.2.0, 09 Oct. 2016 20:27 PST
 
 ### Variables
 
-
+pmOptions="" # Options to be added when running package manager
 
 ### Functions
 
@@ -46,18 +52,21 @@ function displayHelp() {
 read -d helpVar <<"endHelp"
 
 Usage: pm [options] <mode> [package(s)]
+Note: For mode, you can use full names listed below, or single letter in brackets.
 
 Run Modes:
-   Update                                  : Refresh the list of packages on the system
-   Upgrade                                 : Refresh the package list, and then install all available upgrades
-   Install <package_1> [package_2] ...     : Attempt to install all given packages
-   Remove <package_1> [package_2] ...      : Remove given installed packages
-   Query <package_1> [package_2] ...       : Search package databases for matching package names (does not install)
-   Pkginfo <package_1> [package_2] ...     : Display detailed info (dependencies, version, etc) about packages
-   Clean                                   : Clean the system of stale and unnecessary packages
+   Re[f]resh                                 : Update the list of available packages and updates from package maintainer
+   [U]pgrade                                 : Refresh the package list, and then install all available upgrades
+   [I]nstall <package_1> [package_2] ...     : Attempt to install all given packages
+   [R]emove <package_1> [package_2] ...      : Remove given installed packages
+   [Q]uery <package_1> [package_2] ...       : Search package databases for matching package names (does not install)
+   [P]kginfo <package_1> [package_2] ...     : Display detailed info (dependencies, version, etc) about packages
+   [C]lean                                   : Clean the system of stale and unnecessary packages
 
 Options:
-   -v | --verbose                          : Display detailed debugging info (note: MUST be first argument!)
+   -v | --verbose                   : Display detailed debugging info (note: MUST be first argument!)
+   -o | --option <pm_option>        : Any options added here will be added when running the package manager
+                                    : Use as many times as needed! 
 
 endHelp
 echo "$helpVar"
@@ -65,6 +74,10 @@ echo "$helpVar"
 
 ### Main Script
 
-
+determinePM
+if [[ "$program" == "pacman" && "$EUID" -eq 0 ]]; then
+	debug "l3" "Please run as regular user when using arch-based distros, not sudo/root!"
+	exit 1
+fi
 
 #EOF
