@@ -27,3 +27,7 @@ htop
 
 # Added from an issue of Distrowatch Weekly, looks interesting and helpful
 moreutils
+
+# Graphically display disk usage tree
+baobab
+

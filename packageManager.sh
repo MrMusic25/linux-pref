@@ -3,6 +3,10 @@
 # packageManager.sh, a.k.a pm - A universal package manager script
 #
 # Changes:
+# v1.0.0
+# - Release version ready
+# - Everything is in the processArgs() function
+#
 # v0.2.0
 # - Updated displayHelp()
 # - Prep for -o|--option
@@ -28,11 +32,12 @@
 # - If PM is Arch, make sure it is NOT running as sudo. Otherwise, checkPrivilege "quit"
 #
 #
-# v0.2.0, 09 Oct. 2016 20:27 PST
+# v1.0.0, 09 Oct. 2016 21:35 PST
 
 ### Variables
 
 pmOptions="" # Options to be added when running package manager
+#runMode="NULL"
 
 ### Functions
 
@@ -49,7 +54,7 @@ else
 fi
 
 function displayHelp() {
-read -d helpVar <<"endHelp"
+read -d '' helpVar <<"endHelp"
 
 Usage: pm [options] <mode> [package(s)]
 Note: For mode, you can use full names listed below, or single letter in brackets.
@@ -72,6 +77,67 @@ endHelp
 echo "$helpVar"
 }
 
+function processArgs() {
+	# Make sure arguments is not empty
+	if [[ -z $1 ]]; then
+		debug "l2" "ERROR: $0 requires at least one argument to run!"
+		displayHelp
+		exit 1
+	fi
+	
+	for var in "$@"
+	do
+		case "$var" in
+			-h|--help)
+			displayHelp
+			exit 0
+			;;
+			-o|--option)
+			pmOptions="$pmOptions"" ""$2"
+			shift
+			;;
+			f|F|refresh|Refresh|update|Update) # Such alias.
+			updatePM
+			;;
+			u|U|upgrade|Upgrade)
+			upgradePM
+			;;
+			c|C|clean|Clean)
+			cleanPM
+			;;
+			i|I|install|Install)
+			for prog in "$@"
+			do
+				universalInstaller "$2"
+				shift
+			done
+			;;
+			r|R|remove|Remove)
+			for prog in "$@"
+			do
+				removePM "$2"
+				shift
+			done
+			;;
+			q|Q|query|Query)
+			for prog in "$@"
+			do
+				queryPM "$2"
+				shift
+			done
+			;;
+			p|P|pkg*|Pkg*) # Hopefully this works the way I want, wild cards can be tricky
+			for prog in "$@"
+			do
+				pkgInfo "$2"
+				shift
+			done
+			;;
+		esac
+		shift
+	done
+}
+
 ### Main Script
 
 determinePM
@@ -79,5 +145,10 @@ if [[ "$program" == "pacman" && "$EUID" -eq 0 ]]; then
 	debug "l3" "Please run as regular user when using arch-based distros, not sudo/root!"
 	exit 1
 fi
+
+processArgs "$@" # Didn't plan it this way, but awesome that everything work with this script
+
+announce "Done with script!"
+exit 0
 
 #EOF
