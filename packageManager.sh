@@ -38,6 +38,7 @@
 
 pmOptions="" # Options to be added when running package manager
 #runMode="NULL"
+program="NULL" # Uninitialized variables are unhappy variables
 
 ### Functions
 

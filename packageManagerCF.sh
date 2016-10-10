@@ -3,6 +3,9 @@
 # packageManagerCF.sh - Common functions for package managers and similar functions
 #
 # Changes:
+# v1.1.2
+# - Foiled by a bang!
+#
 # v1.1.1
 # - Changed a couple debug calls
 #
@@ -54,7 +57,7 @@
 #   ~ Separate updating databases from this function
 #   ~ In cases like Arch with pacman/yaourt, inform user of dual-package managers
 #
-# v1.1.1, 09 Oct. 2016 20:28 PST
+# v1.1.2, 09 Oct. 2016 21:54 PST
 
 ### Variables
 
@@ -89,7 +92,8 @@ fi
 # Other info: Updates repositories if possible, redirect to /dev/null if you don't want to see it
 # https://linuxconfig.org/comparison-of-major-linux-package-management-systems
 function determinePM() {
-	if [[ ! -z $program || "$program" != "NULL" ]]; then
+	set -x
+	if [[ -z $program || "$program" != "NULL" ]]; then
 		true
 	elif [[ ! -z $(which apt-get 2>/dev/null) ]]; then # Most common, so it goes first
 		export program="apt"
@@ -122,6 +126,7 @@ function determinePM() {
 		exit 1
 	fi
 	debug "Package manager found! $program"
+	set +x
 }
 
 ## updatePM()
