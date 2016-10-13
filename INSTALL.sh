@@ -6,6 +6,12 @@
 # There are too many things to display here, so please look at displayHelp() to see the options and install options
 #
 # Changes:
+# v1.3.0
+# - Added a check for a link to pmCF.sh
+# - update -> pm, for pm.sh
+# - Changed programs to install using pm.sh
+# - This is why functions are the best - easy fixes for future changes
+#
 # v1.2.2
 # - Made some minor changes
 # - setupCommands and nonScriptCommands now ask before running, and don't run in "except" mode
@@ -60,7 +66,7 @@
 # v0.0.1
 # - Initial commit - only displayHelp() and processArgs() working currently
 #
-# v1.2.2 22 Sept 2016 21:14 PST
+# v1.3.0, 13 Oct. 2016 13:49 PST
 
 ### Variables
 
@@ -86,9 +92,11 @@ function linkCF() {
 	if [[ "$EUID" -ne 0 ]]; then
 		echo "Linking to /usr/share requires root permissions, please login"
 		sudo ln -s "$(pwd)"/commonFunctions.sh /usr/share/commonFunctions.sh
+		sudo ln -s "$(pwd)"/packageManagerCF.sh /usr/share/packageManagerCF.sh
 	else
 		echo "Linking to commonFunctions.sh to /usr/share/ !"
 		sudo ln -s "$(pwd)"/commonFunctions.sh /usr/share/commonFunctions.sh
+		sudo ln -s "$(pwd)"/packageManagerCF.sh /usr/share/packageManagerCF.sh
 	fi
 }
 
@@ -162,7 +170,7 @@ function processArgs() {
 			export runMode="all"
 			export loopFlag=1
 			;;
-			update)
+			pm|packageManager|packagemanager)
 			export runMode="update"
 			export loopFlag=1
 			;;
@@ -298,18 +306,16 @@ function pathCheck() {
 function installUpdate() {
 	announce "Now installing the update and installer scripts!" "NOTE: This will require sudo permissions."
 	if [[ $installOnly -ne 0 ]]; then
-		debug "User indicated not to run scripts, only installing update script!"
+		debug "User indicated not to run scripts, only installing package manager script!"
 	fi
 	
-	sudo ln -s $(pwd)/update.sh /usr/bin/update
-	announce "You can now update your system anywhere by running the command: sudo update" "You can also install packages by running: sudo update <packages_to_install>"
-	
-	sudo ln -s $(pwd)/installPackages.sh /usr/bin/installPackages
-	announce "If all you want to do is install packages, you can run: installPackages <packages_to_install>"
+	sudo ln -s $(pwd)/packageManager.sh /usr/bin/pm
+	sudo ln -s $(pwd)/packageManager.sh /usr/bin/packageManager
+	announce "Universal package installer script has been installed!" "Run pm -h or packageManager --help for more info."
 	sleep 5 # Give the user time to read before more script runs
 	
 	if [[ $installOnly -eq 0 ]]; then
-		sudo update
+		sudo packageManager.sh update upgrade
 	fi
 }
 
@@ -343,7 +349,7 @@ function installPrograms() {
 	fi
 	
 	announce "Installing programs using programInstaller.sh!" "Script is interactive, so pay attention!" "Look at the programLists folder to see what will be installed!"
-	sudo ./programInstaller.sh "$programsFile"
+	sudo ./packageManager.sh install "$programsFile"
 }
 
 function displayHelp() {
@@ -355,14 +361,14 @@ function displayHelp() {
 	#echo "       Each script will be run after it is installed as well, to verify it is working properly."
 	#echo " "
 	echo " Install Options:"
-	echo "    all                                : Installs all the scripts below"
-	echo "    update                             : Installs update script"
-	echo "    programs [file]                    : Installs programs using default locations, or provided text-based tab-delimited file"
-	#echo "    kali [file]                        : Same as 'programs', but installs from .kaliPrograms.txt by default. Also accepts file input."
-	echo "    git                                : Installs git monitoring script and sets up cron job to run at boot"
-	echo "    bash                               : Links or sources the .bashrc and .bash_aliases from the git repo"
-	echo "    grive                              : Helps create and sync Google Drive using grive2"
-	echo "    uninstall                          : Uninstalls any file or settings that may have been installed, highly interactive"
+	echo "    all                             : Installs all the scripts below"
+	echo "    pm | packageManager             : Installs the universal package manager script"
+	echo "    programs [file]                 : Installs programs using default locations, or provided text-based tab-delimited file"
+	#echo "    kali [file]                     : Same as 'programs', but installs from .kaliPrograms.txt by default. Also accepts file input."
+	echo "    git                             : Installs git monitoring script and sets up cron job to run at boot"
+	echo "    bash                            : Links or sources the .bashrc and .bash_aliases from the git repo"
+	echo "    grive                           : Helps create and sync Google Drive using grive2"
+	echo "    uninstall                       : Uninstalls any file or settings that may have been installed, highly interactive"
 	echo " "
 	echo " Options:"
 	echo "    -h | --help                        : Displays this help message"
@@ -467,7 +473,7 @@ function installGrive() {
 
 function uninstallScript() {
 	# Remove all the links created
-	links=( "/usr/share/commonFunctions.sh" "/usr/bin/update" "/usr/bin/grive.sh" "/usr/bin/gitcheck" "/usr/bin/installPackages" )
+	links=( "/usr/share/commonFunctions.sh" "/usr/share/packageManagerCF.sh" "/usr/bin/grive.sh" "/usr/bin/gitcheck" "/usr/bin/pm" "/usr/bin/packageManager" )
 	
 	debug "Running uninstaller function."
 	getUserAnswer "Would you like to uninstall all the program links that have been made?"
