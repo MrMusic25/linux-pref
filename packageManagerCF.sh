@@ -92,7 +92,6 @@ fi
 # Other info: Updates repositories if possible, redirect to /dev/null if you don't want to see it
 # https://linuxconfig.org/comparison-of-major-linux-package-management-systems
 function determinePM() {
-	set -x
 	if [[ -z $program || "$program" != "NULL" ]]; then
 		true
 	elif [[ ! -z $(which apt-get 2>/dev/null) ]]; then # Most common, so it goes first
@@ -126,7 +125,6 @@ function determinePM() {
 		exit 1
 	fi
 	debug "Package manager found! $program"
-	set +x
 }
 
 ## updatePM()

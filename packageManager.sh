@@ -3,6 +3,9 @@
 # packageManager.sh, a.k.a pm - A universal package manager script
 #
 # Changes:
+# v1.0.1
+# - Some functions didn't work, fixed it with shift statements
+#
 # v1.0.0
 # - Release version ready
 # - Everything is in the processArgs() function
@@ -32,7 +35,7 @@
 # - If PM is Arch, make sure it is NOT running as sudo. Otherwise, checkPrivilege "quit"
 #
 #
-# v1.0.0, 09 Oct. 2016 21:35 PST
+# v1.0.1, 13 Oct. 2016 12:36 PST
 
 ### Variables
 
@@ -107,30 +110,34 @@ function processArgs() {
 			cleanPM
 			;;
 			i|I|install|Install)
+			shift
 			for prog in "$@"
 			do
-				universalInstaller "$2"
+				universalInstaller "$1"
 				shift
 			done
 			;;
 			r|R|remove|Remove)
+			shift
 			for prog in "$@"
 			do
-				removePM "$2"
+				removePM "$1"
 				shift
 			done
 			;;
 			q|Q|query|Query)
+			shift
 			for prog in "$@"
 			do
-				queryPM "$2"
+				queryPM "$1"
 				shift
 			done
 			;;
 			p|P|pkg*|Pkg*) # Hopefully this works the way I want, wild cards can be tricky
+			shift
 			for prog in "$@"
 			do
-				pkgInfo "$2"
+				pkgInfo "$1"
 				shift
 			done
 			;;
