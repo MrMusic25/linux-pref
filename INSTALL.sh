@@ -6,6 +6,10 @@
 # There are too many things to display here, so please look at displayHelp() to see the options and install options
 #
 # Changes:
+# v1.3.1
+# - Script now checks to make sure pmCF.sh is also linked
+# - Script will now attempt to switch to main LP directory if not already in that directory
+#
 # v1.3.0
 # - Added a check for a link to pmCF.sh
 # - update -> pm, for pm.sh
@@ -66,7 +70,7 @@
 # v0.0.1
 # - Initial commit - only displayHelp() and processArgs() working currently
 #
-# v1.3.0, 13 Oct. 2016 13:49 PST
+# v1.3.1, 19 Oct. 2016 20:06 PST
 
 ### Variables
 
@@ -562,10 +566,16 @@ function uninstallScript() {
 ### Main Script
 
 # This doesn't really need to be here now, but double-checking never hurts!
-if [[ ! -f /usr/share/commonFunctions.sh ]]; then
+if [[ ! -f /usr/share/commonFunctions.sh || ! -f /usr/share/packageManagerCF.sh ]]; then
 	echo "commonFunctions.sh not linked to /usr/share, fixing now!"
 	linkCF
 fi
+
+if [[ $(pwd) != *linux-pref ]]; then
+	debug "l2" "Script is being run outside of source directory, switching to main directory!"
+	cd $(dirname $0) || cd linux-pref || debug "l2" "An error has occurred!"; exit 1
+fi
+	
 
 debug "Processing arguments passed to script"
 processArgs "$@"

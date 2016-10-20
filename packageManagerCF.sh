@@ -162,6 +162,7 @@ function updatePM() {
 		pacman)
 		sudo pacman $pmOptions -Syy
 		yaourt $pmOptions -Syy
+		;;
 		dnf)
 		dnf $pmOptions check-update
 		;;
