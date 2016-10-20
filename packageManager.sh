@@ -3,6 +3,10 @@
 # packageManager.sh, a.k.a pm - A universal package manager script
 #
 # Changes:
+# v1.2.0
+# - Added option for -n|--no-confirm to reflect new default in pmCF.sh of non-interactive management
+# - Gives warnings for dangerous -n cases
+#
 # v1.1.0
 # - Install mode now works with files and folders of files, like programInstaller.sh
 #
@@ -38,7 +42,7 @@
 # - If PM is Arch, make sure it is NOT running as sudo. Otherwise, checkPrivilege "quit"
 #
 #
-# v1.1.0, 13 Oct. 2016 13:05 PST
+# v1.2.0, 19 Oct. 2016 19:22 PST
 
 ### Variables
 
@@ -46,6 +50,7 @@ pmOptions="" # Options to be added when running package manager
 #runMode="NULL"
 program="NULL" # Uninitialized variables are unhappy variables
 programMode="name"
+confirm=0 # 0 Indicates no change, anything else indicates running noConfirm()
 
 ### Functions
 
@@ -79,10 +84,30 @@ Run Modes:
 Options:
    -v | --verbose                   : Display detailed debugging info (note: MUST be first argument!)
    -o | --option <pm_option>        : Any options added here will be added when running the package manager
-                                    : Use as many times as needed! 
-
+                                    : Use as many times as needed!
+   -n | --no-confirm                : Runs specified actions without prompting user to continue
+   
 endHelp
 echo "$helpVar"
+}
+
+function noConfirm() {
+	[[ -z $program || "$program" == "NULL" ]] && determinePM
+	
+	case $program in
+		apt)
+		pmOptions="$pmOptions"" ""--assume-yes"
+		;;
+		pacman)
+		pmOptions="$pmOptions"" ""--no-confirm"
+		;;
+		dnf)
+		pmOptions="$pmOptions"" ""-y"
+		;;
+		zypper)
+		pmOptions="$pmOptions"" ""--non-interactive"
+		;;
+	esac
 }
 
 function processArgs() {
@@ -104,6 +129,10 @@ function processArgs() {
 			pmOptions="$pmOptions"" ""$2"
 			shift
 			;;
+			-n|--no-confirm)
+			confirm=1
+			noConfirm
+			;;
 			f|F|refresh|Refresh|update|Update) # Such alias.
 			updatePM
 			;;
@@ -111,6 +140,13 @@ function processArgs() {
 			upgradePM
 			;;
 			c|C|clean|Clean)
+			# Give a warning if running in non-interactive mode
+			if [[ $confirm -ne 0 ]]; then
+				debug "Warning user against cleaning the package manager non-interactively..."
+				announce "WARNING: It can be dangerous to clean package managers without confirmation!" "Script will continue shortly, but it is recommended to CTRL+C now!"
+				sleep 5
+			fi
+			
 			cleanPM
 			;;
 			i|I|install|Install)
@@ -123,6 +159,14 @@ function processArgs() {
 			;;
 			r|R|remove|Remove)
 			shift
+			
+			# Give a warning if running in non-interactive mode
+			if [[ $confirm -ne 0 ]]; then
+				debug "Warning user against removing programs non-interactively..."
+				announce "WARNING: It is dangerous to remove programs without confirmation!" "Script will continue shortly, but it is highly recommended to CTRL+C now!"
+				sleep 5
+			fi
+			
 			for prog in "$@"
 			do
 				removePM "$1"

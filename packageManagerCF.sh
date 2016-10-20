@@ -3,6 +3,11 @@
 # packageManagerCF.sh - Common functions for package managers and similar functions
 #
 # Changes:
+# v1.2.0
+# - All programs now support the -o|--options from pm.sh
+# - Package managers are no longer non-interactive by default
+# - Fixed a bug that was keeping yaourt from working...
+#
 # v1.1.2
 # - Foiled by a bang!
 #
@@ -57,11 +62,12 @@
 #   ~ Separate updating databases from this function
 #   ~ In cases like Arch with pacman/yaourt, inform user of dual-package managers
 #
-# v1.1.2, 09 Oct. 2016 21:54 PST
+# v1.2.0, 19 Oct. 2016 19:11 PST
 
 ### Variables
 
 pmCFvar=0 # Ignore shellcheck saying this isn't used. Lets script know if this has been sourced or not.
+pmOptions="" # Options to be added before running any package manager
 
 ### Functions
 
@@ -151,28 +157,28 @@ function updatePM() {
 	debug "Refreshing the package manager's database"
 	case $program in
 		apt)
-		apt-get update
+		apt-get $pmOptions update
 		;;
 		pacman)
-		sudo pacman -Syy
-		;;
+		sudo pacman $pmOptions -Syy
+		yaourt $pmOptions -Syy
 		dnf)
-		dnf check-update
+		dnf $pmOptions check-update
 		;;
 		yum)
-		yum check-update
+		yum $pmOptions check-update
 		;;
 		slackpkg)
-		slackpkg update
+		slackpkg $pmOptions update
 		;;
 		emerge)
-		emerge --sync
+		emerge $pmOptions --sync
 		;;
 		rpm)
-		rpm -F --justdb # Only updates the DB, not the system
+		rpm $pmOptions -F --justdb # Only updates the DB, not the system
 		;;
 		zypper)
-		zypper refresh
+		zypper $pmOptions refresh
 		;;
 		*)
 		debug "Unsupported package manager detected! Please contact script maintainer to get yours added to the list!"
@@ -205,33 +211,33 @@ function universalInstaller() {
 		debug "Attempting to install $var"
 		case $program in
 			apt)
-			apt-get --assume-yes install "$var"  
+			apt-get $pmOptions install "$var"  
 			;;
 			dnf)
-			dnf -y install "$var"
+			dnf $pmOptions install "$var"
 			;;
 			yum)
-			yum install "$var" 
+			yum $pmOptions install "$var" 
 			;;
 			slackpkg)
-			slackpkg install "$var"
+			slackpkg $pmOptions install "$var"
 			;;
 			zypper)
-			zypper --non-interactive install "$var"
+			zypper $pmOptions install "$var"
 			;;
 			rpm)
-			rpm -i "$var" 
+			rpm $pmOptions -i "$var" 
 			;;
 			emerge)
-			emerge "$var"
+			emerge $pmOptions "$var"
 			;;
 			pacman)
-			sudo pacman -S --noconfirm "$var"
+			sudo pacman $pmOptions -S "$var"
 			
 			# If pacman can't install it, it can likely be found in AUR/yaourt
 			if [[ $? -eq 1 ]]; then
 				debug "l2" "$var not found with pacman, attempting install with yaourt!"
-				yaourt "$var"
+				yaourt $pmOptions -S "$var"
 			fi 
 			;;
 			*)
@@ -265,30 +271,30 @@ function upgradePM() {
 	case $program in
 		apt)
 		announce "NOTE: script will be running a dist-upgrade!"
-		apt-get --assume-yes dist-upgrade
+		apt-get $pmOptions dist-upgrade
 		;;
 		dnf)
-		dnf -y upgrade
+		dnf $pmOptions upgrade
 		;;
 		yum)
-		yum upgrade
+		yum $pmOptions upgrade
 		;;
 		slackpkg)
-		slackpkg install-new # Required line
-		slackpkg upgrade-all
+		slackpkg $pmOptions install-new # Required line
+		slackpkg $pmOptions upgrade-all
 		;;
 		zypper)
-		zypper --non-interactive update
+		zypper $pmOptions update
 		;;
 		rpm)
-		rpm -F
+		rpm $pmOptions -F
 		;;
 		pacman)
-		sudo pacman -Syu
-		yaourt -Syu --aur # Remember to refresh the AUR as well
+		sudo pacman $pmOptions -Syu
+		yaourt $pmOptions -Syu --aur # Remember to refresh the AUR as well
 		;;
 		emerge)
-		emerge --update --deep world # Gentoo is strange
+		emerge $pmOptions --update --deep world # Gentoo is strange
 		;;
 		*)
 		debug "Unsupported package manager detected! Please contact script maintainer to get yours added to the list!"
@@ -319,18 +325,18 @@ function cleanPM() {
 	debug "Preparing to clean with $program"
 	case $program in
 		apt)
-		apt-get --assume-yes autoremove
-		apt-get autoclean
+		apt-get $pmOptions autoremove
+		apt-get $pmOptions autoclean
 		;;
 		dnf)
-		dnf -y clean all
-		dnf -y autoerase
+		dnf $pmOptions clean all
+		dnf $pmOptions autoerase
 		;;
 		yum)
-		yum clean all
+		yum $pmOptions clean all
 		;;
 		slackpkg)
-		slackpkg clean-system
+		slackpkg $pmOptions clean-system
 		;;
 		rpm)
 		announce "RPM has no clean function"
@@ -344,8 +350,8 @@ function cleanPM() {
 		announce "Zypper has no clean function"
 		;;
 		emerge)
-		emerge --clean
-		emerge --depclean # Couldn't tell which was the only one necessary, so I included both
+		emerge $pmOptions --clean
+		emerge $pmOptions --depclean # Couldn't tell which was the only one necessary, so I included both
 		;;
 		*)
 		debug "Unsupported package manager detected! Please contact script maintainer to get yours added to the list!"
@@ -378,32 +384,32 @@ function queryPM() {
 		debug "l3" "Querying packagage database for: $var"
 		case $program in
 			apt)
-			apt-cache search "$var"
+			apt-cache $pmOptions search "$var"
 			;;
 			pacman)
-			pacman -Ss "$var" # No sudo required for this one, same for yaourt
+			pacman $pmOptions -Ss "$var" # No sudo required for this one, same for yaourt
 			if [[ $? -ne 0 ]]; then
 				debug "l3" "Package $var not found in pacman, searching AUR via yaourt instead."
-				yaourt -Ss "$var"
+				yaourt $pmOptions -Ss "$var"
 			fi
 			;;
 			yum)
-			yum search "$var" # Change to 'yum search all' if the results aren't good enough
+			yum $pmOptions search "$var" # Change to 'yum search all' if the results aren't good enough
 			;;
 			emerge)
-			emerge --search "$var" # Like yum, use 'emerge --searchdesc' if the results aren't enough
+			emerge $pmOptions --search "$var" # Like yum, use 'emerge --searchdesc' if the results aren't enough
 			;;
 			zypper)
-			zypper search "$var"
+			zypper $pmOptions search "$var"
 			;;
 			dnf)
-			dnf search "$var"
+			dnf $pmOptions search "$var"
 			;;
 			rpm)
-			rpm -q "$var"
+			rpm $pmOptions -q "$var"
 			;;
 			slackpkg)
-			slackpkg search "$var"
+			slackpkg $pmOptions search "$var"
 			;;
 			*)
 			debug "Unsupported package manager detected! Please contact script maintainer to get yours added to the list!"
@@ -437,32 +443,32 @@ function removePM() {
 		debug "l3" "Attempting to remove $var..."
 		case $program in
 			apt)
-			apt-get remove "$var"
+			apt-get $pmOptions remove "$var"
 			;;
 			pacman)
 			sudo pacman -R "$var"
 			if [[ $? -ne 0 ]]; then
 				debug "l3" "Couldn't find package $var with pacman, trying yaourt"
-				sudo yaourt -R "$var"
+				sudo yaourt $pmOptions -R "$var"
 			fi
 			;;
 			yum)
-			yum remove "$var"
+			yum $pmOptions remove "$var"
 			;;
 			emerge)
-			emerge --remove --depclean "$var"
+			emerge $pmOptions --remove --depclean "$var"
 			;;
 			dnf)
-			dnf remove "$var"
+			dnf $pmOptions remove "$var"
 			;;
 			rpm)
-			rpm -e "$var"
+			rpm $pmOptions -e "$var"
 			;;
 			slackpkg)
-			slackpkg remove "$var"
+			slackpkg $pmOptions remove "$var"
 			;;
 			zypper)
-			zypper remove "$var"
+			zypper $pmOptions remove "$var"
 			;;
 			*)
 			debug "Unsupported package manager detected! Please contact script maintainer to get yours added to the list!"
@@ -496,10 +502,10 @@ function pkgInfo() {
 		debug "l3" "Displaying package info of: $var"
 		case "$program" in
 			pacman)
-			pacman -Qi "$var"
+			pacman $pmOptions -Qi "$var"
 			if [[ $? -ne 0 ]]; then
 				debug "l3" "$var could not be found in pacman, trying yaourt!"
-				yaourt -Qi "$var"
+				yaourt $pmOptions -Qi "$var"
 			fi
 			;;
 			apt)
@@ -509,26 +515,26 @@ function pkgInfo() {
 			# This allows to check a .rpm file for data info
 			if [[ -f "$var" ]]; then
 				debug "$var is a file, checking contents for documentation"
-				rpm -qip "$var"
+				rpm $pmOptions -qip "$var"
 			else
-				rpm -qi "$var"
+				rpm $pmOptions -qi "$var"
 			fi
 			;;
 			yum)
-			yum info "$var"
+			yum $pmOptions info "$var"
 			;;
 			emerge)
-			equery meta "$var"
-			equery depends "$var" # Shows dependencies
+			equery $pmOptions meta "$var"
+			equery $pmOptions depends "$var" # Shows dependencies
 			;;
 			slackpkg)
-			slackpkg info "$var"
+			slackpkg $pmOptions info "$var"
 			;;
 			dnf)
-			dnf info "$var"
+			dnf $pmOptions info "$var"
 			;;
 			zypper)
-			zypper info "$var"
+			zypper $pmOptions info "$var"
 			;;
 			*)
 			debug "Unsupported package manager detected! Please contact script maintainer to get yours added to the list!"
