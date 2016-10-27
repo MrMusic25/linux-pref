@@ -144,6 +144,7 @@ debugPrefix="$HOME/.logs" # Use: scriptLog="$debugPrefix/scriptLog.log", then in
 logFile=$debugPrefix/$( basename "$0" | cut -d '.' -f 1 ).log # Now every script has a unique yet dynamic log name!
 debugLevel=1 # Default, directs to log; see debug() for more info
 
+
 cFlag=0 # Used with the ctrl_c function
 #trap ctrl_c INT # This will run the function ctrl_c() when it captures the key press
 

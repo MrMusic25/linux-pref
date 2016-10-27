@@ -3,6 +3,9 @@
 # packageManager.sh, a.k.a pm - A universal package manager script
 #
 # Changes:
+# v1.2.2
+# - Changed the way the script looks for privilege so query and pkginfo trigger the privilege check
+#
 # v1.2.1
 # - Spaces break things. Removed offending spaces.
 # - Script will now quit early if not root on most systems
@@ -36,7 +39,7 @@
 #
 # TODO:
 #
-# v1.2.1, 26 Oct. 2016 18:37 PST
+# v1.2.2, 26 Oct. 2016 18:59 PST
 
 ### Variables
 
@@ -128,9 +131,11 @@ function processArgs() {
 			noConfirm
 			;;
 			f|F|refresh|Refresh|update|Update) # Such alias.
+			[[ "$program" != "pacman" ]] && checkPrivilege "exit" 
 			updatePM
 			;;
 			u|U|upgrade|Upgrade)
+			[[ "$program" != "pacman" ]] && checkPrivilege "exit" 
 			upgradePM
 			;;
 			c|C|clean|Clean)
@@ -141,9 +146,11 @@ function processArgs() {
 				sleep 5
 			fi
 			
+			[[ "$program" != "pacman" ]] && checkPrivilege "exit" 
 			cleanPM
 			;;
 			i|I|install|Install)
+			[[ "$program" != "pacman" ]] && checkPrivilege "exit" 
 			shift
 			for prog in "$@"
 			do
@@ -152,6 +159,7 @@ function processArgs() {
 			done
 			;;
 			r|R|remove|Remove)
+			[[ "$program" != "pacman" ]] && checkPrivilege "exit" 
 			shift
 			
 			# Give a warning if running in non-interactive mode
@@ -262,8 +270,6 @@ if [[ "$program" == "pacman" && "$EUID" -eq 0 ]]; then
 	debug "l3" "Please run as regular user when using arch-based distros, not sudo/root!"
 	exit 1
 fi
-
-checkPrivilege "quit"
 
 processArgs "$@" # Didn't plan it this way, but awesome that everything work with this script
 
