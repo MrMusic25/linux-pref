@@ -3,6 +3,9 @@
 # packageManager.sh, a.k.a pm - A universal package manager script
 #
 # Changes:
+# v1.2.3
+# - Adding options is broken, attempted a fix, but didn't have time to diagnose it more
+#
 # v1.2.2
 # - Changed the way the script looks for privilege so query and pkginfo trigger the privilege check
 #
@@ -123,7 +126,11 @@ function processArgs() {
 			exit 0
 			;;
 			-o|--option)
-			pmOptions="$pmOptions""$2"
+			if [[ -z $pmOptions ]]; then
+				pmOptions="$2"
+			else
+				pmOptions="$pmOptions""$2"
+			fi
 			shift
 			;;
 			-n|--no-confirm)
