@@ -5,6 +5,10 @@
 # Note: this script whould not be run by itself, as it only contains functions and variables
 #
 # Changes:
+# v1.8.1
+# - The best kind of updates are those that go untested, amirite? Lol, bug fixes
+# - Added a newline so text doesn't get chopped
+#
 # v1.8.0
 # - getUserAnswer() can now assume yes/no ans timeout for "headless" scripts. Doesn't effect legacy calls.
 #
@@ -134,7 +138,7 @@
 #   ~ If the option times out, assum the answer and return that value
 #     ~ This allows for user input while still being non-interactive
 #
-# v1.8.0, 26 Oct. 2016 19:30 PST
+# v1.8.1, 26 Oct. 2016 20:01 PST
 
 ### Variables
 
@@ -147,7 +151,7 @@ debugPrefix="$HOME/.logs" # Use: scriptLog="$debugPrefix/scriptLog.log", then in
 logFile=$debugPrefix/$( basename "$0" | cut -d '.' -f 1 ).log # Now every script has a unique yet dynamic log name!
 debugLevel=1 # Default, directs to log; see debug() for more info
 assume="nothing" # Mysterious guys get the most girls :3
-timeoutVal="10s" # Seconds to wait when assuming yes/no in getUserAnswer()
+timeoutVal=10 # Seconds to wait when assuming yes/no in getUserAnswer()
 
 cFlag=0 # Used with the ctrl_c function
 #trap ctrl_c INT # This will run the function ctrl_c() when it captures the key press
@@ -496,7 +500,7 @@ function getUserAnswer() {
 		assume="yes"
 		shift
 	elif [[ "$1" == "n" || "$1" == "no" ]]; then
-		assume ="no"
+		assume="no"
 		shift
 	fi
 	
@@ -505,16 +509,18 @@ function getUserAnswer() {
 	case $assume in
 		yes)
 		until [[ $ans == "y" || $ans == "yes" || $ans == "n" || $ans == "no" ]]; do
-			timeout "$timeoutVal" read -p "Please answer above prompt (Y/n): " ans
-			if [[ "$ans" == "NULL" ]]; then
+			read -t "$timeoutVal" -p "Please answer above prompt (Y/n): " ans
+			if [[ $ans != "y" || $ans != "yes" || $ans != "n" || $ans != "no" ]]; then
+				printf "\n" # Formatting
 				ans="y"
 			fi
 		done
 		;;
 		no)
 		until [[ $ans == "y" || $ans == "yes" || $ans == "n" || $ans == "no" ]]; do
-			timeout "$timeoutVal" read -p "Please answer above prompt (y/N): " ans
-			if [[ "$ans" == "NULL" ]]; then
+			read -t "$timeoutVal" -p "Please answer above prompt (y/N): " ans
+			if [[ $ans != "y" || $ans != "yes" || $ans != "n" || $ans != "no" ]]; then
+				printf "\n"
 				ans="n"
 			fi
 		done
