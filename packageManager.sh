@@ -3,6 +3,10 @@
 # packageManager.sh, a.k.a pm - A universal package manager script
 #
 # Changes:
+# v1.2.1
+# - Spaces break things. Removed offending spaces.
+# - Script will now quit early if not root on most systems
+#
 # v1.2.0
 # - Added option for -n|--no-confirm to reflect new default in pmCF.sh of non-interactive management
 # - Gives warnings for dangerous -n cases
@@ -31,18 +35,8 @@
 # - Initial version
 #
 # TODO:
-# - Make new cF.sh specifically for this script
-#   ~ Add this script to cF.sh so other functions that depend on universalInstaller or determinePM can still use them
-#     ~ For that matter, DON'T BREAK COMPATIBILITY! COPY+PASTE!
-#   ~ Possibly add them to a folder of common functions, source all of them with a for loop or conditionally (ifdef, C++ style!)
-#     ~ http://unix.stackexchange.com/questions/253805/ifdef-style-conditional-inclusions-for-shell
-#   ~ Note: you might have to fix linking once everything is ready
-#     ~ Idea: Script that sources everything from the $LP/commonFunctions.sh folder, solves a lot of issues
-#       ~ You would have to export the location of $LP, but that's pretty easy to include with INSTALL.sh
-# - If PM is Arch, make sure it is NOT running as sudo. Otherwise, checkPrivilege "quit"
 #
-#
-# v1.2.0, 19 Oct. 2016 19:22 PST
+# v1.2.1, 26 Oct. 2016 18:37 PST
 
 ### Variables
 
@@ -96,16 +90,16 @@ function noConfirm() {
 	
 	case $program in
 		apt)
-		pmOptions="$pmOptions"" ""--assume-yes"
+		pmOptions="$pmOptions""--assume-yes"
 		;;
 		pacman)
-		pmOptions="$pmOptions"" ""--no-confirm"
+		pmOptions="$pmOptions""--no-confirm"
 		;;
 		dnf)
-		pmOptions="$pmOptions"" ""-y"
+		pmOptions="$pmOptions""-y"
 		;;
 		zypper)
-		pmOptions="$pmOptions"" ""--non-interactive"
+		pmOptions="$pmOptions""--non-interactive"
 		;;
 	esac
 }
@@ -126,7 +120,7 @@ function processArgs() {
 			exit 0
 			;;
 			-o|--option)
-			pmOptions="$pmOptions"" ""$2"
+			pmOptions="$pmOptions""$2"
 			shift
 			;;
 			-n|--no-confirm)
@@ -268,6 +262,8 @@ if [[ "$program" == "pacman" && "$EUID" -eq 0 ]]; then
 	debug "l3" "Please run as regular user when using arch-based distros, not sudo/root!"
 	exit 1
 fi
+
+checkPrivilege "quit"
 
 processArgs "$@" # Didn't plan it this way, but awesome that everything work with this script
 
