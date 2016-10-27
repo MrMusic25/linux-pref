@@ -5,6 +5,9 @@
 # Note: this script whould not be run by itself, as it only contains functions and variables
 #
 # Changes:
+# v1.8.0
+# - getUserAnswer() can now assume yes/no ans timeout for "headless" scripts. Doesn't effect legacy calls.
+#
 # v1.7.6
 # - Moved checkRequirements() to pmCF.sh
 # - Added a source argument for pmCF.sh
@@ -131,7 +134,7 @@
 #   ~ If the option times out, assum the answer and return that value
 #     ~ This allows for user input while still being non-interactive
 #
-# v1.7.6, 08 Oct. 2016 01:32 PST
+# v1.8.0, 26 Oct. 2016 19:30 PST
 
 ### Variables
 
@@ -143,7 +146,8 @@ debugInit=0
 debugPrefix="$HOME/.logs" # Use: scriptLog="$debugPrefix/scriptLog.log", then include $scriptLog in debug() statements
 logFile=$debugPrefix/$( basename "$0" | cut -d '.' -f 1 ).log # Now every script has a unique yet dynamic log name!
 debugLevel=1 # Default, directs to log; see debug() for more info
-
+assume="nothing" # Mysterious guys get the most girls :3
+timeoutVal="10s" # Seconds to wait when assuming yes/no in getUserAnswer()
 
 cFlag=0 # Used with the ctrl_c function
 #trap ctrl_c INT # This will run the function ctrl_c() when it captures the key press
@@ -475,7 +479,7 @@ function addCronJob() {
 #
 # Function: Asks a user for input, verifies input, then returns with the answer (0 for true/yes, 1 for false/no)
 #
-# Call: getUserAnswer "Question in quotation marks?" [variable_name] "Question for variable name, if present?"
+# Call: getUserAnswer [y/n] "Question in quotation marks?" [variable_name] "Question for variable name, if present?"
 #
 # Input: User will be asked the question in quotes ($1). 
 #        If [variable_name] ($2) is present, it will ask the second question ($3) and assign response to that variable
@@ -483,13 +487,44 @@ function addCronJob() {
 # Output: stdout (obviously), return value of 0 for yes/true response, value of 1 for no/false response
 #
 # Other info: Be careful which names you give to the variables, you may accidentally delete other variables!
+#             If first argument is y or n, it will assume answer is yes/no respectively. Script will not assume input values (for now)
 function getUserAnswer() {
 	export ans="NULL" # Guess re-declaration doesn't work properly in bash...
+	
+	# Allows for assuming yes/no without needed to edit all current calls
+	if [[ "$1" == "y" || "$2" == "yes" ]]; then
+		assume="yes"
+		shift
+	elif [[ "$1" == "n" || "$1" == "no" ]]; then
+		assume ="no"
+		shift
+	fi
+	
 	announce "$1"
 	
-	until [[ $ans == "y" || $ans == "yes" || $ans == "n" || $ans == "no" ]]; do
-		read -p "Please answer above prompt (y/n): " ans
-	done
+	case $assume in
+		yes)
+		until [[ $ans == "y" || $ans == "yes" || $ans == "n" || $ans == "no" ]]; do
+			timeout "$timeoutVal" read -p "Please answer above prompt (Y/n): " ans
+			if [[ "$ans" == "NULL" ]]; then
+				ans="y"
+			fi
+		done
+		;;
+		no)
+		until [[ $ans == "y" || $ans == "yes" || $ans == "n" || $ans == "no" ]]; do
+			timeout "$timeoutVal" read -p "Please answer above prompt (y/N): " ans
+			if [[ "$ans" == "NULL" ]]; then
+				ans="n"
+			fi
+		done
+		;;
+		*)
+		until [[ $ans == "y" || $ans == "yes" || $ans == "n" || $ans == "no" ]]; do
+			read -p "Please answer above prompt (y/n): " ans
+		done
+		;;
+	esac
 	
 	#while [[ $ans == "NULL" || $ans != "y" || $ans != "yes" || $ans != "n" || $ans != "no" ]];
 	#do
