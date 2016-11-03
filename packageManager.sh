@@ -102,16 +102,16 @@ function noConfirm() {
 	
 	case $program in
 		apt)
-		[[ -z $pmOptions]] && pmOptions="--assume-yes" || pmOptions="$pmOptions ""--assume-yes"
+		[[ -z $pmOptions ]] && pmOptions="--assume-yes" || pmOptions="$pmOptions ""--assume-yes"
 		;;
 		pacman)
-		[[ -z $pmOptions]] && pmOptions="--no-confirm" || pmOptions="$pmOptions ""--no-confirm"
+		[[ -z $pmOptions ]] && pmOptions="--no-confirm" || pmOptions="$pmOptions ""--no-confirm"
 		;;
 		dnf|yum)
-		[[ -z $pmOptions]] && pmOptions="-y" || pmOptions="$pmOptions ""-y"
+		[[ -z $pmOptions ]] && pmOptions="-y" || pmOptions="$pmOptions ""-y"
 		;;
 		zypper)
-		[[ -z $pmOptions]] && pmOptions="--non-interactive" || pmOptions="$pmOptions ""--non-interactive"
+		[[ -z $pmOptions ]] && pmOptions="--non-interactive" || pmOptions="$pmOptions ""--non-interactive"
 		;;
 		*)
 		# Emerge, slackpkg, rpm do not support assume-yes like commands
