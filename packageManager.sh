@@ -88,6 +88,7 @@ Run Modes:
    [C]lean                                   : Clean the system of stale and unnecessary packages
 
 Options:
+   -h | --help                      : Display this help message
    -v | --verbose                   : Display detailed debugging info (note: MUST be first argument!)
    -o | --option <pm_option>        : Any options added here will be added when running the package manager
                                     : Use as many times as needed!
