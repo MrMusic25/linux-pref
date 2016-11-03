@@ -61,6 +61,9 @@
 #     ~ Export variable packageManager="$pm" to .bashrc, to save time later
 #   ~ Separate updating databases from this function
 #   ~ In cases like Arch with pacman/yaourt, inform user of dual-package managers
+# - Add npm and npm to install(), update(), upgrade(), remove(), and possibly query()/info() - but NOT to determinePM()
+# - For all functions - add ability to 'run PM as $1' if there is an argument
+#   ~ e.g. "upgradePM" will upgrade the current PM, "upgradePM npm" will (attempt to) upgrade npm
 #
 # v1.2.0, 19 Oct. 2016 19:11 PST
 

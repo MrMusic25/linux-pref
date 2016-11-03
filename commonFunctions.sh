@@ -137,6 +137,7 @@
 #   ~ For y/n answers, add an option that assumes a default option ( y/N or Y/n)
 #   ~ If the option times out, assum the answer and return that value
 #     ~ This allows for user input while still being non-interactive
+#   ~ Add a way to specify the timeout value from the default in cF.sh
 #
 # v1.8.1, 26 Oct. 2016 20:01 PST
 

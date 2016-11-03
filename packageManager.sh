@@ -3,6 +3,12 @@
 # packageManager.sh, a.k.a pm - A universal package manager script
 #
 # Changes:
+# v1.2.4
+# - Fixed adding options (hopefully)
+# - no-confirm actually does something now, and should work as well
+# - Added a couple of common shorcuts I have become used to using this script the past few weeks (fu, fuc)
+# - Added support for updating Raspberry Pi firmware, npm and pip support coming soon
+#
 # v1.2.3
 # - Adding options is broken, attempted a fix, but didn't have time to diagnose it more
 #
@@ -42,7 +48,7 @@
 #
 # TODO:
 #
-# v1.2.2, 26 Oct. 2016 18:59 PST
+# v1.2.4, 02 Nov. 2016 20:36 PST
 
 ### Variables
 
@@ -85,7 +91,7 @@ Options:
    -v | --verbose                   : Display detailed debugging info (note: MUST be first argument!)
    -o | --option <pm_option>        : Any options added here will be added when running the package manager
                                     : Use as many times as needed!
-   -n | --no-confirm                : Runs specified actions without prompting user to continue
+   -n | --no-confirm                : Runs specified actions without prompting user to continue. Not supported by all PMs!
    
 endHelp
 echo "$helpVar"
@@ -96,16 +102,20 @@ function noConfirm() {
 	
 	case $program in
 		apt)
-		pmOptions="$pmOptions""--assume-yes"
+		[[ -z $pmOptions]] && pmOptions="--assume-yes" || pmOptions="$pmOptions ""--assume-yes"
 		;;
 		pacman)
-		pmOptions="$pmOptions""--no-confirm"
+		[[ -z $pmOptions]] && pmOptions="--no-confirm" || pmOptions="$pmOptions ""--no-confirm"
 		;;
-		dnf)
-		pmOptions="$pmOptions""-y"
+		dnf|yum)
+		[[ -z $pmOptions]] && pmOptions="-y" || pmOptions="$pmOptions ""-y"
 		;;
 		zypper)
-		pmOptions="$pmOptions""--non-interactive"
+		[[ -z $pmOptions]] && pmOptions="--non-interactive" || pmOptions="$pmOptions ""--non-interactive"
+		;;
+		*)
+		# Emerge, slackpkg, rpm do not support assume-yes like commands
+		debug "l2" "User specified to run in no-confirm mode, but $program doesn't support it!"
 		;;
 	esac
 }
@@ -129,13 +139,29 @@ function processArgs() {
 			if [[ -z $pmOptions ]]; then
 				pmOptions="$2"
 			else
-				pmOptions="$pmOptions""$2"
+				pmOptions="$pmOptions ""$2"
 			fi
 			shift
 			;;
 			-n|--no-confirm)
 			confirm=1
 			noConfirm
+			;;
+			fu|FU)
+			[[ "$program" != "pacman" ]] && checkPrivilege "exit"
+			updatePM
+			upgradePM
+			;;
+			fuc|FUC)
+			[[ "$program" != "pacman" ]] && checkPrivilege "exit"
+			updatePM
+			upgradePM
+			if [[ $confirm -ne 0 ]]; then
+				debug "Warning user against cleaning the package manager non-interactively..."
+				announce "WARNING: It can be dangerous to clean package managers without confirmation!" "Script will continue shortly, but it is recommended to CTRL+C now!"
+				sleep 5
+			fi
+			cleanPM
 			;;
 			f|F|refresh|Refresh|update|Update) # Such alias.
 			[[ "$program" != "pacman" ]] && checkPrivilege "exit" 
@@ -270,6 +296,26 @@ function programInstaller() {
 	esac
 }
 
+function updateOthers() {
+	# Check to see if there are other installers/updaters, and offer to update them
+	
+	# rpi-update - Firmware updater for Raspberry Pi distros
+	if [[ ! -z $(which rpi-update 2>/dev/null) ]]; then
+		getUserAnswer "y" "Raspberry Pi detected, would you like to update firmware with rpi-update?"
+		case $? in
+			0)
+			sudo rpi-update
+			;;
+			1)
+			false
+			;;
+			*)
+			debug "l3" "Unknown error detected!"
+			;;
+		esac
+	fi
+	
+}
 ### Main Script
 
 determinePM
