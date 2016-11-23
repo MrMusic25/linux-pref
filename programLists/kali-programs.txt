@@ -1,8 +1,8 @@
 # All of my favorite pentesting programs from kali, backbox, etc...
 nmap
 zenmap
-theharvester
-metasploit-framework
+#theharvester
+metasploit
 john
 crunch
 ophcrack

@@ -3,6 +3,9 @@
 # packageManager.sh, a.k.a pm - A universal package manager script
 #
 # Changes:
+# v1.2.5
+# - Switched from a while loop to a for loop, solved the folder installation issues
+#
 # v1.2.4
 # - Fixed adding options (hopefully)
 # - no-confirm actually does something now, and should work as well
@@ -48,7 +51,7 @@
 #
 # TODO:
 #
-# v1.2.4, 02 Nov. 2016 20:36 PST
+# v1.2.5, 23 Nov. 2016 00:49 PST
 
 ### Variables
 
@@ -248,10 +251,15 @@ function programInstaller() {
 	case $programMode in
 		file)
 		announce "Now installing programs listed in $file!" "This may take a while depending on number of updates and internet speed" "Check $logFile for details"
-		while read -r line; do
+		#while read -r -u4 line; do
+		#	[[ $line = \#* ]] && continue # Skips comment lines
+		#	universalInstaller "$line"
+		#done <$file
+		for line in $file;
+		do
 			[[ $line = \#* ]] && continue # Skips comment lines
 			universalInstaller "$line"
-		done <$file
+		done
 		;;
 		directory)
 		announce "Installing all directories from $file!" "This WILL take a long time!" "Don't go anywhere, you will be asked if each section should be installed!"
@@ -279,10 +287,15 @@ function programInstaller() {
 				;;
 				esac
 
-				while read -r line; do
+				#while read -r line; do
+				#	[[ $line = \#* ]] && continue # Skips comment lines
+				#	universalInstaller "$line"
+				#done <"$list"
+				for line in $file;
+				do
 					[[ $line = \#* ]] && continue # Skips comment lines
 					universalInstaller "$line"
-				done <"$list"
+				done
 			fi
 		done
 		[[ ! -z $OLDPWD ]] && cd "$OLDPWD" || cd .. # Return to previous location so other scripts don't break
