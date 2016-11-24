@@ -3,6 +3,12 @@
 # packageManager.sh, a.k.a pm - A universal package manager script
 #
 # Changes:
+# v1.2.6
+# - Fixed installation from folder issues incurred from last update
+# - Editing text files now edits and deletes a tmp file so main files are not disrupted
+# - Added msfupdate to updateOthers()
+# - Select commands will now trigger updateOthers(), making it semi-usable!
+#
 # v1.2.5
 # - Switched from a while loop to a for loop, solved the folder installation issues
 #
@@ -51,7 +57,7 @@
 #
 # TODO:
 #
-# v1.2.5, 23 Nov. 2016 00:49 PST
+# v1.2.6, 23 Nov. 2016 20:00 PST
 
 ### Variables
 
@@ -155,11 +161,13 @@ function processArgs() {
 			[[ "$program" != "pacman" ]] && checkPrivilege "exit"
 			updatePM
 			upgradePM
+			updateOthers
 			;;
 			fuc|FUC)
 			[[ "$program" != "pacman" ]] && checkPrivilege "exit"
 			updatePM
 			upgradePM
+			updateOthers
 			if [[ $confirm -ne 0 ]]; then
 				debug "Warning user against cleaning the package manager non-interactively..."
 				announce "WARNING: It can be dangerous to clean package managers without confirmation!" "Script will continue shortly, but it is recommended to CTRL+C now!"
@@ -174,6 +182,7 @@ function processArgs() {
 			u|U|upgrade|Upgrade)
 			[[ "$program" != "pacman" ]] && checkPrivilege "exit" 
 			upgradePM
+			updateOthers
 			;;
 			c|C|clean|Clean)
 			# Give a warning if running in non-interactive mode
@@ -251,15 +260,34 @@ function programInstaller() {
 	case $programMode in
 		file)
 		announce "Now installing programs listed in $file!" "This may take a while depending on number of updates and internet speed" "Check $logFile for details"
+		getUserAnswer "Would you like to edit $file before installing?"
+		case $? in
+			0)
+			fileTMP="$file".tmp # Temp file, so main files are not edited
+			cp "$file" "$fileTMP"
+			editTextFile "$fileTMP"
+			;;
+			1)
+			fileTMP="$file".tmp # Temp file, so main files are not edited
+			cp "$file" "$fileTMP"
+			debug "User chose not to edit $file"
+			;;
+			*)
+			debug "Unknown option: $?"
+			announce "Error occurred! Please consult log!"
+			exit 1
+			;;
+		esac
 		#while read -r -u4 line; do
 		#	[[ $line = \#* ]] && continue # Skips comment lines
 		#	universalInstaller "$line"
 		#done <$file
-		for line in $file;
+		for line in $fileTMP;
 		do
 			[[ $line = \#* ]] && continue # Skips comment lines
 			universalInstaller "$line"
 		done
+		rm "$fileTMP"
 		;;
 		directory)
 		announce "Installing all directories from $file!" "This WILL take a long time!" "Don't go anywhere, you will be asked if each section should be installed!"
@@ -275,9 +303,13 @@ function programInstaller() {
 				getUserAnswer "Would you like to edit $list before installing?"
 				case $? in
 				0)
-				editTextFile "$list"
+				listTMP="$list".tmp # Temp file, so main files are not edited
+				cp "$list" "$listTMP"
+				editTextFile "$listTMP"
 				;;
 				1)
+				listTMP="$list".tmp
+				cp "$list" "$listTMP"
 				debug "User chose not to edit $list"
 				;;
 				*)
@@ -291,11 +323,12 @@ function programInstaller() {
 				#	[[ $line = \#* ]] && continue # Skips comment lines
 				#	universalInstaller "$line"
 				#done <"$list"
-				for line in $file;
+				for line in $listTMP;
 				do
 					[[ $line = \#* ]] && continue # Skips comment lines
 					universalInstaller "$line"
 				done
+				rm "$listTMP" # Leave no trace. Besides what the user wants, that is
 			fi
 		done
 		[[ ! -z $OLDPWD ]] && cd "$OLDPWD" || cd .. # Return to previous location so other scripts don't break
@@ -329,6 +362,21 @@ function updateOthers() {
 		esac
 	fi
 	
+	# Update Metasploit framework using msfupdate
+	if [[ ! -z $(which msfupdate 2>/dev/null) ]]; then
+		getUserAnswer "n" "Metasploit detected, would you like to update as well?"
+		case $? in
+			0)
+			sudo msfupdate
+			;;
+			1)
+			false
+			;;
+			*)
+			debug "l3" "Unknown error while installing msfupdate!"
+			;;
+		esac
+	fi
 }
 ### Main Script
 
