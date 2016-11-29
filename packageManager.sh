@@ -3,6 +3,9 @@
 # packageManager.sh, a.k.a pm - A universal package manager script
 #
 # Changes:
+# v1.2.7
+# - After some extensive testing and StackOverflow research, installing from files/directories FINALLY works as planned!
+#
 # v1.2.6
 # - Fixed installation from folder issues incurred from last update
 # - Editing text files now edits and deletes a tmp file so main files are not disrupted
@@ -57,7 +60,7 @@
 #
 # TODO:
 #
-# v1.2.6, 23 Nov. 2016 20:00 PST
+# v1.2.7, 28 Nov. 2016 23:26 PST
 
 ### Variables
 
@@ -282,11 +285,17 @@ function programInstaller() {
 		#	[[ $line = \#* ]] && continue # Skips comment lines
 		#	universalInstaller "$line"
 		#done <$file
-		for line in $fileTMP;
+		
+		OIFS=$IFS; IFS=$'\n' # Change to IFS is necessary
+		set -f # Disables globbing
+		for line in $(cat $fileTMP); # Not sure why the community dislikes cat, but it works
 		do
 			[[ $line = \#* ]] && continue # Skips comment lines
 			universalInstaller "$line"
 		done
+		IFS=$OIFS # Reset IFS and globbing so the rest of the script doesn't break
+		set +f
+		
 		rm "$fileTMP"
 		;;
 		directory)
@@ -323,11 +332,17 @@ function programInstaller() {
 				#	[[ $line = \#* ]] && continue # Skips comment lines
 				#	universalInstaller "$line"
 				#done <"$list"
+				
+				OIFS=$IFS; IFS=$'\n'
+				set -f
 				for line in $listTMP;
 				do
 					[[ $line = \#* ]] && continue # Skips comment lines
 					universalInstaller "$line"
 				done
+				IFS=$OIFS
+				set +f
+				
 				rm "$listTMP" # Leave no trace. Besides what the user wants, that is
 			fi
 		done
