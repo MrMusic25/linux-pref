@@ -666,11 +666,9 @@ function win2UnixPath() {
 	if [[ ! -z $2 ]]; then
 		case "$2" in
 			u*) # upper in documentation
-			echo "upper was activated!"
 			true # Essentiallly, do nothing, since default behavior is to make 'c drive' lowercase (built for bash on Windows!)
 			;;
 			c*) # cut in documentation
-			echo "cut was activated!"
 			dir="$(echo "$dir" | cut -d'/' -f2 --complement)"
 			#dir="/""$dir" # Command cut off root in trials, this can be remedied later anyways
 			;;
@@ -681,7 +679,6 @@ function win2UnixPath() {
 		esac
 	else
 		# Convert the Windows 'root' drive tolower, common use in Bash for Windows
-		echo "lower was activated!"
 		drive="$(echo "$dir" | cut -d'/' -f2 | awk '{print tolower($1)}')"
 		dir=/"$drive""$(echo "$dir" | cut -d'/' -f2 --complement)" # Scary, only way to test this is to run the script!
 	fi
