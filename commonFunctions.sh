@@ -5,6 +5,10 @@
 # Note: this script whould not be run by itself, as it only contains functions and variables
 #
 # Changes:
+# v1.9.1
+# - Automatic space conversion disabled for win2UnixPath(), it was giving me problems
+# - win2UnixPath() can still edit spaces, but now you must include "space" as the last argument
+#
 # v1.9.0
 # - New function: win2UnixPath()
 #
@@ -142,7 +146,7 @@
 #     ~ This allows for user input while still being non-interactive
 #   ~ Add a way to specify the timeout value from the default in cF.sh
 #
-# v1.9.0, 30 Nov. 2016 20:35 PST
+# v1.9.1, 02 Dec. 2016 12:06 PST
 
 ### Variables
 
@@ -632,7 +636,7 @@ function editTextFile() {
 # Function: Converts a Windows path to a POSIX path and echoes the response to stdout; typical use case will look like the following:
 #           directory="$(win2UnixPath "$windowsDirectory")"
 #
-# Call: win2UnixPath <Windows_path> [prefix] [upper OR cut]
+# Call: win2UnixPath <Windows_path> [prefix] [upper OR cut] [space]
 #
 # Input: String containing a Windows path
 #
@@ -641,6 +645,7 @@ function editTextFile() {
 # Other: By default, the Windows 'root' drive (C:\) will be converted tolower, useful in Bash for Windows (make sure prefix="/mnt" in this case!)
 #        Appending upper to the end of the call will leave the uppercase letter intact; appending cut will remove the Windows root outright
 #        Both of these appendages can be used by themselves, but the prefix must ALWAYS go first if it is not set somewhere else in the script!
+#        As of 1.9.1, function will not automatically convert spaces. Include "space" at the end of the call to have this done from now on.
 function win2UnixPath() {
 	# Make sure an argument is given
 	if [[ -z $1 ]]; then
@@ -651,7 +656,7 @@ function win2UnixPath() {
 	dir="$1" # Getting ready to have nasty things done to it
 	
 	# Explained: winDir            \ -> /       : -> ''    ' ' -> '\ '
-	dir="$(echo "/$dir" | sed -e 's/\\/\//g' -e 's/://' -e 's/ /\\ /g')"
+	dir="$(echo "/$dir" | sed -e 's/\\/\//g' -e 's/://')" #-e 's/ /\\ /g')"
 	
 	# Determing if second argument is prefix
 	if [[ $# -gt 2 ]]; then
@@ -662,7 +667,7 @@ function win2UnixPath() {
 		shift
 	fi
 	
-	# Now, do 'cut' or 'upper' if the user requested it
+	# Now, do 'cut', 'upper', or 'space' if the user requested it
 	if [[ ! -z $2 ]]; then
 		case "$2" in
 			u*) # upper in documentation
@@ -671,6 +676,9 @@ function win2UnixPath() {
 			c*) # cut in documentation
 			dir="$(echo "$dir" | cut -d'/' -f2 --complement)"
 			#dir="/""$dir" # Command cut off root in trials, this can be remedied later anyways
+			;;
+			s*)
+			dir="$(echo "$dir" | sed -e 's/ /\\ /g')"
 			;;
 			*)
 			debug "l2" "ERROR: Bad call for winToUnixPath(): $2 is neither an acceptable command nor a valid prefix!"
@@ -687,6 +695,9 @@ function win2UnixPath() {
 	if [[ ! -z $prefix ]]; then
 		dir="$prefix"/"$dir"
 	fi
+	
+	# Lastly, if the user requested it, edit the spaces; no need to check contents of last call, should be the only argument
+	[[ ! -z $2 ]] && dir="$(echo "$dir" | sed -e 's/ /\\ /g')"
 	
 	# One final cleanup... Change any double slash to single
 	dir="$(echo "$dir" | sed 's,//,/,g')"

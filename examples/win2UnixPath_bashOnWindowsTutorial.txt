@@ -1,0 +1,87 @@
+This will demonstrate how win2UnixPath() is meant to be used for Bash on Windows
+
+Script looks like:
+
+#!/bin/bash
+#
+# Script used to test functions and ideas before putting it into production
+
+source commonFunctions.sh
+
+file="G:\iTunes\iTunes Media\Music\Die Antwoord\Donker Mag\1-07 Cookie Thumper!.mp3"
+
+echo "Original: $file"
+echo " "
+
+prefix="/mnt" # Main use: Bash on Windows
+echo "Editing file with prefix of: $prefix"
+newFile="$(win2UnixPath "$file")"
+
+echo "New file looks like: $newFile"
+echo " "
+
+printf "Does path exist?: "
+if [[ -e "$newFile" ]]; then
+	printf "True\n\n"
+else
+	printf "False\n\n"
+fi
+
+printf "Is path a file?: "
+if [[ -f "$newFile" ]]; then
+	printf "True\n\n"
+else
+	printf "False\n\n"
+fi
+
+cutFile="$(echo "$newFile" | rev | cut -d'/' -f 1 --complement | rev)"
+echo "New cut file looks like: $cutFile"
+echo " "
+
+printf "Does path exist?: "
+if [[ -e "$cutFile" ]]; then
+	printf "True\n\n"
+else
+	printf "False\n\n"
+fi
+
+printf "Is path a directory?: "
+if [[ -d "$cutFile" ]]; then
+	printf "True\n\n"
+else
+	printf "False\n\n"
+fi
+
+#EOF
+
+Running the script gives us this output:
+
+Original: G:\iTunes\iTunes Media\Music\Die Antwoord\Donker Mag\1-07 Cookie Thumper!.mp3
+ 
+Editing file with prefix of: /mnt
+New file looks like: 
+ 
+Does path exist?: False
+
+Is path a file?: False
+
+New cut file looks like: 
+ 
+Does path exist?: False
+
+Is path a directory?: False
+
+Original: G:\iTunes\iTunes Media\Music\Die Antwoord\Donker Mag\1-07 Cookie Thumper!.mp3
+ 
+Editing file with prefix of: /mnt
+New file looks like: /mnt/g/iTunes/iTunes Media/Music/Die Antwoord/Donker Mag/1-07 Cookie Thumper!.mp3
+ 
+Does path exist?: True
+
+Is path a file?: True
+
+New cut file looks like: /mnt/g/iTunes/iTunes Media/Music/Die Antwoord/Donker Mag
+ 
+Does path exist?: True
+
+Is path a directory?: True
