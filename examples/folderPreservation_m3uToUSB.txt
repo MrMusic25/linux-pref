@@ -1,0 +1,94 @@
+This doc will show how folder preservation works, in regards to preserving the artist and album folder using m3uToUSB.sh
+
+Script looks like:
+
+#!/bin/bash
+#
+# Script used to test functions and ideas before putting it into production
+
+source commonFunctions.sh
+
+file="G:\iTunes\iTunes Media\Music\Nonpoint\The Return\1-02 Breaking Skin.m4a"
+output="/mnt/d/"
+
+echo "Original: $file"
+echo " "
+
+echo "Output looks like: $output"
+if [[ "$output" == */ ]]; then
+	output="$(echo "$output" | rev | cut -d'/' -f 1 --complement | rev)" # Fix trailing slash
+	echo "Fixed output looks like: $output"
+fi
+echo " "
+
+prefix="/mnt" # Main use: Bash on Windows
+echo "Editing file with prefix of: $prefix"
+newFile="$(win2UnixPath "$file")"
+
+echo "New file looks like: $newFile"
+echo " "
+
+fileName="$(echo "$newFile" | rev | cut -d'/' -f 1 | rev)"
+echo "File name looks like: $fileName"
+echo " "
+
+fileName="$(echo "$fileName" | cut -d'.' -f 1)"
+echo "File name without extension looks like: $fileName"
+echo " "
+
+convertFile="$fileName"".mp3"
+echo "Converted file name looks like: $convertFile"
+echo " "
+
+noNumbers="$(echo "$convertFile" | cut -d' ' -f1 --complement)"
+echo "Filename without numbers looks like: $noNumbers"
+echo " "
+
+artistFolder="$(echo "$newFile" | rev | cut -d'/' -f3 | rev)"
+echo "Artist folder looks like this: $artistFolder"
+echo " "
+
+albumFolder="$(echo "$newFile" | rev | cut -d'/' -f2 | rev)"
+echo "Album folder looks like this: $albumFolder"
+echo " "
+
+outputFile="$output"/"$convertFile"
+echo "Output level none looks like: $outputFile"
+echo " "
+
+outputFile="$output"/"$artistFolder"/"$convertFile"
+echo "Output level artist looks like: $outputFile"
+echo " "
+
+outputFile="$output"/"$artistFolder"/"$albumFolder"/"$convertFile"
+echo "Output level album looks like: $outputFile"
+echo " "
+#EOF
+
+Output from script looks like:
+
+Original: G:\iTunes\iTunes Media\Music\Nonpoint\The Return\1-02 Breaking Skin.m4a
+ 
+Output looks like: /mnt/d/
+Fixed output looks like: /mnt/d
+ 
+Editing file with prefix of: /mnt
+New file looks like: /mnt/g/iTunes/iTunes Media/Music/Nonpoint/The Return/1-02 Breaking Skin.m4a
+ 
+File name looks like: 1-02 Breaking Skin.m4a
+ 
+File name without extension looks like: 1-02 Breaking Skin
+ 
+Converted file name looks like: 1-02 Breaking Skin.mp3
+ 
+Filename without numbers looks like: Breaking Skin.mp3
+ 
+Artist folder looks like this: Nonpoint
+ 
+Album folder looks like this: The Return
+ 
+Output level none looks like: /mnt/d/1-02 Breaking Skin.mp3
+ 
+Output level artist looks like: /mnt/d/Nonpoint/1-02 Breaking Skin.mp3
+ 
+Output level album looks like: /mnt/d/Nonpoint/The Return/1-02 Breaking Skin.mp3
