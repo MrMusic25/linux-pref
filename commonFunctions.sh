@@ -5,6 +5,9 @@
 # Note: this script whould not be run by itself, as it only contains functions and variables
 #
 # Changes:
+# v1.9.2
+# - Small change to debug(), not sure if it helps or not but conforms to other scripts now
+#
 # v1.9.1
 # - Automatic space conversion disabled for win2UnixPath(), it was giving me problems
 # - win2UnixPath() can still edit spaces, but now you must include "space" as the last argument
@@ -146,7 +149,7 @@
 #     ~ This allows for user input while still being non-interactive
 #   ~ Add a way to specify the timeout value from the default in cF.sh
 #
-# v1.9.1, 02 Dec. 2016 12:06 PST
+# v1.9.2, 04 Dec. 2016 17:12 PST
 
 ### Variables
 
@@ -316,14 +319,14 @@ function debug() {
 	# Now, redirect output based on debugLevel
 	case $debugLevel in
 		2)
-		(>&2 echo "Debug: $*")
+		(>&2 echo "Debug: $@")
 		;;
 		3)
-		announce "Debug: $*"
+		announce "Debug: $@"
 		;;
 		4)
-		(>&2 echo "Debug: $*")
-		announce "Debug: $*"
+		(>&2 echo "Debug: $@")
+		announce "Debug: $@"
 		;;
 	esac
 	debugLevel="$oldLevel"
@@ -678,7 +681,7 @@ function win2UnixPath() {
 			#dir="/""$dir" # Command cut off root in trials, this can be remedied later anyways
 			;;
 			s*)
-			dir="$(echo "$dir" | sed -e 's/ /\\ /g')"
+			dir="$(echo "$dir" | sed -e 's/ /\ /g')"
 			;;
 			*)
 			debug "l2" "ERROR: Bad call for winToUnixPath(): $2 is neither an acceptable command nor a valid prefix!"
