@@ -3,6 +3,10 @@
 # packageManagerCF.sh - Common functions for package managers and similar functions
 #
 # Changes:
+# v1.2.1
+# - Small change to checkRequirements for non-sudo scripts
+# - checkRequirements now uses pm.sh to install programs, turns out sudo-ing functions is difficult
+#
 # v1.2.0
 # - All programs now support the -o|--options from pm.sh
 # - Package managers are no longer non-interactive by default
@@ -65,7 +69,7 @@
 # - For all functions - add ability to 'run PM as $1' if there is an argument
 #   ~ e.g. "upgradePM" will upgrade the current PM, "upgradePM npm" will (attempt to) upgrade npm
 #
-# v1.2.0, 19 Oct. 2016 19:11 PST
+# v1.2.1, 04 Dec. 2016 16:45 PST
 
 ### Variables
 
@@ -582,7 +586,24 @@ function checkRequirements() {
 			case $? in
 				0)
 				debug "Installing $reqt based on user input"
-				universalInstaller "$reqt"
+				if [[ "$program" == "pacman" ]]; then
+					if [[ -e packageManager.sh ]]; then
+						packageManager.sh install "$reqt"
+					elif [[ -e /usr/bin/pm ]]; then
+						pm install "$reqt"
+					else
+						debug "l2" "ERROR: Unable to locate packageManager.sh! Please install $reqt manually!"
+						exit 1
+					fi
+				else
+					if [[ -e packageManager.sh ]]; then
+						sudo packageManager.sh install "$reqt"
+					elif [[ -e /usr/bin/pm ]]; then
+						sudo pm install "$reqt"
+					else
+						debug "l2" "ERROR: Unable to locate packageManager.sh! Please install $reqt manually!"
+						exit 1
+					fi				fi
 				;;
 				1)
 				debug "User chose not to install required program $reqt, quitting!"
