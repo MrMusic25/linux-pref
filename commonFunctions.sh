@@ -688,6 +688,7 @@ function win2UnixPath() {
 			return
 			;;
 		esac
+		shift
 	else
 		# Convert the Windows 'root' drive tolower, common use in Bash for Windows
 		drive="$(echo "$dir" | cut -d'/' -f2 | awk '{print tolower($1)}')"
@@ -699,11 +700,13 @@ function win2UnixPath() {
 		dir="$prefix"/"$dir"
 	fi
 	
+	# Change any escape characters
+	
 	# Lastly, if the user requested it, edit the spaces; no need to check contents of last call, should be the only argument
 	[[ ! -z $2 ]] && dir="$(echo "$dir" | sed -e 's/ /\\ /g')"
 	
-	# One final cleanup... Change any double slash to single
-	dir="$(echo "$dir" | sed 's,//,/,g')"
+	# One final cleanup... Change any double slashes to single
+	dir="$(echo "$dir" | sed -e 's,//,/,g' -e 's,\\\\,\\,g')"
 	
 	# Congratulations if you made it this far!
 	echo "$dir"

@@ -32,6 +32,12 @@
 # v1.0.1
 # - Script now uses $debugPrefix
 #
+# TODO:
+# - Add a .gitDirectories folder to ~/ and sync with each directory every x minutes
+# - Make an alias 'git clone'='gitcheck clone' and offer to add to directory list
+#   ~ Only need one cron entry, easy to update all gits on computer!
+#   ~ Ask if user wants to be notified of updates
+#
 # v1.1.0, 23 Aug. 2016 15:34 PST
 
 ### Variables
