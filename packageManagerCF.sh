@@ -603,7 +603,8 @@ function checkRequirements() {
 					else
 						debug "l2" "ERROR: Unable to locate packageManager.sh! Please install $reqt manually!"
 						exit 1
-					fi				fi
+					fi
+				fi
 				;;
 				1)
 				debug "User chose not to install required program $reqt, quitting!"

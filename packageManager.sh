@@ -333,11 +333,13 @@ function programInstaller() {
 				#	universalInstaller "$line"
 				#done <"$list"
 				
-				OIFS=$IFS; IFS=$'\n'
+				OIFS=$IFS
+				IFS=$'\n'
 				set -f
 				for line in $listTMP;
 				do
-					[[ $line = \#* ]] && continue # Skips comment lines
+					[[ $line == \#* ]] && continue # Skips comment lines
+					debug "Attempting to install $line"
 					universalInstaller "$line"
 				done
 				IFS=$OIFS
