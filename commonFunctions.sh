@@ -7,6 +7,7 @@
 # Changes:
 # v1.9.3
 # - Added level 5 debugging to debug(); only sends message to stderr and log if verbose mode is on
+# - Finally got around to it: announce() does not print stars in verbose mode - this makes 'set -x' output cleaner
 #
 # v1.9.2
 # - Small change to debug(), not sure if it helps or not but conforms to other scripts now
@@ -152,7 +153,7 @@
 #     ~ This allows for user input while still being non-interactive
 #   ~ Add a way to specify the timeout value from the default in cF.sh
 #
-# v1.9.3, 11 Dec. 2016 02:24 PST
+# v1.9.3, 11 Dec. 2016 02:32 PST
 
 ### Variables
 
@@ -190,9 +191,21 @@ function announce() {
 		return
 	fi
 	
+	# If verbose mode is on, do not print stars, just the messages with "Announce: " appended to is
+	# I really wanted this to be used with 'set -x', but I have no way to tell if it is set beforehand or not
+	# 'set -x' is almost always used in conjunction with --verbose though, so it should be fine
+	if [[ "$debugFlag" -ne 0 ]]; then
+		for message in "$@";
+		do
+			printf "Announce: %s\n" "$message"
+		done
+		printf "\n"
+		return
+	fi
+	
 	# For everyting below, you can ignore SC2034. Too much work to change
 	stars=0
-		for j in "$@"; # Stupid quotation marks killed the whole thing.... ugh....
+	for j in "$@"; # Stupid quotation marks killed the whole thing.... ugh....
 	do
 		if [[ ${#j} -gt $stars ]]; then
 			export stars=${#j}
