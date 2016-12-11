@@ -5,6 +5,9 @@
 # Note: this script whould not be run by itself, as it only contains functions and variables
 #
 # Changes:
+# v1.9.3
+# - Added level 5 debugging to debug(); only sends message to stderr and log if verbose mode is on
+#
 # v1.9.2
 # - Small change to debug(), not sure if it helps or not but conforms to other scripts now
 #
@@ -149,7 +152,7 @@
 #     ~ This allows for user input while still being non-interactive
 #   ~ Add a way to specify the timeout value from the default in cF.sh
 #
-# v1.9.2, 04 Dec. 2016 17:12 PST
+# v1.9.3, 11 Dec. 2016 02:24 PST
 
 ### Variables
 
@@ -311,6 +314,13 @@ function debug() {
 			;;
 			l4)
 			debugLevel=4 # Log + stdout + stderr (this probably won't be used often, but coded it in anyways
+			;;
+			l5)
+			if [[ "$debugFlag" -eq 0 ]]; then # Only display/log the message if script is in verbose mode. Use case: diagnosing loop iterations
+				return
+			else
+				debugLevel=2
+			fi
 			;;
 		esac
 		shift # So that the level doesn't get included in the debug message
