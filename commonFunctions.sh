@@ -195,6 +195,7 @@ function announce() {
 	# I really wanted this to be used with 'set -x', but I have no way to tell if it is set beforehand or not
 	# 'set -x' is almost always used in conjunction with --verbose though, so it should be fine
 	if [[ "$debugFlag" -ne 0 ]]; then
+		printf "\n"
 		for message in "$@";
 		do
 			printf "Announce: %s\n" "$message"
@@ -724,6 +725,8 @@ function win2UnixPath() {
 	fi
 	
 	# Change any escape characters
+	#                             $ -> \$       @ -> \@       # -> \#       ! -> \!
+	#dir="$(echo "$dir" | sed -e 's,\$,\\\$,g' -e 's,\@,\\\@,g' -e 's,\#,\\\#,g' -e 's,\!,\\\!,g')"
 	
 	# Lastly, if the user requested it, edit the spaces; no need to check contents of last call, should be the only argument
 	[[ ! -z $2 ]] && dir="$(echo "$dir" | sed -e 's/ /\\ /g')"
