@@ -6,6 +6,9 @@
 # There are too many things to display here, so please look at displayHelp() to see the options and install options
 #
 # Changes:
+# v1.3.2
+# - Script will now check for, and possibly run raspi-config if detected
+#
 # v1.3.1
 # - Script now checks to make sure pmCF.sh is also linked
 # - Script will now attempt to switch to main LP directory if not already in that directory
@@ -70,7 +73,12 @@
 # v0.0.1
 # - Initial commit - only displayHelp() and processArgs() working currently
 #
-# v1.3.1, 19 Oct. 2016 20:06 PST
+# TODO:
+# - Fix installation of programs
+#   ~ Differentiate between pacman and others, make script work with files (currently broken)
+# - Add custom .bashrc rules, such as LP=$(pwd)
+#
+# v1.3.2, 02 Jan. 2017 13:22 PST
 
 ### Variables
 
@@ -575,7 +583,24 @@ if [[ $(pwd) != *linux-pref ]]; then
 	debug "l2" "Script is being run outside of source directory, switching to main directory!"
 	cd $(dirname $0) || cd linux-pref || debug "l2" "An error has occurred!"; exit 1
 fi
-	
+
+if [[ -e "/usr/bin/raspi-config" ]]; then
+		announce "Raspberry Pi detected!" "If this is the first time being run, please make sure locale is correct!" "Also make sure SSH is enabled in advanced options!"
+		getUserAnswer "Would you like to run raspi-config before running the rest of the script?"
+		case $? in
+			0)
+			debug "l1" "User chose to run raspi-config"
+			raspi-config
+			;;
+			1)
+			debug "l1" "User chose not to run raspi-config!"
+			;;
+			*)
+			debug "l2" "ERROR: Unknown return value for getUserAnswer!"
+			exit 1
+			;;
+		esac
+fi
 
 debug "Processing arguments passed to script"
 processArgs "$@"
