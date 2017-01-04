@@ -3,6 +3,9 @@
 # packageManager.sh, a.k.a pm - A universal package manager script
 #
 # Changes:
+# v1.2.8
+# - Fixed an issue preventing program installation from folders from working
+#
 # v1.2.7
 # - After some extensive testing and StackOverflow research, installing from files/directories FINALLY works as planned!
 #
@@ -60,7 +63,7 @@
 #
 # TODO:
 #
-# v1.2.7, 28 Nov. 2016 23:26 PST
+# v1.2.8, 04 Jan. 2017 12:13 PST
 
 ### Variables
 
@@ -286,7 +289,8 @@ function programInstaller() {
 		#	universalInstaller "$line"
 		#done <$file
 		
-		OIFS=$IFS; IFS=$'\n' # Change to IFS is necessary
+		OIFS=$IFS
+		IFS=$'\n' # Change to IFS is necessary
 		set -f # Disables globbing
 		for line in $(cat $fileTMP); # Not sure why the community dislikes cat, but it works
 		do
@@ -299,7 +303,7 @@ function programInstaller() {
 		rm "$fileTMP"
 		;;
 		directory)
-		announce "Installing all directories from $file!" "This WILL take a long time!" "Don't go anywhere, you will be asked if each section should be installed!"
+		announce "Installing programs from files in directory $file!" "This WILL take a long time!" "Don't go anywhere, you will be asked if each section should be installed!"
 		cd "$file"
 		for list in *.txt;
 		do
@@ -336,7 +340,7 @@ function programInstaller() {
 				OIFS=$IFS
 				IFS=$'\n'
 				set -f
-				for line in $listTMP;
+				for line in $(cat "$listTMP");
 				do
 					[[ $line == \#* ]] && continue # Skips comment lines
 					debug "Attempting to install $line"

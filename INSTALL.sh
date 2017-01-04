@@ -6,6 +6,9 @@
 # There are too many things to display here, so please look at displayHelp() to see the options and install options
 #
 # Changes:
+# v1.3.3
+# - Changed the order of certain installation functions
+#
 # v1.3.2
 # - Script will now check for, and possibly run raspi-config if detected
 #
@@ -77,8 +80,11 @@
 # - Fix installation of programs
 #   ~ Differentiate between pacman and others, make script work with files (currently broken)
 # - Add custom .bashrc rules, such as LP=$(pwd)
+# - Add checkRequirements line for git, possibly whiptail and coreutils
+#   ~ https://en.wikibooks.org/wiki/Bash_Shell_Scripting/Whiptail
+#   ~ Got the idea from looking ad raspi-config code
 #
-# v1.3.2, 02 Jan. 2017 13:22 PST
+# v1.3.3, 04 Jan. 2017 12:18 PST
 
 ### Variables
 
@@ -326,6 +332,7 @@ function installUpdate() {
 	announce "Universal package installer script has been installed!" "Run pm -h or packageManager --help for more info."
 	sleep 5 # Give the user time to read before more script runs
 	
+	determinePM # Used later
 	if [[ $installOnly -eq 0 ]]; then
 		sudo packageManager.sh update upgrade
 	fi
@@ -361,7 +368,11 @@ function installPrograms() {
 	fi
 	
 	announce "Installing programs using programInstaller.sh!" "Script is interactive, so pay attention!" "Look at the programLists folder to see what will be installed!"
-	sudo ./packageManager.sh install "$programsFile"
+	if [[ "$program" == "pacman" ]]; then
+		pm install "$programsFile"
+	else
+		sudo pm install "$programsFile"
+	fi
 }
 
 function displayHelp() {
@@ -646,14 +657,14 @@ case $runMode in
 	except)
 	case $except in
 		programs)
-		installGit
 		installUpdate
+		installGit
 		installBash
 		installGrive
 		;;
 		git)
-		installPrograms
 		installUpdate
+		installPrograms
 		installBash
 		installGrive
 		;;
@@ -664,15 +675,15 @@ case $runMode in
 		installGrive
 		;;
 		bash)
+		installUpdate
 		installPrograms
 		installGit
-		installUpdate
 		installGrive
 		;;
 		grive)
+		installUpdate
 		installPrograms
 		installGit
-		installUpdate
 		installBash
 		;;
 		*)
