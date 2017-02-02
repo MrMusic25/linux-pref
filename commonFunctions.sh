@@ -156,6 +156,9 @@
 #   ~ Display (and possibly log) the difference between two times. Thought of for m2u
 #     ~ Possibly just add to debug()? Or finally in the implementation of 'script start' or 'script end <exit_code>'
 #   ~ http://stackoverflow.com/questions/8903239/how-to-calculate-time-difference-in-bash-script
+# - Implement universal version checking for commonFunctions.sh
+#   ~ Recommend when cF.sh should be updated
+#   ~ Log message if 'required' versions are mismatched
 #
 # v1.9.3, 11 Dec. 2016 02:32 PST
 
