@@ -40,6 +40,7 @@
 # - git config --global core.editor nano
 # - Output git status to log if push/pull unsuccessful
 #   ~ Also output git diff to a tmp file (shortName_repo_date.txt)
+# - https://git-scm.com/book/en/v2/Git-Basics-Recording-Changes-to-the-Repository
 #
 # v1.1.0, 23 Aug. 2016 15:34 PST
 
