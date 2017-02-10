@@ -83,6 +83,10 @@
 # - Add checkRequirements line for git, possibly whiptail and coreutils
 #   ~ https://en.wikibooks.org/wiki/Bash_Shell_Scripting/Whiptail
 #   ~ Got the idea from looking ad raspi-config code
+# - Dynamic linking
+#   ~ Each script gets two vars - shortName="pm" and longName="packageManager"
+#   ~ Installer, as well as the scripts them selves, can use these for logging and tmp output
+#   ~ In addition, using these the log names will be more consistent
 #
 # v1.3.3, 04 Jan. 2017 12:18 PST
 

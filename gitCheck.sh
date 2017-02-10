@@ -37,6 +37,9 @@
 # - Make an alias 'git clone'='gitcheck clone' and offer to add to directory list
 #   ~ Only need one cron entry, easy to update all gits on computer!
 #   ~ Ask if user wants to be notified of updates
+# - git config --global core.editor nano
+# - Output git status to log if push/pull unsuccessful
+#   ~ Also output git diff to a tmp file (shortName_repo_date.txt)
 #
 # v1.1.0, 23 Aug. 2016 15:34 PST
 
