@@ -38,6 +38,8 @@
 #   ~ Only need one cron entry, easy to update all gits on computer!
 #   ~ Ask if user wants to be notified of updates
 # - git config --global core.editor nano
+# - git config --global push.default [simple vs matching]
+#   ~ Possibly make choice between the two if multiple branches detected
 # - Output git status to log if push/pull unsuccessful
 #   ~ Also output git diff to a tmp file (shortName_repo_date.txt)
 # - https://git-scm.com/book/en/v2/Git-Basics-Recording-Changes-to-the-Repository
