@@ -50,7 +50,7 @@ function extract()
 
 # Found this on /r/linux, https://www.reddit.com/r/linux/comments/4v3cfw/share_some_scripts_that_youve_made_or_ones_you/
 # Depends on extract() above. Make sure to use both!
-compile () {
+function compile () {
     if [ -z "$1" ]
     then
         echo "Usage: compile <source code archive>"
@@ -98,3 +98,39 @@ EDITOR="nano"
 # A fun little program I found on Reddit one day, change city to official list at wttr.in!
 wttrCity="los_angeles"
 alias weather='curl wttr.in/$wttrCity'
+
+function push() {
+	# If arg provided, use that as directory. Otherwise, assume pwd
+	if [[ -z "$1" ]]; then
+		git push
+	else
+		OPWD="$(pwd)"
+		cd "$1"
+		git push
+		cd "$OPWD"
+	fi
+}
+
+function pull() {
+	# If arg provided, use that as directory. Otherwise, assume pwd
+	if [[ -z "$1" ]]; then
+		git pull
+	else
+		OPWD="$(pwd)"
+		cd "$1"
+		git pull
+		cd "$OPWD"
+	fi
+}
+
+function commit() {
+	# If arg provided, use that as directory. Otherwise, assume pwd
+	if [[ -z "$1" ]]; then
+		git commit -a
+	else
+		OPWD="$(pwd)"
+		cd "$1"
+		git commit -a
+		cd "$OPWD"
+	fi
+}

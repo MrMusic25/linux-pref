@@ -22,9 +22,10 @@ alias egrep='egrep --color=auto'
 alias fgrep='fgrep --color=auto'
 
 # Couple that I thought of, might be useful
-alias push='git push'
-alias pull='git pull'
-alias commit='git commit -a'
+#alias push='git push'
+#alias pull='git pull'
+#alias commit='git commit -a'
+# The above functions have been deprecated, and new functions with similar names have been implemented in .bashrc
 
 # Found this on reddit one day from u/TheHamitron
 # https://gist.github.com/hamitron/53aed9089f224727cf28917b6b573e9d
