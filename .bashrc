@@ -102,35 +102,59 @@ alias weather='curl wttr.in/$wttrCity'
 function push() {
 	# If arg provided, use that as directory. Otherwise, assume pwd
 	if [[ -z "$1" ]]; then
-		git push
+		if [[ ! -d .git ]]; then
+			echo "$(pwd) is not a valid git directory!"
+		else
+			git push
+		fi
 	else
-		OPWD="$(pwd)"
-		cd "$1"
-		git push
-		cd "$OPWD"
+		if [[ ! -d "$1"/.git ]]; then
+			echo "$1 is not a valid git directory!"
+		else
+			OPWD="$(pwd)"
+			cd "$1"
+			git push
+			cd "$OPWD"
+		fi
 	fi
 }
 
 function pull() {
 	# If arg provided, use that as directory. Otherwise, assume pwd
 	if [[ -z "$1" ]]; then
-		git pull
+		if [[ ! -d .git ]]; then
+			echo "$(pwd) is not a valid git directory!"
+		else
+			git pull
+		fi
 	else
-		OPWD="$(pwd)"
-		cd "$1"
-		git pull
-		cd "$OPWD"
+		if [[ ! -d "$1"/.git ]]; then
+			echo "$1 is not a valid git directory!"
+		else
+			OPWD="$(pwd)"
+			cd "$1"
+			git pull
+			cd "$OPWD"
+		fi
 	fi
 }
 
 function commit() {
 	# If arg provided, use that as directory. Otherwise, assume pwd
 	if [[ -z "$1" ]]; then
-		git commit -a
+		if [[ ! -d .git ]]; then
+			echo "$(pwd) is not a valid git directory!"
+		else
+			git commit -a
+		fi
 	else
-		OPWD="$(pwd)"
-		cd "$1"
-		git commit -a
-		cd "$OPWD"
+		if [[ ! -d "$1"/.git ]]; then
+			echo "$1 is not a valid git directory!"
+		else
+			OPWD="$(pwd)"
+			cd "$1"
+			git commit -a
+			cd "$OPWD"
+		fi
 	fi
 }
