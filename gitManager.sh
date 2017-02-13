@@ -1,17 +1,20 @@
 #!/bin/bash
 #
-# gitCheck.sh - Script that will pull from a git repo every X minutes
+# gitManager.sh - Script that will pull from a git repo every X minutes
 #
-# Usage: ./gitCheck.sh <working_git_directory> OR ./gitCheck.sh install <git_URL> [directory]
+# Usage: ./gitCheck.sh [options] [git_directory]
 #
 # Recommended crontab entry:
-#      */15 * * * * /home/$USER/linux-pref/gitCheck.sh /home/$USER/linux-pref/
-#                                                       `---> This can be replaced with any git directory to be synced
+#      */15 * * * * /home/$USER/linux-pref/gitCheck.sh --daemon &>/dev/null
 # Syncs every 15 mins. Becareful which user script gets run as, should be owner of folder, or have read/write/execute access!
 #
 # Relies on the .git folder in the directory to be able to pull, therefore must be setup beforehand!
 #
 # Changes:
+# v2.0.0
+# - Starting work on an improved version of this script that can do more
+# - Changed name of script from gitCheck.sh -> gitManager.sh
+#
 # v1.1.0
 # - You can now download/install git repos with this script
 # - Script will ask to setup cron job for new repo as well
@@ -44,13 +47,11 @@
 #   ~ Also output git diff to a tmp file (shortName_repo_date.txt)
 # - https://git-scm.com/book/en/v2/Git-Basics-Recording-Changes-to-the-Repository
 #
-# v1.1.0, 23 Aug. 2016 15:34 PST
+# v2.0.0, 13 Jan. 2016 15:14 PST
 
 ### Variables
 
-#sleepTime=900 # Time in seconds to wait until going through loop again. 900 seconds (15 minutes) by default
 directory="NULL"
-#logFile="$debugPrefix/logFile.log"
 
 ### Functions
 
@@ -68,85 +69,10 @@ fi
 
 ### Main Script
 
-# I was reminded why comments are important when I looked upon this codebock the next day and did not understand it...
-# Anyways lol, this block is used to determine if directory is valid and git-ready
-if [[ ! -z "$1" ]]; then
-	if [[ "$1" == "install" ]]; then
-		if [[ ! -z "$2" ]]; then 
-			gitURL="$2"
-			debug "Installing git repo from $gitURL"
-			announce "Installing repo from the following URL!" "$gitURL" "Note: This may take time depending on connection speed and repo size"
-			
-			# Decide which directory to clone into
-			if [[ ! -z "$3" && -d "$3" ]]; then
-				debug "User specified $3 as directory to be used."
-				directory="$3"
-			else
-				debug "Cloning into current directory"
-				directory='' # Must be null or it will create errors
-			fi
-			
-			# Now, do the clone!
-			git clone "$gitURL" "$directory" &>.tmp
-			
-			if [[ -z "$directory" ]]; then
-				directory=$( head -n 1 .tmp | awk -F\' '{print $2,$4}' ) # This gets the name of the directory
-				rm .tmp
-				
-				# Check to make directory exists
-				if [[ ! -d "$directory" ]]; then
-					debug "Something went wrong while cloning, or directory somehow was not found. Clone manually and add cron job."
-					announce "Something went wrong!" "Please clone and setup cron job manually!"
-					exit 1
-				fi
-			else
-				rm .tmp
-			fi
-			
-			debug "Successfully cloned directory"
-			
-			# Next, setup the cron job for the user
-			addCronJob "30" "min" "/usr/bin/gitcheck $directory"
-			if [[ "$?" -ne 0 ]]; then
-				debug "There was an issue setting up the cronjob! Please setup manually!"
-				tmpVar="Cron job could not be setup! Please run crontab -e and set it up manually!"
-			else
-				debug "Cron job setup!"
-				tmpVar="Cron job was successfully setup for the git repo!"
-			fi
-			
-			# Clever way I came up with to notify if cron was successful or not lol
-			announce "Git repo was successfully cloned!" "$tmpVar" "Now moving on to the rest of the script..."
-		else
-			debug "Install mode selected, but no URL given! Exiting..."
-			displayHelp
-			exit 1
-		fi
-	elif [[ -d "$1" ]]; then
-		if [[ -d "$1/.git" ]]; then
-			export directory="$1"
-		else
-			export debugFlag=1
-			debug "Directory exists, but has not been initilized by git, please fix and re-run!"
-			exit 1
-		fi
-	fi
-elif [[ -z $1 ]]; then
-	debug "Script was run, but no arguments given. Need at least one directory argument."
-	announce "ERROR: No directory given!" "Please give a directory as an argument and re-run!" "e.g. $0 /home/user/git-directory/ "
-	exit 1
-else
-	export debugFlag=1
-	debug "Path given is invalid, please fix and re-run!"
-	exit 1
-fi
-
-announce "Preparing to sync with git directory $directory !"
-
 # Next, check to see if git credentials will be saved
 # Realized halfway through writing this the script will not be pushing, only pulling. Still useful as I forget things like this
 if [[ -e ~/.git-credentials || -e ~/.git-credential-cache ]]; then
-	debug "Git has already been setup, moving to next step."
+	debug "l5" "Git has already been setup, moving to next step."
 else
 	announce "Git has not been setup yet!" "This script will now help configure git for ease of use."
 	getUserAnswer "Would you like to setup your email and display name for git now?"
