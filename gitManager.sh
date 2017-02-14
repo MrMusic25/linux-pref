@@ -11,6 +11,10 @@
 # Relies on the .git folder in the directory to be able to pull, therefore must be setup beforehand!
 #
 # Changes:
+# v2.0.1
+# - Added displayHelp() and processArgs() from defaultScriptTemplate
+# - Updated displayHelp with planned functions
+#
 # v2.0.0
 # - Starting work on an improved version of this script that can do more
 # - Changed name of script from gitCheck.sh -> gitManager.sh
@@ -47,11 +51,11 @@
 #   ~ Also output git diff to a tmp file (shortName_repo_date.txt)
 # - https://git-scm.com/book/en/v2/Git-Basics-Recording-Changes-to-the-Repository
 #
-# v2.0.0, 13 Jan. 2016 15:14 PST
+# v2.0.1, 13 Jan. 2016 16:26 PST
 
 ### Variables
 
-directory="NULL"
+directoryList="~/.gitDirectoryList"
 
 ### Functions
 
@@ -66,6 +70,109 @@ else
 	echo "Script will now exit, please put file in same directory as script, or link to /usr/share!"
 	exit 1
 fi
+
+
+function displayHelp() {
+# The following will read all text between the words 'helpVar' into the variable $helpVar
+# The echo at the end will output it, exactly as shown, to the user
+read -d '' helpVar <<"endHelp"
+
+gitManager.sh - A script that will update and manage various git repositories
+Meant to be run as a cronjob, but can be run as is also.
+Run script once to complete setup!
+
+Usage: ./gitManager.sh [options] [git_repository]
+
+Options:
+-h | --help                         : Display this help message and exit
+-v | --verbose                      : Enable verbose debug messages. (Note: MUST be first argument!)
+-c | --clone <git_URL> [folder]     : Clone a remote repository, and add it to the update list, then exit
+-a | --add <git_folder>             : Add an existing git folder to the update list and exit
+-d | --daemon                       : Run script in daemon mode, no interactive elements
+-l | --list                         : Display locations and info of installed repositories and exit
+
+endHelp
+echo "$helpVar"
+}
+
+function processArgs() {
+	# displayHelp and exit if there is less than the required number of arguments
+	# Remember to change this as your requirements change!
+	if [[ $# -lt 1 ]]; then
+		debug "l2" "ERROR: No arguments given! Please fix and re-run"
+		displayHelp
+		exit 1
+	fi
+	
+	# This is an example of how most of my argument processors look
+	# Psuedo-code: until condition is met, change values based on input; shift variable, then repeat
+	while [[ $loopFlag -eq 0 ]]; do
+		key="$1"
+		
+		# In this example, if $key and $2 are a file and a directory, then processing arguments can end. Otherwise it will loop forever
+		# This is also where you would include code for optional 3rd argument, otherwise it will never be processed
+		if [[ -f "$key" && -d "$2" ]]; then
+			inputFile="$key"
+			outputDir="$2"
+			
+			if [[ -f "$3" ]]; then
+				tmpDir="$3"
+			fi
+			loopFlag=1 # This will kill the loop, and the function. A 'return' statement would also work here.
+		fi
+			
+		case "$key" in
+			--output-only) # Long, unaliased names should always go first so they do not create errors. Try to avoid similar names!
+			outputOnly="true"
+			;;
+			-h|--help)
+			displayHelp
+			exit 0
+			;;
+			-o|--option)
+			option=1
+			;;
+			-i|--include)
+			# Be careful with these, always check for file validity before moving on
+			# Doing it this way makes it you can add as many files as you want, and then continuing
+			until [[ "$2" == -* ]]; do # Keep looping until an option (starting with a - ) is found
+				if [[ -f "$2" ]]; then
+					# This adds the filename to the array includeFiles - make code later to perform an action on each file
+					includeFiles+=("$2")
+					shift
+				else
+					# displayHelp and exit if the file could not be found, safety measure
+					debug "l2" "ERROR: Argument $2 is not a valid file or argument!"
+					displayHelp
+					exit 1
+				fi
+			done
+			;;
+			-a|--assume)
+			if [[ "$2" == "Y" || "$2" == "y" || "$2" == "Yes" || "$2" == "yes" ]]; then
+				assume="true"
+				shift
+			elif [[ "$2" == "N" || "$2" == "n" || "$2" == "No" || "$2" == "no" ]]; then
+				assume="false" # If this is the default value, you can delete this line, used for example purposes
+				shift
+			else
+				# Invalid value given with -a, report and exit!
+				debug "l2" "ERROR: Invalid option $2 given with $key! Please fix and re-run"
+				displayHelp
+				exit 1
+			fi
+			;;
+			*)
+			# Anything here is undocumented or uncoded. Up to user whether or not to continue, but it is recommended to exit here if triggered
+			debug "l2" "ERROR: Unknown option given: $key! Please fix and re-run"
+			displayHelp
+			exit 1
+			;;
+		esac
+		shift
+	done
+}
+
 
 ### Main Script
 
