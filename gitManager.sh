@@ -11,6 +11,12 @@
 # Relies on the .git folder in the directory to be able to pull, therefore must be setup beforehand!
 #
 # Changes:
+# v2.0.3
+# - Added the -i option to reintsall git options, instead of just "first run"
+# - Added a failsafe to cloneRepo() in case folder could not be found
+# - setupGit() created, and ready to go
+# - Added the rest of the options from processArgs
+#
 # v2.0.2
 # - Updated processArgs a bit with planned functions
 # - Created functions cloneRepo() and addRepo()
@@ -56,11 +62,12 @@
 #   ~ Also output git diff to a tmp file (shortName_repo_date.txt)
 # - https://git-scm.com/book/en/v2/Git-Basics-Recording-Changes-to-the-Repository
 #
-# v2.0.2, 13 Jan. 2016 17:57 PST
+# v2.0.3, 13 Jan. 2016 23:43 PST
 
 ### Variables
 
 directoryList="~/.gitDirectoryList"
+daemonMode=0
 
 ### Functions
 
@@ -95,6 +102,7 @@ Options:
 -a | --add <git_folder>             : Add an existing git folder to the update list and exit
 -d | --daemon                       : Run script in daemon mode, no interactive elements
 -l | --list                         : Display locations and info of installed repositories and exit
+-i | --install                      : Setup or re-setup the git parameters and exit
 
 endHelp
 echo "$helpVar"
@@ -127,6 +135,20 @@ function processArgs() {
 			cloneRepo "$gitURL" "$gitFolder"
 			exit 0 # Shouldn't get here, but just in case
 			;;
+			-d|--daemon)
+			debug "INFO: Daemon mode enabled"
+			daemonMode=1
+			;;
+			-i|--install)
+			debug "INFO: Setting up git per user's request"
+			setupGit
+			exit 0
+			;;
+			-a|--add)
+			debug "INFO: Attempting to add repo from $2"
+			addRepo "$2"
+			exit 0
+			;;
 			*)
 			# Anything here is undocumented or uncoded
 			debug "l2" "ERROR: Unknown option given: $key! Please fix and re-run"
@@ -144,7 +166,7 @@ function processArgs() {
 }
 
 function addRepo() {
-	true
+	
 }
 
 function cloneRepo() {
@@ -166,35 +188,51 @@ function cloneRepo() {
 		debug "l2" "ERROR: There was an error attemping to clone the repository! Exit code: $value"
 		exit 1
 	else
+		if [[ ! -d "$folder" ]]; then
+			debug "l2" "WARN: Repo was successfully cloned, but folder $folder could not be found! Please add to list manually!"
+			exit 1
+		fi
 		addRepo "$folder"
 		exit 0
 	fi
 }
+
+function setupGit() {
+	# Return if in daemon mode, no interactivity allowed!
+	if [[ $daemonMode -ne 0 ]]; then
+		return
+	fi
+	
+	# Interactive part of the setup
+	announce "Setting up Git for this system!" "Please follow the interactive prompts."
+	read -p "Please enter the email you would like to use: " varEmail
+	git config --global user.email "$varEmail"
+	read -p "Please enter the display name you would like to use: " varUser
+	git config --global user.name "$varUser"
+	read -p "Please enter the default editor you wish to use (nano, vim, emacs, etc.): " varEditor
+	git config --global core.editor "$varEditor"
+	debug "INFO: Git set up as follows - Name: $varUser, Email: $varEmail, Editor: $varEditor"
+	
+	# Static config now
+	git config --global credential.helper store
+	debug "INFO: Git credential storage enabled"
+	announce "Git credential storage has been enabled." "This means you will only have to login once to upload merges"
+	git config --global push.default simple
+	debug "INFO: Simple push behavior has been enabled"
+	announce "Git has been configured to use simple push behavior (default since git v2.0+)" "This means that only the current working branch will be pushed, not all!"
+}
+
 ### Main Script
 
 processArgs "$@"
 
-# Next, check to see if git credentials will be saved
-# Realized halfway through writing this the script will not be pushing, only pulling. Still useful as I forget things like this
+# Check to see if git has been setup. Run if not
 if [[ -e ~/.git-credentials || -e ~/.git-credential-cache ]]; then
-	debug "l5" "Git has already been setup, moving to next step."
+	debug "l5" "INFO: Git has already been setup, moving to next step."
 else
-	announce "Git has not been setup yet!" "This script will now help configure git for ease of use."
-	getUserAnswer "Would you like to setup your email and display name for git now?"
-	if [[ $? -eq 0 ]]; then
-		debug "Prompting for users info..."
-		read -p "Please enter the email you would like to use: " varEmail
-		git config --global user.email "$varEmail"
-		read -p "Please enter the display name you would like to use: " varUser
-		git config --global user.name "$varUser"
-		debug "Git has been configured for user $varUser with email $varEmail"
-	fi
-		
-	git config --global credential.helper store
-	debug "Credential storage has been enabled"
+	debug "l3" "WARN: Git has not been setup! Running first-time setup"
+	setupGit
 fi
-
-# Note: Script itself will not loop, just in case there are bugs. Instead, set a cronjob to run it
 
 cd $directory
 git pull >>$logFile
