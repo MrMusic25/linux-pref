@@ -11,6 +11,10 @@
 # Relies on the .git folder in the directory to be able to pull, therefore must be setup beforehand!
 #
 # Changes:
+# v2.0.4
+# - Added listRepos(), does nothing for now
+# - Made the main bulk into pullRepo(), while loop to call it
+#
 # v2.0.3
 # - Added the -i option to reintsall git options, instead of just "first run"
 # - Added a failsafe to cloneRepo() in case folder could not be found
@@ -62,7 +66,7 @@
 #   ~ Also output git diff to a tmp file (shortName_repo_date.txt)
 # - https://git-scm.com/book/en/v2/Git-Basics-Recording-Changes-to-the-Repository
 #
-# v2.0.3, 13 Jan. 2016 23:43 PST
+# v2.0.4, 14 Jan. 2016 00:46 PST
 
 ### Variables
 
@@ -103,6 +107,8 @@ Options:
 -d | --daemon                       : Run script in daemon mode, no interactive elements
 -l | --list                         : Display locations and info of installed repositories and exit
 -i | --install                      : Setup or re-setup the git parameters and exit
+
+Information from "git pull" command is not shown by default; run the script with the verbose flag to see the data, or check the log!
 
 endHelp
 echo "$helpVar"
@@ -166,7 +172,14 @@ function processArgs() {
 }
 
 function addRepo() {
+	# Check if git directory is valid
+	if [[ ! -d "$1"/.git ]]; then
+		debug "l2" "ERROR: $folder is not a valid git directory! Unable to add to list! Exiting..."
+		exit 1
+	fi
 	
+	# Valid directory at this point
+	echo "$1" >>$directoryList
 }
 
 function cloneRepo() {
@@ -222,6 +235,31 @@ function setupGit() {
 	announce "Git has been configured to use simple push behavior (default since git v2.0+)" "This means that only the current working branch will be pushed, not all!"
 }
 
+function listRepos() {
+	true
+}
+
+function pullRepo() {
+	debug "INFO: Attempting to update repo $1 on currnt branch"
+	cd "$1"
+	git pull >.gitTmp
+	value="$?"
+	
+	# Decide what to do with git output info
+	if [[ $debugFlag -ne 0 && $daemonMode -ne 0 ]]; then
+		cat .gitTmp
+	fi
+	cat .gitTmp >>$logFile
+	rm .gitTmp
+	
+	# Warn user of any errors
+	if [[ $value -ne 0 ]]; then
+		debug "l2" "WARN: There was an error attempting to pull $1 - Exit code: $value"
+	else
+		debug "l5" "INFO: Repo $1 was updated successfully for current branch!"
+	fi
+}
+
 ### Main Script
 
 processArgs "$@"
@@ -230,13 +268,17 @@ processArgs "$@"
 if [[ -e ~/.git-credentials || -e ~/.git-credential-cache ]]; then
 	debug "l5" "INFO: Git has already been setup, moving to next step."
 else
-	debug "l3" "WARN: Git has not been setup! Running first-time setup"
+	debug "l3" "WARN: Git has not been setup! Running first-time setup automatically"
 	setupGit
 fi
 
-cd $directory
-git pull >>$logFile
-
+# Update all the installed repos
+OPWD="$(pwd)"
+while read -r directory;
+do
+	pullRepo "$directory"
+done <"$directoryList"
+cd "$OPWD"
 if [[ $? -ne 0 ]]; then
 	debug "There was an error, please check log for more info"
 	echo "gitCheck.sh encountered an error, please check $logFile for more info!" | mail -s "gitCheck.sh" $USER
@@ -244,6 +286,6 @@ else
 	echo "Success!"
 fi
 
-debug "Done with script!"
+debug "l3" "Done with script!"
 
 #EOF
