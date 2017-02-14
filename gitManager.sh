@@ -14,6 +14,8 @@
 # v2.0.4
 # - Added listRepos(), does nothing for now
 # - Made the main bulk into pullRepo(), while loop to call it
+# - Script will remove old 'gitcheck' refrences now
+# - addRepo(), while small, works
 #
 # v2.0.3
 # - Added the -i option to reintsall git options, instead of just "first run"
@@ -66,7 +68,7 @@
 #   ~ Also output git diff to a tmp file (shortName_repo_date.txt)
 # - https://git-scm.com/book/en/v2/Git-Basics-Recording-Changes-to-the-Repository
 #
-# v2.0.4, 14 Jan. 2016 00:46 PST
+# v2.0.4, 14 Jan. 2016 01:11 PST
 
 ### Variables
 
@@ -261,6 +263,12 @@ function pullRepo() {
 }
 
 ### Main Script
+
+# Get rid of old symlink if it exists
+if [[ -e /usr/bin/gitcheck ]]; then
+	debug "l2" "WARN: Legacy program info found! Please give sudo privileges to remove!"
+	sudo rm /usr/bin/gitcheck
+fi
 
 processArgs "$@"
 
