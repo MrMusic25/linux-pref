@@ -11,6 +11,11 @@
 # Relies on the .git folder in the directory to be able to pull, therefore must be setup beforehand!
 #
 # Changes:
+# v2.0.5
+# - Script will now check to make sure it is linked to /usr/bin
+# - setupGit() will now check if cronjob has been setup or not
+# - I have run the script a few times, tested all the functions, and everything is working! *crosses fingers*
+#
 # v2.0.4
 # - Added listRepos(), does nothing for now
 # - Made the main bulk into pullRepo(), while loop to call it
@@ -68,12 +73,13 @@
 #   ~ Also output git diff to a tmp file (shortName_repo_date.txt)
 # - https://git-scm.com/book/en/v2/Git-Basics-Recording-Changes-to-the-Repository
 #
-# v2.0.4, 14 Jan. 2016 01:11 PST
+# v2.0.5, 14 Jan. 2016 23:14 PST
 
 ### Variables
 
-directoryList="~/.gitDirectoryList"
+directoryList="$HOME/.gitDirectoryList"
 daemonMode=0
+updateTime=15 # Time between updates, in minutes. Used when setting up a cronjob
 
 ### Functions
 
@@ -102,13 +108,13 @@ Run script once to complete setup!
 Usage: ./gitManager.sh [options] [git_repository]
 
 Options:
--h | --help                         : Display this help message and exit
--v | --verbose                      : Enable verbose debug messages. (Note: MUST be first argument!)
--c | --clone <git_URL> [folder]     : Clone a remote repository, and add it to the update list, then exit
--a | --add <git_folder>             : Add an existing git folder to the update list and exit
--d | --daemon                       : Run script in daemon mode, no interactive elements
--l | --list                         : Display locations and info of installed repositories and exit
--i | --install                      : Setup or re-setup the git parameters and exit
+-h | --help                       : Display this help message and exit
+-v | --verbose                    : Enable verbose debug messages. (Note: MUST be first argument!)
+-c | --clone <git_URL> [folder]   : Clone a remote repository, and add it to the update list, then exit
+-a | --add <git_folder>           : Add an existing git folder to the update list and exit
+-d | --daemon                     : Run script in daemon mode, no interactive elements
+-l | --list                       : Display locations and info of installed repositories and exit
+-i | --install                    : Setup or re-setup the git parameters and exit
 
 Information from "git pull" command is not shown by default; run the script with the verbose flag to see the data, or check the log!
 
@@ -151,6 +157,11 @@ function processArgs() {
 			debug "INFO: Setting up git per user's request"
 			setupGit
 			exit 0
+			;;
+			-l|--list)
+			debug "l3" "ERROR: This functionality is not ready yet! Exiting now..."
+			listRepos
+			exit 1
 			;;
 			-a|--add)
 			debug "INFO: Attempting to add repo from $2"
@@ -235,6 +246,27 @@ function setupGit() {
 	git config --global push.default simple
 	debug "INFO: Simple push behavior has been enabled"
 	announce "Git has been configured to use simple push behavior (default since git v2.0+)" "This means that only the current working branch will be pushed, not all!"
+	
+	# Cronjob stuff
+	if [[  -z "$(crontab -l | grep /usr/bin/gm)" ]]; then
+		debug "l2" "WARN: No cronjob detected for current user!"
+		getUserAnswer "Would you like to add a new job now? (WARNING: Be careful with this!)"
+		case $? in
+			0)
+			getUserAnswer "Default is to check every 15 minutes, would you like to change this?" updateTime "How often would you like to check, in minutes?"
+			addCronJob "$updateTime" "min" "/usr/bin/gm --daemon" # No matter what, user decided to install cronjob; doesn't matter if they changed the time or not
+			;;
+			1)
+			debug "WARN: User chose not to install cronjob despite one not being setup"
+			;;
+			*)
+			debug "l2" "FATAL: Unexpected output from getUserAnswer! Exiting now..."
+			exit 1
+			;;
+		esac
+	else	
+		debug "INFO: Cronjob already setup for current user"
+	fi
 }
 
 function listRepos() {
@@ -270,6 +302,12 @@ if [[ -e /usr/bin/gitcheck ]]; then
 	sudo rm /usr/bin/gitcheck
 fi
 
+# Make sure current symlink is setup, just in case
+if [[ ! -e /usr/bin/gm ]]; then
+	debug "l2" "WARN: This script is not linked to /usr/bin, please provide sudo privilege to do this!"
+	sudo ln -s "$(pwd)"/gitManager.sh /usr/bin/gm
+fi
+
 processArgs "$@"
 
 # Check to see if git has been setup. Run if not
@@ -281,18 +319,13 @@ else
 fi
 
 # Update all the installed repos
+[[ ! -f "$directoryList" ]] && touch "$directoryList"
 OPWD="$(pwd)"
 while read -r directory;
 do
 	pullRepo "$directory"
 done <"$directoryList"
 cd "$OPWD"
-if [[ $? -ne 0 ]]; then
-	debug "There was an error, please check log for more info"
-	echo "gitCheck.sh encountered an error, please check $logFile for more info!" | mail -s "gitCheck.sh" $USER
-else
-	echo "Success!"
-fi
 
 debug "l3" "Done with script!"
 
