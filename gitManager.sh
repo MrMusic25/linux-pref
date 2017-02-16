@@ -274,6 +274,7 @@ function listRepos() {
 }
 
 function pullRepo() {
+	# Check if repo is ready to pull, warn if not
 	debug "INFO: Attempting to update repo $1 on currnt branch"
 	cd "$1"
 	git pull >.gitTmp
