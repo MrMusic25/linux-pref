@@ -11,6 +11,11 @@
 # Relies on the .git folder in the directory to be able to pull, therefore must be setup beforehand!
 #
 # Changes:
+# v2.0.6
+# - Script will check that no changes will be overwritten before pulling each repo
+# - Finished writing --list, it works
+# - Script is now 100% functional! Tested and working!
+#
 # v2.0.5
 # - Script will now check to make sure it is linked to /usr/bin
 # - setupGit() will now check if cronjob has been setup or not
@@ -159,9 +164,9 @@ function processArgs() {
 			exit 0
 			;;
 			-l|--list)
-			debug "l3" "ERROR: This functionality is not ready yet! Exiting now..."
+			debug "INFO: Listing directory information to user"
 			listRepos
-			exit 1
+			exit 0
 			;;
 			-a|--add)
 			debug "INFO: Attempting to add repo from $2"
@@ -270,13 +275,40 @@ function setupGit() {
 }
 
 function listRepos() {
-	true
+	OPWD="$(pwd)"
+	while read -r directory;
+	do
+		printf "\nRepo location: %s\nGit status output:\n\n" "$directory"
+		cd $directory
+		git status
+		headVar="$(head -n5 READ* 2>/dev/null)" # Sends errors to null so string is empty if README* is missing
+		if [[ -z $headVar ]]; then
+			debug "l2" "WARN: No README file found for repo $directory"
+		else
+			printf "\nTop 5 lines of repo's README file:\n\n"
+			printf "%s\n" "$headVar"
+		fi
+		#printf "\n"
+		sleep 2
+	done <"$directoryList"
+	cd "$OPWD"
 }
 
 function pullRepo() {
-	# Check if repo is ready to pull, warn if there are differences
 	debug "INFO: Attempting to update repo $1 on currnt branch"
 	cd "$1"
+	
+	# First, check if repo is ready to pul; warn if there are errors
+	if [[ ! -z "$(git status | grep ahead)" ]]; then
+		debug "l2" "ERROR: Repo at $1 is not ready, there are uncommited changes!"
+		return
+	fi
+	if [[ ! -z "$(git status | grep "not staged")" ]]; then
+		debug "l2" "FATAL: There are uncommitted changes for repo $1 ! Please fix, leaving for now..."
+		return
+	fi
+	
+	# If it makes it this far, it is safe to pull
 	git pull >.gitTmp
 	value="$?"
 	
