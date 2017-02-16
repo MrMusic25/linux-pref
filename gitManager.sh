@@ -2,11 +2,11 @@
 #
 # gitManager.sh - Script that will pull from a git repo every X minutes
 #
-# Usage: ./gitCheck.sh [options] [git_directory]
+# Usage: ./gitManager.sh [options] [git_directory]
 #
 # Recommended crontab entry:
-#      */15 * * * * /home/$USER/linux-pref/gitCheck.sh --daemon &>/dev/null
-# Syncs every 15 mins. Becareful which user script gets run as, should be owner of folder, or have read/write/execute access!
+#      */15 * * * * /home/$USER/linux-pref/gitManager.sh --daemon &>/dev/null
+# Syncs every 15 mins. Becareful which user script gets run as; should be owner of folder, or have read/write/execute access!
 #
 # Relies on the .git folder in the directory to be able to pull, therefore must be setup beforehand!
 #
@@ -67,18 +67,11 @@
 # - Script now uses $debugPrefix
 #
 # TODO:
-# - Add a .gitDirectories folder to ~/ and sync with each directory every x minutes
-# - Make an alias 'git clone'='gitcheck clone' and offer to add to directory list
-#   ~ Only need one cron entry, easy to update all gits on computer!
-#   ~ Ask if user wants to be notified of updates
-# - git config --global core.editor nano
-# - git config --global push.default [simple vs matching]
-#   ~ Possibly make choice between the two if multiple branches detected
 # - Output git status to log if push/pull unsuccessful
 #   ~ Also output git diff to a tmp file (shortName_repo_date.txt)
 # - https://git-scm.com/book/en/v2/Git-Basics-Recording-Changes-to-the-Repository
 #
-# v2.0.5, 14 Jan. 2016 23:14 PST
+# v2.0.6, 15 Jan. 2016 21:14 PST
 
 ### Variables
 
