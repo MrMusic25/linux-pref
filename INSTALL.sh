@@ -6,6 +6,9 @@
 # There are too many things to display here, so please look at displayHelp() to see the options and install options
 #
 # Changes:
+# v1.3.4
+# - This monstrosity of a script was changed to reflect the new gitManager.sh
+#
 # v1.3.3
 # - Changed the order of certain installation functions
 #
@@ -88,7 +91,7 @@
 #   ~ Installer, as well as the scripts them selves, can use these for logging and tmp output
 #   ~ In addition, using these the log names will be more consistent
 #
-# v1.3.3, 04 Jan. 2017 12:18 PST
+# v1.3.4, 15 Feb. 2017 21:08 PST
 
 ### Variables
 
@@ -348,13 +351,13 @@ function installGit() {
 		debug "User indicated not to run scripts, so I will only install the script!"
 	fi
 	
-	sudo ln -s $(pwd)/gitCheck.sh /usr/bin/gitcheck
+	sudo ln -s $(pwd)/gitManager.sh /usr/bin/gm
 	
 	announce "This script can be used for any git repository, read the documentation for more info!" "Make sure to add a cron job for any new directories!"
 	
 	getUserAnswer "Would you like to periodically update this directory?" gitTime "How many minutes would you like between updates? (0-60)"
 	if [[ $? -eq 0 ]]; then
-		addCronJob "$gitTime" min "/usr/bin/gitcheck $(pwd)" # Added as current user
+		addCronJob "$gitTime" min "/usr/bin/gm --daemon" # Added as current user
 		debug "Cron job added, will check every $gitTime minutes."
 	fi
 }
