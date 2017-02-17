@@ -15,7 +15,10 @@
 
 ### Variables
 
-
+# These variables are used for logging
+# longName is preferred, if it is missing it will use shortName. If both are missing, uses the basename of the script
+longName="defaultScriptTemplate"
+#shortName="dst"
 
 ### Functions
 

@@ -3,6 +3,9 @@
 # packageManager.sh, a.k.a pm - A universal package manager script
 #
 # Changes:
+# v1.2.9
+# - Added $shortName and $longName for logging purposes
+#
 # v1.2.8
 # - Fixed an issue preventing program installation from folders from working
 #
@@ -63,7 +66,7 @@
 #
 # TODO:
 #
-# v1.2.8, 04 Jan. 2017 12:13 PST
+# v1.2.9, 16 Feb. 2017 22:03 PST
 
 ### Variables
 
@@ -72,6 +75,10 @@ pmOptions="" # Options to be added when running package manager
 program="NULL" # Uninitialized variables are unhappy variables
 programMode="name"
 confirm=0 # 0 Indicates no change, anything else indicates running noConfirm()
+
+# Used for logging
+longName="packageManager"
+shortName="pm"
 
 ### Functions
 

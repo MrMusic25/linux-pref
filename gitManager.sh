@@ -11,6 +11,9 @@
 # Relies on the .git folder in the directory to be able to pull, therefore must be setup beforehand!
 #
 # Changes:
+# v2.0.7
+# - Added $longName for logging purposes
+#
 # v2.0.6
 # - Script will check that no changes will be overwritten before pulling each repo
 # - Finished writing --list, it works
@@ -71,13 +74,14 @@
 #   ~ Also output git diff to a tmp file (shortName_repo_date.txt)
 # - https://git-scm.com/book/en/v2/Git-Basics-Recording-Changes-to-the-Repository
 #
-# v2.0.6, 15 Jan. 2016 21:14 PST
+# v2.0.7, 16 Feb. 2016 22:04 PST
 
 ### Variables
 
 directoryList="$HOME/.gitDirectoryList"
 daemonMode=0
 updateTime=15 # Time between updates, in minutes. Used when setting up a cronjob
+longName="gitManager"
 
 ### Functions
 

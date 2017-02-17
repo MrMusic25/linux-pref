@@ -5,6 +5,10 @@
 # Note: this script whould not be run by itself, as it only contains functions and variables
 #
 # Changes:
+# v1.9.4
+# - Changed the way dynamic logging works - now uses $longName (per script) and $shortName for logFile
+# - Still dynamic logging, but more control over names, and no duplicates "pm.log" and "packageManager.log" etc.
+#
 # v1.9.3
 # - Added level 5 debugging to debug(); only sends message to stderr and log if verbose mode is on
 # - Finally got around to it: announce() does not print stars in verbose mode - this makes 'set -x' output cleaner
@@ -160,7 +164,7 @@
 #   ~ Recommend when cF.sh should be updated
 #   ~ Log message if 'required' versions are mismatched
 #
-# v1.9.3, 11 Dec. 2016 02:32 PST
+# v1.9.4, 16 Feb. 2017 22:00 PST
 
 ### Variables
 
@@ -170,7 +174,7 @@ privilege=0 # 0 if root, 777 if not
 cfVar=0 # Used for '#ifndef', sourcing
 debugInit=0
 debugPrefix="$HOME/.logs" # Use: scriptLog="$debugPrefix/scriptLog.log", then include $scriptLog in debug() statements
-logFile=$debugPrefix/$( basename "$0" | cut -d '.' -f 1 ).log # Now every script has a unique yet dynamic log name!
+#logFile=$debugPrefix/$( basename "$0" | cut -d '.' -f 1 ).log # Now every script has a unique yet dynamic log name!
 debugLevel=1 # Default, directs to log; see debug() for more info
 assume="nothing" # Mysterious guys get the most girls :3
 timeoutVal=10 # Seconds to wait when assuming yes/no in getUserAnswer()
@@ -178,6 +182,15 @@ timeoutVal=10 # Seconds to wait when assuming yes/no in getUserAnswer()
 cFlag=0 # Used with the ctrl_c function
 #trap ctrl_c INT # This will run the function ctrl_c() when it captures the key press
 
+# Eacho script should have $longName and $shortName set; Use them accordingly, longName preferred
+# Uses old default of basename if variables are empty. Still dynamic logging!
+if [[ ! -z $longName ]]; then
+	logFile="$debugPrefix"/"$longName".log
+elif [[ ! -z $shortName ]]; then
+	logFile="$debugPrefix"/"$shortName".log
+else
+	logFile="$debugPrefix"/$( basename "$0" | cut -d '.' -f 1 ).log
+fi
 ### Functions
 
 ## announce()

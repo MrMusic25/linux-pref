@@ -9,6 +9,9 @@
 #	*/5 * * * * /home/kyle/grive.sh
 #
 # Changes:
+# v1.2.1
+# - Added $longName for logging purposes
+#
 # v1.2.0
 # - Script will now check to see if there are Conflict files and notify user
 # - Turned mailing back on since this script is run more often as a cron job. Check mail daily for cron notifications!
@@ -33,12 +36,13 @@
 # - Overhauled other parts of script to be 'self-friendly' (uses my own functions)
 # - Also updated to use $updatePrefix
 #
-# v1.2.0, 23 Aug. 2016 12:14 PST
+# v1.2.1, 16 Feb. 2017, 22:07 PST
 
 ### Variables
 
 #logFile="$updatePrefix/logFile.log" # Saves it in the grive directory unless otherwise specified
 griveDir="NULL"
+longName="grive"
 
 ### Functions
 
