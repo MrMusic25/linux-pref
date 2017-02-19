@@ -104,9 +104,13 @@ This command will echo anything it receives to a dynamically made log file. Very
 Debug now supports levels! Below are what each level does, see function for more info:
 
 L1: Log only
+
 L2: stderr + log
+
 L3: stdout (via announce()) + log
+
 L4: stderr + stdout (via announce()) + log
+
 L5: Log, but ONLY if verbose mode is on!
 
 L5 is useful for debugging repetitive scripts; only outputs messages in verbose mode, so log is not flooded after every run
