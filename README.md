@@ -46,7 +46,7 @@ Please run `packageManager.sh --help` to get a more complete list of commands an
 ### gitManager.sh
 A script that will update a single given repository, OR update from a known list of repositories.
 
-Using the file `$HOME/.gitDirectoryList`, this script will update evere valid git directory on its current branch.
+Using the file `$HOME/.gitDirectoryList`, this script will update every valid git directory on its current branch.
 
 You can also update a single repository simply by running the script with the directory as an argument.
 
@@ -101,7 +101,15 @@ Sometimes just printing a line to the screen doesn't get a user's attention; the
 #### debug()
 This command will echo anything it receives to a dynamically made log file. Very useful, add statements everywhere using this!
 
-By adding `export debugFlag=1` to any script, it will also echo messages to stderr ( >2& ).
+Debug now supports levels! Below are what each level does, see function for more info:
+
+L1: Log only
+L2: stderr + log
+L3: stdout (via announce()) + log
+L4: stderr + stdout (via announce()) + log
+L5: Log, but ONLY if verbose mode is on!
+
+L5 is useful for debugging repetitive scripts; only outputs messages in verbose mode, so log is not flooded after every run
 
 #### checkPrivilege()
 Checks to see if user has root privileges or not.
