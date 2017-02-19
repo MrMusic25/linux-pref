@@ -1,14 +1,17 @@
 # linux-pref
 A repository that is meant to hold and install all my favorite programs, settings, aliases, and scripts whenever I decided
 to install or try a new distribution of Linux. These are written entirely in bash so, it should work on anything that runs it
-i.e. OSX, BSD, UNIX, and soon Windows 10!
+i.e. OSX, BSD, UNIX, and Windows 10!
 
-## Notes and Info
+## General Note and Information
 
 - If a script requires root privileges, it will notify you and attempt to re-run itself as root.
-- All scripts will save their logs to `~/.logs/`, look there for additional debug info if submitting a ticket or diagnosing errors.
-- Please feel free to fork this for yourself, or leave a note here. I accept any input or suggestions on improvements or bug fixes.
+- All scripts will save their logs to `~/.logs/`, look there for additional debug info when diagnosing errors.
+- Please feel free to fork this for yourself, or leave a note here. I accept any input or suggestions/improvements.
 - If you are interested in writing scripts like these, you can begin learning the syntax from the [Bash Hackers Wiki] (http://wiki.bash-hackers.org/), or look at the files in `examples/`
+- I wrote most of these on a Manjaro system, but also do a lot of it with Bash for Windows. Below are the versions my scripts have been tested on:
+  ~ Bash for Windows: version 4.3.11(1)-release (x86_64-pc-linux-gnu)
+  ~ Manjaro Linux: Bash version 4.4? (will verify)
 
 ## Scripts and Usage
 
@@ -34,48 +37,24 @@ Alternatively, you can use the different commands listed when running the script
 Also displays with `./INSTALL.sh -h` or `./INSTALL.sh --help`
 
 ### packageManager.sh
-A script capable of managing packages on most of the common distributions.
+The Swiss Army Knife of the Bash world! This script can update, install, remove, query, and display package information on almost any distribution.
 
-More info to come once this script is ready, but it will replace programInstaller.sh, update.sh, and installPackages.sh
+This makes lifes easier, with commands such as `sudo pm fuc` will re[f]resh, [u]pdate, and [c]lean your system.
 
-### programInstaller.sh
-A multi-distro script that installs a list of programs, or a folder full of program lists.
+Please run `packageManager.sh --help` to get a more complete list of commands and functions of this script. 
 
-Usage: `./programInstaller.sh <list_of_programs>/` OR `./programInstaller <list.txt>`
+### gitManager.sh
+A script that will update a single given repository, OR update from a known list of repositories.
 
-First argument should either be a single list of programs, or it can be a directory full of program lists.
-If none is given, it will default to programLists/ in the current directory.
+Using the file `$HOME/.gitDirectoryList`, this script will update evere valid git directory on its current branch.
 
-### update.sh
-Another multi-distro script that updates the repos and upgrades all available packages.
+You can also update a single repository simply by running the script with the directory as an argument.
 
-Usage: `./update.sh <packages_to_install>`
+NOTE: This means you must run `gitManager.sh .` to update your current directory!
 
-Meant to be run by itself. Used to make a script like this everytime I installed a new distro...
-If you supply packages at the end, it will attempt to install those packages after updating.
-Also cleans up afterwards, e.g. `apt-get autoclean` , `apt-get autoremove`
+Read the help section for this script by running `gitManager.sh --help` for more info!
 
-### installPackages.sh
-If all you want to do is install packages without upgrading, run this script!
-
-Usage: `./programInstaller.sh <program_1> [program_2] ...`
-
-Must be run with at least one argument, but you can install as many programs as you want at a time!
-
-### gitCheck.sh
-A script used to update a git repository inside a given folder.
-
-This script assumes you ran `git clone git://<url>/<user>/<repo>.git` or something similar on that folder already.
-
-Usage: `./gitCheck.sh <git_folder>`
-
-Script will check to see if git upload info is present. If so, it will change into directory and run a `git pull`.
-
-Add the following line to your crontab, since the script does not loop itself:
-
-`*/15 * * * * /home/$USER/linux-pref/gitCheck.sh <path_to_git_folder> &>/dev/null`
-
-Adding this line will check for an update every 15 minutes. You can also use addCronJob(), see commonFunctions.sh for more info.
+Generally, this script will be run as a cronjob every 15 minutes. This can be configured by running `gm --install`
 
 ### grive.sh
 This script will update your Google Drive using the webupd8/grive2 program.
@@ -116,12 +95,6 @@ All of my scripts include if statements to check /usr/share before current direc
 
 Since the file itself has VERY good documentation, I will only give breif descriptions of each function here
 
-#### determinePM()
-Figures out which package manager you are using, and exports option to `$program`. Supports major distros.
-
-#### universalInstaller()
-Like the XKCD comic, I have created a universal installer (only distrobution packages, no pip etc.)
-
 #### announce()
 Sometimes just printing a line to the screen doesn't get a user's attention; therefore, I created a function that will print messages that demand attention!
 
@@ -145,8 +118,11 @@ Asks the user a given question, then can optionally have user assign a value to 
 #### pause()
 Simply prompts the user to press [Enter] to continue. Can also use custom prompt.
 
-#### checkRequirements()
-If programs are require for a script, add them as an argument to this command. It will check that they are installed and quit if not.
+#### editTextFile()
+Opens a text file for editing with the user's preferred text editor.
+
+#### win2UnixPath()
+Created for my other script, [m3uToUSB.sh] (https://github.com/mrmusic25/bash-projects), to convert Windows directories to Unix-friendly ones. See documentation.
 
 #### Other jobs
 There is now a small function that runs each time commonFunctions.sh is sourced - `if $1 is -v|--verbose`, it will enable debugging and shift arguments for use.
@@ -154,6 +130,33 @@ There is now a small function that runs each time commonFunctions.sh is sourced 
 ### packageManagerCF.sh
 This is a file containing functions pertaining to package management. commonFunctions.sh will automatically import this file.
 Below is a list and brief description for each function. Like with cF.sh, look at the script comments for detailed info.
+
+#### determinePM()
+Determines which package manager you are using and sets it accordingly for future use. Other functions will call this if var is empty.
+
+#### updatePM()
+Refreshes the package databases for known package managers.
+
+#### universalInstaller()
+Like the XKCD comic, but a little more sophisticated. (No support for language managers like pip or npm, though)
+
+#### upgradePM()
+Upgrades the system with the latest packages from the maintainer. Be sure to run updatePM() beforehand!
+
+#### cleanPM()
+Cleans the system of stale and unused packages, if it supports this functions. Gives an error if else.
+
+#### queryPM()
+Searches the package database for the specified package
+
+#### removePM()
+Uninstalls the specifed package from the system
+
+#### pkgInfo()
+Displays specific information about the package given
+
+#### checkRequirements()
+Checks to see if required programs for the script are installed, and installs them if they are not found.
 
 ## Text Files and Data
 
