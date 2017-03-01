@@ -3,6 +3,9 @@
 # packageManagerCF.sh - Common functions for package managers and similar functions
 #
 # Changes:
+# v1.2.2
+# - Changed updatePM() to only update pacman, no need to update twice with yaourt!
+#
 # v1.2.1
 # - Small change to checkRequirements for non-sudo scripts
 # - checkRequirements now uses pm.sh to install programs, turns out sudo-ing functions is difficult
@@ -69,7 +72,7 @@
 # - For all functions - add ability to 'run PM as $1' if there is an argument
 #   ~ e.g. "upgradePM" will upgrade the current PM, "upgradePM npm" will (attempt to) upgrade npm
 #
-# v1.2.1, 04 Dec. 2016 16:45 PST
+# v1.2.2, 01 Mar. 2017 00:53 PST
 
 ### Variables
 
