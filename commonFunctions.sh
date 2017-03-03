@@ -169,7 +169,7 @@
 #   ~ Recommend when cF.sh should be updated
 #   ~ Log message if 'required' versions are mismatched
 #
-# v1.9.5, 03 Mar. 2017 09:48 PST
+# v1.9.5, 03 Mar. 2017 10:11 PST
 
 ### Variables
 
@@ -249,9 +249,14 @@ function announce() {
 	
 	# Make the beginning and end string, then print it once to begin
 	tmpStar=0
+	longString=""
+	spaceString="" # Clear these in case they were already set
 	until [[ $tmpStar -eq $stars ]];
 	do
 		longString+="*"
+		if [[ $((tmpStar + 6)) -lt $stars ]]; then
+			spaceString+=" "
+		fi
 		((tmpStar++))
 	done
 	printf "\n %s" "$longString"
@@ -260,13 +265,7 @@ function announce() {
 	for i in $(seq 1 $#);
 	do
 		# First block prints the stars and spaces between statements
-		printf "\n ***"
-		for q in $(seq 1 "$((stars-6))");
-		do
-			printf " "
-		done
-		printf "***\n"
-		printf " ***" # Initial stars for the message...
+		printf "\n ***%s***\n ***" "$spaceString"
 		
 		# Math block to find out spaces for centering, for both even and odd numbers
 		statement="${!i}"
@@ -311,12 +310,7 @@ function announce() {
 	done
 	
 	# One last line of spaces
-	printf "\n ***"
-		for q in $(seq 1 "$((stars-6))");
-		do
-			printf " "
-		done
-	printf "***"
+	printf "\n ***%s***" "$spaceString"
 	
 	#Finally, print ending stars
 	printf "\n %s \n\n" "$longString"
