@@ -5,6 +5,11 @@
 # Note: this script whould not be run by itself, as it only contains functions and variables
 #
 # Changes:
+# v1.10.0
+# - Added checkout() to be used in parallel scripting
+# - You can now 'checkout' funtions for use using a lock variable so the threads don't step on each other
+# - See documentation for more info
+#
 # v1.9.5
 # - Debug now uses shortName when outputting to stderr/stdout
 # - Added a one-time run function  to support this
@@ -169,7 +174,7 @@
 #   ~ Recommend when cF.sh should be updated
 #   ~ Log message if 'required' versions are mismatched
 #
-# v1.9.5, 03 Mar. 2017 10:11 PST
+# v1.10.0, 03 Mar. 2017 11:09 PST
 
 ### Variables
 
@@ -758,6 +763,47 @@ function win2UnixPath() {
 	
 	# Congratulations if you made it this far!
 	echo "$dir"
+}
+
+## checkout()
+#
+# Function: Used for parallel processing. Makes it so only one instance of the specified function can be run at a time, based on the lock variable given
+#           Once function is called, it will wait until the specified function is available, waiting random times in ms. Then, it will return so script can continue.
+#           It will lock the variable beore returning so no one else can use the function. Make sure to run 'checkout done <var>' when the function is done!
+#
+# Call: checkout <wait|done> <lockVarName>
+#
+# Input: Variable you wish to use as the lock for the process
+#
+# Output: Stderr, if any errors are encountered. Doesn't call debug (mminus at beginning) because it could cause infinite loops.
+#
+# Other: To checkout the function for use, run 'checkout wait <lockVar>'. Be sure to include 'checkout done <lockVar>' when you are done though!
+function checkout() {
+	if [[ $# -ne 2 ]]; then
+		# I know I said not to call debug, but I know how this works and what I'm doing. No infinite loops because I do everything correctly (r/IAmVerySmart)
+		debug "l2" "ERROR: Incorrect number of arguments for checkout()! Please read documentation and try again!"
+		return 1
+	fi
+	
+	# Assuming the correct number of variables...
+	case $1 in
+		w*)
+		until [[ ${!2} -eq 0 ]];
+		do
+			sleep $(( ((RANDOM % 50) + 51 ) / 1000 )) # This sleeps for a random time between 50-100ms
+		done
+		${!2}=1 # Variable is locked, ready to roll!
+		return 0
+		;;
+		d*)
+		${!2}=0 # Variable unlocked
+		return 0
+		;;
+		*)
+		(>2& printf "FATAL: $1 is an incorrect option for checkout()! Please read documentation and retry!")
+		return 1
+		;;
+	esac
 }
 
 # This following, which SHOULD be run in every script, will enable debugging if -v|--verbose is enabled.

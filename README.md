@@ -136,6 +136,9 @@ Opens a text file for editing with the user's preferred text editor.
 #### win2UnixPath()
 Created for my other script, [m3uToUSB.sh] (https://github.com/mrmusic25/bash-projects), to convert Windows directories to Unix-friendly ones. See documentation.
 
+#### checkout()
+Used in parallel processing; checkout a function for use, using a lock variable. See documentation for more info.
+
 #### Other jobs
 There is now a small function that runs each time commonFunctions.sh is sourced - `if $1 is -v|--verbose`, it will enable debugging and shift arguments for use.
 
