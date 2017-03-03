@@ -8,6 +8,7 @@
 # v1.9.5
 # - Debug now uses shortName when outputting to stderr/stdout
 # - Added a one-time run function  to support this
+# - Did some optimization to announce
 #
 # v1.9.4
 # - Changed the way dynamic logging works - now uses $longName (per script) and $shortName for logFile
@@ -168,7 +169,7 @@
 #   ~ Recommend when cF.sh should be updated
 #   ~ Log message if 'required' versions are mismatched
 #
-# v1.9.4, 16 Feb. 2017 22:00 PST
+# v1.9.5, 03 Mar. 2017 09:48 PST
 
 ### Variables
 
@@ -246,12 +247,14 @@ function announce() {
 	done
 	let "stars += 8" # 4 beginning characters and 4 trailing
 	
-	# Now print beginning set of stars
-	printf "\n "
-	for l in $(seq 1 "$stars");
+	# Make the beginning and end string, then print it once to begin
+	tmpStar=0
+	until [[ $tmpStar -eq $stars ]];
 	do
-		printf "*"
+		longString+="*"
+		((tmpStar++))
 	done
+	printf "\n %s" "$longString"
 	
 	# Now, print announcements
 	for i in $(seq 1 $#);
@@ -316,12 +319,7 @@ function announce() {
 	printf "***"
 	
 	#Finally, print ending stars
-	printf "\n "
-	for k in $(seq 1 "$stars");
-	do
-		printf "*"
-	done
-	printf "\n\n"
+	printf "\n %s \n\n" "$longString"
 	sleep 3
 }
 
