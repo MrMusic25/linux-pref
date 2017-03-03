@@ -5,6 +5,10 @@
 # Note: this script whould not be run by itself, as it only contains functions and variables
 #
 # Changes:
+# v1.9.5
+# - Debug now uses shortName when outputting to stderr/stdout
+# - Added a one-time run function  to support this
+#
 # v1.9.4
 # - Changed the way dynamic logging works - now uses $longName (per script) and $shortName for logFile
 # - Still dynamic logging, but more control over names, and no duplicates "pm.log" and "packageManager.log" etc.
@@ -191,6 +195,14 @@ elif [[ ! -z $shortName ]]; then
 else
 	logFile="$debugPrefix"/$( basename "$0" | cut -d '.' -f 1 ).log
 fi
+
+# Smilar to above, use the shortName for debugging, if present. Should be a 2-3 letter name for better display
+if [[ ! -z $shortName ]]; then
+	debugOutputPrefix="$shortName"
+else
+	debugOutputPrefix="Debug"
+fi
+
 ### Functions
 
 ## announce()
@@ -363,14 +375,14 @@ function debug() {
 	# Now, redirect output based on debugLevel
 	case $debugLevel in
 		2)
-		(>&2 echo "Debug: $@")
+		(>&2 printf "%s: %s\n" "$debugOutputPrefix" "$@")
 		;;
 		3)
-		announce "Debug: $@"
+		printf "%s: %s\n" "$debugOutputPrefix" "$@"
 		;;
 		4)
-		(>&2 echo "Debug: $@")
-		announce "Debug: $@"
+		(>&2 printf "%s: %s\n" "$debugOutputPrefix" "$@")
+		announce "$debugOutputPrefix: $@"
 		;;
 	esac
 	debugLevel="$oldLevel"
@@ -388,9 +400,7 @@ function debug() {
 		# Initilize the log file
 		if [[ $debugInit -eq 0 ]]; then
 			export startTime=$(date)
-			echo " " >> "$logFile"
-			echo "*** Started at $startTime ***" >> "$logFile"
-			echo " " >> "$logFile"
+			printf "\n*** Started at $startTime ***\n\n" >> "$logFile"
 			export debugInit=1
 		fi
 		
