@@ -5,6 +5,10 @@
 # Note: this script whould not be run by itself, as it only contains functions and variables
 #
 # Changes:
+# v1.10.1
+# - Did some testing, added improved math for sleep
+# - checkout() will now declare variable if previously undeclared
+#
 # v1.10.0
 # - Added checkout() to be used in parallel scripting
 # - You can now 'checkout' funtions for use using a lock variable so the threads don't step on each other
@@ -174,7 +178,7 @@
 #   ~ Recommend when cF.sh should be updated
 #   ~ Log message if 'required' versions are mismatched
 #
-# v1.10.0, 03 Mar. 2017 11:09 PST
+# v1.10.1, 03 Mar. 2017 11:49 PST
 
 ### Variables
 
@@ -788,9 +792,15 @@ function checkout() {
 	# Assuming the correct number of variables...
 	case $1 in
 		w*)
+		if [[ -z ${!2} ]]; then
+			# If the variable isn't declared, function has not been run yet, so safe to continue
+			${!2}=1
+			return 0
+		fi
+		
 		until [[ ${!2} -eq 0 ]];
 		do
-			sleep $(( ((RANDOM % 50) + 51 ) / 1000 )) # This sleeps for a random time between 50-100ms
+			sleep "0$(echo "scale=3; $((RANDOM%50+51)) / 1000" | bc -l )" # This sleeps for a random time between 50-100ms
 		done
 		${!2}=1 # Variable is locked, ready to roll!
 		return 0
