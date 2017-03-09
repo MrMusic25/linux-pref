@@ -11,6 +11,9 @@
 # Relies on the .git folder in the directory to be able to pull, therefore must be setup beforehand!
 #
 # Changes:
+# v2.0.8
+# - Foiled by an incorrect variable! This is what happens when I program while tired lol
+#
 # v2.0.7
 # - Added $longName for logging purposes
 #
@@ -74,7 +77,7 @@
 #   ~ Also output git diff to a tmp file (shortName_repo_date.txt)
 # - https://git-scm.com/book/en/v2/Git-Basics-Recording-Changes-to-the-Repository
 #
-# v2.0.7, 16 Feb. 2016 22:04 PST
+# v2.0.8, 08 Mar. 2016 22:10 PST
 
 ### Variables
 
@@ -179,7 +182,7 @@ function processArgs() {
 		esac
 		
 		((argCount++))
-		if [[ $num -ge $args ]]; then
+		if [[ $argCount -ge $args ]]; then
 			loopFlag=1
 		fi
 		shift
