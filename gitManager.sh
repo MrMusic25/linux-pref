@@ -11,6 +11,9 @@
 # Relies on the .git folder in the directory to be able to pull, therefore must be setup beforehand!
 #
 # Changes:
+# v2.0.9
+# - Made the daemon check less confusing
+#
 # v2.0.8
 # - Foiled by an incorrect variable! This is what happens when I program while tired lol
 #
@@ -77,7 +80,7 @@
 #   ~ Also output git diff to a tmp file (shortName_repo_date.txt)
 # - https://git-scm.com/book/en/v2/Git-Basics-Recording-Changes-to-the-Repository
 #
-# v2.0.8, 08 Mar. 2016 22:10 PST
+# v2.0.9, 10 Mar. 2016 13:53 PST
 
 ### Variables
 
@@ -232,6 +235,8 @@ function setupGit() {
 	# Return if in daemon mode, no interactivity allowed!
 	if [[ $daemonMode -ne 0 ]]; then
 		return
+	else
+		debug "l2" "INFO: Initializing git defaults for user! This is interactive, so pay attention!"
 	fi
 	
 	# Interactive part of the setup
@@ -347,7 +352,7 @@ processArgs "$@"
 if [[ -e ~/.git-credentials || -e ~/.git-credential-cache ]]; then
 	debug "l5" "INFO: Git has already been setup, moving to next step."
 else
-	debug "l3" "WARN: Git has not been setup! Running first-time setup automatically"
+	debug "l3" "WARN: Git has not been initialized on this system!"
 	setupGit
 fi
 
