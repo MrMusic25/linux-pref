@@ -11,6 +11,9 @@
 # Relies on the .git folder in the directory to be able to pull, therefore must be setup beforehand!
 #
 # Changes:
+# v2.0.10
+# - Simply added shortName for better debugging
+#
 # v2.0.9
 # - Made the daemon check less confusing
 #
@@ -80,7 +83,7 @@
 #   ~ Also output git diff to a tmp file (shortName_repo_date.txt)
 # - https://git-scm.com/book/en/v2/Git-Basics-Recording-Changes-to-the-Repository
 #
-# v2.0.9, 10 Mar. 2016 13:53 PST
+# v2.0.10, 13 Mar. 2016 17:19 PST
 
 ### Variables
 
@@ -88,6 +91,7 @@ directoryList="$HOME/.gitDirectoryList"
 daemonMode=0
 updateTime=15 # Time between updates, in minutes. Used when setting up a cronjob
 longName="gitManager"
+shortName="gm"
 
 ### Functions
 
@@ -102,7 +106,6 @@ else
 	echo "Script will now exit, please put file in same directory as script, or link to /usr/share!"
 	exit 1
 fi
-
 
 function displayHelp() {
 # The following will read all text between the words 'helpVar' into the variable $helpVar

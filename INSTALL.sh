@@ -6,6 +6,9 @@
 # There are too many things to display here, so please look at displayHelp() to see the options and install options
 #
 # Changes:
+# v1.3.5
+# - Added longName and shortName for debugging
+#
 # v1.3.4
 # - This monstrosity of a script was changed to reflect the new gitManager.sh
 #
@@ -91,7 +94,7 @@
 #   ~ Installer, as well as the scripts them selves, can use these for logging and tmp output
 #   ~ In addition, using these the log names will be more consistent
 #
-# v1.3.4, 15 Feb. 2017 21:08 PST
+# v1.3.5, 13 Mar. 2017 17:20 PST
 
 ### Variables
 
@@ -103,6 +106,8 @@ runMode="NULL" # Variable used to hold which install option will be run
 pathCheck=0 # Used to tell other functions if path check has be run or not
 pathLocation="/usr/bin"
 #interactiveFlag=0 # Tells the script whether or not to inform the user that the script will require their interaction
+longName="INSTALL"
+shortName="iS" # installScript
 
 ### Functions
 

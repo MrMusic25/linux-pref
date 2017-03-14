@@ -5,6 +5,10 @@
 # Note: this script whould not be run by itself, as it only contains functions and variables
 #
 # Changes:
+# v1.10.2
+# - Got bored and updated all the "debug" statements to the new format
+# - Other small changes I forgot to write down
+#
 # v1.10.1
 # - Did some testing, added improved math for sleep
 # - checkout() will now declare variable if previously undeclared
@@ -178,7 +182,7 @@
 #   ~ Recommend when cF.sh should be updated
 #   ~ Log message if 'required' versions are mismatched
 #
-# v1.10.1, 03 Mar. 2017 11:49 PST
+# v1.10.2, 13 Mar. 2017 17:21 PST
 
 ### Variables
 
@@ -310,9 +314,8 @@ function announce() {
 			done
 			;;
 			*)
-			export debugFlag=1
-			debug "Congratulations on breaking the script. Please escort yourself to the nearest mental institute."
-			exit 9009
+			debug "l3" "ERROR: Congratulations on breaking the script. Please escort yourself to the nearest mental institute."
+			exit 99
 			;;
 		esac
 		printf "***"
@@ -421,19 +424,17 @@ function debug() {
 # Other info: Just calling will return 777; calling with the word "exit" at the end will kill the current script if not root
 function checkPrivilege() {
 if [ "$EUID" -ne 0 ]; then
-	debug "Script is not being run as root!"
-	announce "This script require root privileges, please run as root or sudo!"
-	export privilege=777
+	debug "l3" "WARN: Script requires root privileges, but is not root/sudo!"
+	export privilege=77
 	
 	# Only exits if the flag ($1) is set
 	if [[ "$1" == "exit" ]]; then
-		debug "Script set to exit mode, exiting with error code 777!"
-		exit 777
+		debug "WARN: Script set to exit mode, exiting with error code 77!"
+		exit 77
 	fi
 	
 	if [[ "$1" == "ask" ]]; then
-		debug "Script set to ask mode, re-running as sudo!"
-		announce "Script will now re-run itself as root, please provide password when prompted!"
+		debug "l3" "INFO: Script set to ask mode, re-running as sudo!"
 		shift # Gets rid of 'ask' argument when re-running script
 		sudo "$0" "$@"
 		exit $?
@@ -441,7 +442,7 @@ if [ "$EUID" -ne 0 ]; then
 	
 	return 77
 else
-	debug "Script is being run as root"
+	debug "INFO: Script is being re-run as root"
 	export privilege=0
 	return 0
 fi
@@ -488,10 +489,10 @@ function ctrl_c() {
 function addCronJob() {
 	# First, determine if time is valid
 	if [[ $1 -le 0 || $1 -gt 60 ]]; then
-		echo "ERROR: Call for addCronJob() is outside the natural time limits! (Num: $1)" # Don't you just LOVE cryptic messages?
+		debug "l2" "ERROR: Call for addCronJob() is outside the natural time limits! (Num: $1)" # Don't you just LOVE cryptic messages?
 		return 1
 	elif [[ $2 == "hour" && $1 -gt 24 || $2 == "hours" && $1 -gt 24 ]]; then
-		echo "ERROR: There are not $1 hours in a day, please fix call!"
+		debug "l2" "ERROR: There are not $1 hours in a day, please fix call!"
 		return 1
 	fi
 	
@@ -500,7 +501,7 @@ function addCronJob() {
 		announce "Preparing job $3 for cron!" "Job will every $1 minutes from now on."
 		
 		if [[ ! -z $4 ]]; then
-			debug "cronjob will NOT redirect to /dev/null, expect lots of mail from cron!"
+			debug "WARN: cronjob will NOT redirect to /dev/null, expect lots of mail from cron!"
 			#crontab -l 2>/dev/null; echo "*/$1 * * * * $3 " | crontab -
 			touch tmpCron # Wasn't going to include this at first, but just in case user doesn't have write permission...
 			crontab -l 2>/dev/null > tmpCron
@@ -520,7 +521,7 @@ function addCronJob() {
 		announce "Preparing job $3 for cron!" "Job will run once per day at $1 o'clock, Military Time"
 		
 		if [[ ! -z $4 ]]; then
-			debug "cronjob will NOT redirect to /dev/null, expect lots of mail from cron!"
+			debug "WARN: cronjob will NOT redirect to /dev/null, expect lots of mail from cron!"
 			#crontab -l 2>/dev/null; echo "* $1 * * * $3 " | crontab -
 			touch tmpCron # Wasn't going to include this at first, but just in case user doesn't have write permission...
 			crontab -l 2>/dev/null > tmpCron
@@ -537,7 +538,7 @@ function addCronJob() {
 		fi
 		;;
 		*)
-		echo "ERROR: Unknown call value: $2"
+		debug "l2" "ERROR: Unknown call for addCronJob()! Value: $2"
 		return 1
 		;;
 	esac
@@ -605,7 +606,7 @@ function getUserAnswer() {
 	
 	if [[ ! -z $2 && $ans == "y" || ! -z $2 && $ans == "yes" ]]; then
 		if [[ -z $3 ]]; then
-			echo "ERROR: Incorrect call for function getUserAnswer()! Please look at documentation!"
+			debug "l2" "ERROR: Incorrect call for function getUserAnswer()! Please look at documentation!"
 		else
 			announce "$3"
 			read -p "Please assign a value to $2: " ${2}
@@ -621,11 +622,11 @@ function getUserAnswer() {
 		return 1
 		;;
 		NULL)
-		announce "Congratulations, you somehow broke my script, Linux, and possibly the universe."
+		announce "WARN: Congratulations, you somehow broke my script, Linux, and possibly the universe."
 		return 66 #used to be 666, but apparently that isn't allowed. not that it should happene ANYWAYS...
 		;;
 		*)
-		announce "You must not be very good at this if you made it here."
+		announce "ERROR: You must not be very good at this if you made it here."
 		return 111
 		;;
 	esac
@@ -643,6 +644,7 @@ function getUserAnswer() {
 #
 # Other info: If $1 is missing, it will use default prompt ot "Press [Enter] to continue..."
 function pause() {
+	debug "l5" "INFO: pause() has been called" # Let's verbose users know what is happening
 	if [[ -z $1 ]]; then
 		read -p "Press [Enter] to continue..."
 	else
@@ -664,8 +666,7 @@ function pause() {
 function editTextFile() {
 	# First, check if file was provided. Return error if not.
 	if [[ -z $1 ]]; then
-		debug "Incorrect call for editTextFile, please consult commonFunctions.sh"
-		announce "Incorrect call for editTextFile!" "Please read documentation and fix script." "Script will continue without editing, press CTRL+C to quit"
+		debug "l3" "ERROR: Incorrect call for editTextFile(), please consult commonFunctions.sh! Script will continue anyways, press CTRL+C to quit!"
 		return 1
 	fi
 	
@@ -673,17 +674,18 @@ function editTextFile() {
 	if [[ -z $EDITOR && -z $VISUAL ]]; then
 		if [[ -z $(which nano 2>/dev/null) ]]; then
 			debug "User error has lead to vi being the only editor, using it as a last resort!"
+			# Was gonna delete this when I introduced new debug() format, but this is too good to delete lol
 			announce "It seems vi is your only editor. Strange choice, or new installation?" "When done editing, press :wq to exit vi"
 			vi "$1"
 		else
-			debug "Letting user edit $1 with nano"
+			debug "INFO: Letting user edit $1 with nano"
 			nano "$1"
 		fi
 	elif [[ -z $EDITOR ]]; then
-		debug "Letting user edit $1 with $VISUAL"
+		debug "INFO: Letting user edit $1 with $VISUAL"
 		"$VISUAL" "$1"
 	else
-		debug "Letting user edit $1 with $EDITOR"
+		debug "INFO: Letting user edit $1 with $EDITOR"
 		"$EDITOR" "$1"
 	fi
 	return 0
@@ -819,7 +821,7 @@ function checkout() {
 # This following, which SHOULD be run in every script, will enable debugging if -v|--verbose is enabled.
 # The 'shift' command lets the scripts use the rest of the arguments
 if [[ "$1" == "-v" || "$1" == "--verbose" ]]; then
-	echo "Running in verbose mode!"
+	echo "INFO: Running in verbose mode!"
 	export debugFlag=1
 	export debugLevel=2
 	shift
@@ -831,7 +833,7 @@ if [[ -z $pmCFvar ]]; then
 	elif [[ -f /usr/share/packageManagerCF.sh ]]; then
 		source /usr/share/packageManagerCF.sh
 	else
-		echo "packageManagerCF.sh could not be located!"
+		echo "ERROR: packageManagerCF.sh could not be located!"
 
 		# Comment/uncomment below depending on if script actually uses common functions
 		#echo "Script will now exit, please put file in same directory as script, or link to /usr/share!"
