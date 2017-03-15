@@ -584,7 +584,7 @@ function checkRequirements() {
 		
 		# No debug messages on success, keeps things silent
 		if [[ -z "$(which $reqm 2>/dev/null)" ]]; then
-			debug "$reqt is not installed for $0, notifying user for install"
+			debug "WARN: $reqt is not installed for $0, notifying user for install"
 			getUserAnswer "$reqt is not installed, would you like to do so now?"
 			case $? in
 				0)
