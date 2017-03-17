@@ -5,6 +5,7 @@
 # Changes:
 # v1.2.2
 # - Changed updatePM() to only update pacman, no need to update twice with yaourt!
+# - Update: *Reaper voice* Didn't take
 #
 # v1.2.1
 # - Small change to checkRequirements for non-sudo scripts
@@ -72,7 +73,7 @@
 # - For all functions - add ability to 'run PM as $1' if there is an argument
 #   ~ e.g. "upgradePM" will upgrade the current PM, "upgradePM npm" will (attempt to) upgrade npm
 #
-# v1.2.2, 01 Mar. 2017 00:53 PST
+# v1.2.2, 17 Mar. 2017 09:04 PST
 
 ### Variables
 
@@ -171,7 +172,7 @@ function updatePM() {
 		;;
 		pacman)
 		sudo pacman $pmOptions -Syy
-		yaourt $pmOptions -Syy
+		#yaourt $pmOptions -Syy
 		;;
 		dnf)
 		dnf $pmOptions check-update
