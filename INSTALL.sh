@@ -6,6 +6,10 @@
 # There are too many things to display here, so please look at displayHelp() to see the options and install options
 #
 # Changes:
+# v1.3.6
+# - Added a small question to coincide with an update to .bashrc, supporting easy log viewing
+# - Really all I did was support the option to add the "pwd" logDir to user's .bashrc
+#
 # v1.3.5
 # - Added longName and shortName for debugging
 #
@@ -94,7 +98,7 @@
 #   ~ Installer, as well as the scripts them selves, can use these for logging and tmp output
 #   ~ In addition, using these the log names will be more consistent
 #
-# v1.3.5, 13 Mar. 2017 17:20 PST
+# v1.3.6, 16 Mar. 2017 17:13 PST
 
 ### Variables
 
@@ -465,6 +469,24 @@ function installBash() {
 		debug "User is root, no other installation is needed!"
 		announce "NOTE: If you ran script this as root, you will need to run it again as normal user!" "To save time, run: $0 bash!"
 	fi
+	
+	# Ask whether or not universal log directory should be setup
+	getUserAnswer "Would you like to export the current log directory for universal use?"
+	case $? in
+		0)
+		# Yes
+		debug "WARN: User is setting $debugPrefix as default log directory universally!"
+		echo logDir="$debugPrefix" | tee -a $HOME/.bashrc &>/dev/null
+		echo logDir="$debugPrefix" | sudo tee -a /root/.bashrc &>/dev/null # This assumes 'universal' also means root, plus default root home dir. Will fix when I have more time.
+		;;
+		1)
+		# Nah, bro
+		debug "INFO: User chose not to install default logDir"
+		;;
+		*)
+		debug "l2" "ERROR: Bad return value from getUserAnswer()!"
+		;;
+	esac
 }
 
 function installGrive() {

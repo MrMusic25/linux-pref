@@ -158,3 +158,63 @@ function commit() {
 		fi
 	fi
 }
+
+# Got the idea for this one day
+if [[ -z $logDir ]]; then
+	logDir="$HOME/.logs" # If logDir is unset, set it to the default. Typically should be set to system-wide directory, unless system is shared
+fi
+
+function log() {
+read -d '' logUsage << endHelp
+Usage: log <logFile> [numLines] OR log <command>
+Type 'log command' to see supported commands.
+numLines is the number of lines you would like to be read (via tail).
+endHelp
+	if [[ -z $1 ]]; then
+		printf "ERROR: No arguments given with log()!\n%s\n" "$logUsage"
+		return 1
+	fi
+
+	case $1 in
+		-h|--help|help)
+		printf "%s\n" "$logUsage"
+		return 0
+		;;
+		ls|list)
+		printf "Displaying files in %s...\n" "$logDir"
+		ls -l "$logDir"
+		return 0
+		;;
+		dir|display|show)
+		printf "Log directory is located at: %s\nType in \'log cd\' to switch to the directory!" "$logDir"
+		return 0
+		;;
+		cd|switch)
+		printf "Changing current directory to %s!\n" "$logDir"
+		cd "$logDir"
+		return 0
+		;;
+		command*)
+		printf "Commands:\n  ls|list          : List the files in the set log directory\n  cd|switch        : Switch to the set log directory\n dir|display|show  : Tells you the name of the set log directory\n"
+		return 0
+		;;
+		*)
+		if [[ ! -e "$logDir"/"$1" ]]; then
+			printf "%s\nERROR: %s is not a valid log file! Please choose one from the list below and try again!\n" "$logUsage" "$1"
+			ls -l "$logDir"
+			return 1
+		fi # Else, file is valid; continue
+		;;
+	esac
+
+	if [[ ! -z $2 && "$2" -eq "$2" ]]; then
+		nlines="$2"
+	else
+		nlines="20"
+	fi
+	
+	logRead="$logDir"/"$1"
+	printf "INFO: Showing the last %s lines of log file %s:\n\n" "$nlines" "$logRead"
+	tail -n "$nlines" "$logRead"
+	return 0
+}
