@@ -31,3 +31,6 @@ moreutils
 # Graphically display disk usage tree
 baobab
 
+# Not a default in most systems, but a lifesaver!
+gnome-disk-utility
+
