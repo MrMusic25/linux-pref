@@ -11,6 +11,9 @@
 # Relies on the .git folder in the directory to be able to pull, therefore must be setup beforehand!
 #
 # Changes:
+# v2.0.11
+# - Fixed a typo I noticed weeks ago but never bothered to fix til now
+#
 # v2.0.10
 # - Simply added shortName for better debugging
 #
@@ -83,7 +86,7 @@
 #   ~ Also output git diff to a tmp file (shortName_repo_date.txt)
 # - https://git-scm.com/book/en/v2/Git-Basics-Recording-Changes-to-the-Repository
 #
-# v2.0.10, 13 Mar. 2016 17:19 PST
+# v2.0.11, 27 Mar. 2016 14:45 PST
 
 ### Variables
 
@@ -303,7 +306,7 @@ function listRepos() {
 }
 
 function pullRepo() {
-	debug "INFO: Attempting to update repo $1 on currnt branch"
+	debug "INFO: Attempting to update repo $1 on current branch"
 	cd "$1"
 	
 	# First, check if repo is ready to pul; warn if there are errors
