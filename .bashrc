@@ -199,11 +199,7 @@ endHelp
 		return 0
 		;;
 		*)
-		if [[ ! -e "$logDir"/"$1" ]]; then
-			printf "%s\nERROR: %s is not a valid log file! Please choose one from the list below and try again!\n" "$logUsage" "$1"
-			ls -l "$logDir"
-			return 1
-		fi # Else, file is valid; continue
+		true # Used to be an error here, but now with file guessing it is irrelevent
 		;;
 	esac
 
@@ -213,8 +209,18 @@ endHelp
 		nlines="20"
 	fi
 	
-	logRead="$logDir"/"$1"
+	OPWD="$(pwd)"
+	cd "$logDir" # Makes searching easier
+	
+	if [[ -e "$1" ]]; then
+		logRead="$1"
+	else # Partial name, guess the rest
+		printf "WARN: Partial name given for log file, guessing the rest!\n"
+		logRead="$(ls *.log | grep "$1")"
+	fi
+	
 	printf "INFO: Showing the last %s lines of log file %s:\n\n" "$nlines" "$logRead"
 	tail -n "$nlines" "$logRead"
+	cd "$OPWD"
 	return 0
 }
