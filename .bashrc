@@ -186,7 +186,7 @@ endHelp
 		return 0
 		;;
 		dir|display|show)
-		printf "Log directory is located at: %s\nType in \'log cd\' to switch to the directory!" "$logDir"
+		printf "Log directory is located at: %s\nType in \'log cd\' to switch to the directory!\n" "$logDir"
 		return 0
 		;;
 		cd|switch)
