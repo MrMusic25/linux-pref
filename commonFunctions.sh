@@ -5,6 +5,9 @@
 # Note: this script whould not be run by itself, as it only contains functions and variables
 #
 # Changes:
+# v1.10.3
+# - I need to run shellcheck more often... minor fixes that (hopefully) make life better
+#
 # v1.10.2
 # - Got bored and updated all the "debug" statements to the new format
 # - Other small changes I forgot to write down
@@ -182,7 +185,7 @@
 #   ~ Recommend when cF.sh should be updated
 #   ~ Log message if 'required' versions are mismatched
 #
-# v1.10.2, 13 Mar. 2017 17:21 PST
+# v1.10.3, 31 Mar. 2017 14:46 PST
 
 ### Variables
 
@@ -386,7 +389,7 @@ function debug() {
 		;;
 		4)
 		(>&2 printf "%s: %s\n" "$debugOutputPrefix" "$@")
-		announce "$debugOutputPrefix: $@"
+		announce "$debugOutputPrefix: $*"
 		;;
 	esac
 	debugLevel="$oldLevel"
@@ -577,7 +580,7 @@ function getUserAnswer() {
 		yes)
 		until [[ $ans == "y" || $ans == "yes" || $ans == "n" || $ans == "no" ]]; do
 			read -t "$timeoutVal" -p "Please answer above prompt (Y/n): " ans
-			if [[ $ans != "y" || $ans != "yes" || $ans != "n" || $ans != "no" ]]; then
+			if [[ $ans != "y" && $ans != "yes" && $ans != "n" && $ans != "no" ]]; then
 				printf "\n" # Formatting
 				ans="y"
 			fi
@@ -586,7 +589,7 @@ function getUserAnswer() {
 		no)
 		until [[ $ans == "y" || $ans == "yes" || $ans == "n" || $ans == "no" ]]; do
 			read -t "$timeoutVal" -p "Please answer above prompt (y/N): " ans
-			if [[ $ans != "y" || $ans != "yes" || $ans != "n" || $ans != "no" ]]; then
+			if [[ $ans != "y" && $ans != "yes" && $ans != "n" && $ans != "no" ]]; then
 				printf "\n"
 				ans="n"
 			fi
@@ -812,7 +815,7 @@ function checkout() {
 		return 0
 		;;
 		*)
-		(>2& printf "FATAL: $1 is an incorrect option for checkout()! Please read documentation and retry!")
+		(>2& printf "FATAL: %s is an incorrect option for checkout()! Please read documentation and retry!" "$1")
 		return 1
 		;;
 	esac
