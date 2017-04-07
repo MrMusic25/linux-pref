@@ -1,10 +1,14 @@
 #!/bin/bash
 #
 # commonFunctions.sh - A collection of functions to be used in this project
-#
 # Note: this script whould not be run by itself, as it only contains functions and variables
 #
 # Changes:
+# v1.11.0
+# - Added importText() since I use it so often in many scripts. See documentation, pretty self-explanatory
+# - Moved most of the changelog to oldChangelogs.txt
+# - Minor text fixes
+#
 # v1.10.3
 # - I need to run shellcheck more often... minor fixes that (hopefully) make life better
 #
@@ -44,120 +48,6 @@
 # v1.9.0
 # - New function: win2UnixPath()
 #
-# v1.8.1
-# - The best kind of updates are those that go untested, amirite? Lol, bug fixes
-# - Added a newline so text doesn't get chopped
-#
-# v1.8.0
-# - getUserAnswer() can now assume yes/no ans timeout for "headless" scripts. Doesn't effect legacy calls.
-#
-# v1.7.6
-# - Moved checkRequirements() to pmCF.sh
-# - Added a source argument for pmCF.sh
-# - Fixed SC2145
-#
-# v1.7.5
-# - A comment required a version change... Script now relies on $program not being set
-# - Added as close to an '#ifndef' statement as I could for sourcing
-#
-# v1.7.4
-# - Debug now supports levels! See function for more info (legacy calls are not effected)
-#
-# v1.7.3
-# - Didn't want to change major version since I was working on it today
-# - Added function editTextFile() that was originally built for improved programInstaller.sh
-#
-# v1.7.2
-# - Don't use pipes to separate variables... Changed to slashes, and this time I tested before uploading
-# - Small change to determinePM() to prevent pacman errors
-# - After testing, reverted the change to determinePM and moved it to universalInstaller()
-#
-# v1.7.1
-# - Fixed checkRequirements() so it accepts "program|installer" as an argument
-#
-# v1.7.0
-# - Added checkRequirements()
-#
-# v1.6.7
-# - Added a very tiny function that pauses the script (can't believe it took me this long to do something so simple...)
-# - Fixed a few issues found with shellcheck
-#
-# v1.6.6
-# - Changed the way updating and installing with pacman works
-#
-# v1.6.5
-# - Fixed determinePM() so 'which' is not so noisy
-# - Added some more debug statements
-# - Changed the way determinePrivilege() works due to a bug I discovered
-# - BIG (yet humble) CHANGE: debug() now redirects message to stderr instead of stdout if verbose is on
-#
-# v1.6.4
-# - Found a huge error in debug(), fixed now
-# - Fixed all errors from shellcheck (minus the ones that don't need fixing (SC2034) and ones that would break the functions)
-# - So many small changes I forgot to list
-#
-# v1.6.3
-# - checkPrivilege() now returns 0 if you are root and 777 if not
-# - Quick fix to universalInstaller() for apt-get, assumes yes for installation
-#
-# v1.6.2
-# - Added small 'function' that allows any script to have -v|--verbose as $1 to enable debugging
-# - Change to the way addCronJob() works, since it was non-functional before
-#
-# v1.6.1
-# - Finally got around to testing getUserAnswer, and it only half worked. Now works 97%.
-# - Other small changes I forgot to document and forgot hours later
-#
-# v1.6.0
-# - Big update - now, all scripts have a dynamically assigned logFile based on the script name!
-# - All scripts have been updated to reflect this, they can still be found in '$HOME/.logs'
-# - MAJOR update to announce(), now looks much cleaner!
-# - announce() now checks to make sure an argument is given as well
-#
-# v1.5.1
-# - Turned off ctrl_c() trap because it doesn't work properly, will fix later
-# - Added slackpkg to universalInstaller() and determinePM()
-#
-# v1.5.0
-# - Retroactively employed the better looking numbering scheme
-# - Added the addCronJob() function. Have yet to test it, however
-#
-# v1.4.0
-# - Added a re-run as sudo option to update.sh, then decided to make is common as part of checkPrivilege()
-# - ctrl_c now kill hung process first, then asks to exit. Safety measure
-#
-# v1.3.1
-# - ctrl_c() now send a SIGINT to kill process
-#
-# v1.3.0
-# - Added the ctrl_c() function, and corresponding trap for INT request
-#
-# v1.2.3
-# - First actual 'bugfix' - accidentally made it touch $debugPrefix instead of mkdir
-#
-# v1.2.2
-# - Added variable for a log directory prefix; small line, big impact
-# - debug() will also make sure directory exists before writing to it
-#
-# v1.2.1
-# - Added an initilizer to debug() so that time log was started is shown at beginning of log
-#
-# v1.2.0
-# - Added checkPrivilege(). Checks if user is root, and exits with code 777 if not
-#
-# v1.1.3
-# - Added a 'sleep 2' statement to the end of announce() since I keep doing it anyways
-#
-# v1.1.2
-# - Added 'dnf' to determinePM() and universalInstaller() after reading about it on DistroWatch. Similar changes made in programInstaller.sh
-#
-# v1.1.1
-# - debug() now touches logfile so script doesn't have to!
-# - Slightly changed the output of announce() to look more symmetrical
-#
-# v1.1.0
-# - Added announce() and debug() functions
-#
 # TODO:
 # - Add hello()/bye() OR script(start/stop) function to initialize scripts
 #   ~ Start debugger, log the start time, source files that are needed according to script
@@ -185,7 +75,7 @@
 #   ~ Recommend when cF.sh should be updated
 #   ~ Log message if 'required' versions are mismatched
 #
-# v1.10.3, 31 Mar. 2017 14:46 PST
+# v1.11.0, 07 Apr. 2017 10:58 PST
 
 ### Variables
 
@@ -784,7 +674,7 @@ function win2UnixPath() {
 #
 # Input: Variable you wish to use as the lock for the process
 #
-# Output: Stderr, if any errors are encountered. Doesn't call debug (mminus at beginning) because it could cause infinite loops.
+# Output: Stderr, if any errors are encountered. Doesn't call debug (minus at beginning) because it could cause infinite loops.
 #
 # Other: To checkout the function for use, run 'checkout wait <lockVar>'. Be sure to include 'checkout done <lockVar>' when you are done though!
 function checkout() {
@@ -821,6 +711,54 @@ function checkout() {
 	esac
 }
 
+## importText()
+#
+# Function: Import the given text (or other newline-delimited file) to the given variable
+#           I use this so often I finally decided to make it a common function
+#
+# Call: importText <filename> <variable> [include_hash]
+#
+# Input: filename of the text file, variable where the imported file will be stored
+#        If the last var is present, function will put ALL lines into the variable, instead of ignoring '#' comments (default)
+#
+# Output: Stderr for problems, and an ARRAY with the text file contents
+#         Return value of 0 on success, value of 1 if there was a problem. Let's the script decide whether or not to quit
+#
+# Other: NOTE - everything is stored in an array, so when examining it in a loop, make sure you use "$var[@]"!
+function importText() {
+	# argc check
+	if [[ -z $2 ]]; then
+		debug "l2" "FATAL: Incorrect call for importText!"
+		return 1
+	fi
+	
+	# Make sure we can see the file
+	if [[ -f "$1" ]]; then
+		local fileName="$1"
+	else
+		debug "l2" "ERROR: $1 is not a file!"
+		return 1
+	fi
+	local var="$2"
+	declare -a ${var}
+	if [[ ! -z $3 ]]; then
+		debug "INFO: importText will import comments as well!"
+		comments=1
+	fi
+	
+	# Now, read the file to the variable
+	local count=0
+	while read -r line
+	do
+		[[ "$line" == "" || "$line" == " " ]] && continue # Skip blank and empty lines, everytime
+		[[ "$line" == \#* && -z $comments ]] && continue # Conditionally skip comments
+		
+		${var}+=("$line")
+		((count++))
+	done < "${fileName}"
+	debug "l5" "INFO: Read $count lines into variable $var!"
+	return 0
+}
 # This following, which SHOULD be run in every script, will enable debugging if -v|--verbose is enabled.
 # The 'shift' command lets the scripts use the rest of the arguments
 if [[ "$1" == "-v" || "$1" == "--verbose" ]]; then

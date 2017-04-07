@@ -3,6 +3,9 @@
 # packageManager.sh, a.k.a pm - A universal package manager script
 #
 # Changes:
+# v1.2.10
+# - Removed some changelog to comply with new rules
+#
 # v1.2.9
 # - Added $shortName and $longName for logging purposes
 #
@@ -51,22 +54,9 @@
 # - Release version ready
 # - Everything is in the processArgs() function
 #
-# v0.2.0
-# - Updated displayHelp()
-# - Prep for -o|--option
-# - Runtime options can now be a single letter
-# - Added privilege check for arch-based distros
-#
-# v0.1.0
-# - Added displayHelp()
-#
-# v0.0.1
-# - No real scripting, but added a long list of things to-do
-# - Initial version
-#
 # TODO:
 #
-# v1.2.9, 16 Feb. 2017 22:03 PST
+# v1.2.10, 07 Apr. 2017 11:04 PST
 
 ### Variables
 

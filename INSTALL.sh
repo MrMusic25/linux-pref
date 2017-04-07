@@ -6,6 +6,9 @@
 # There are too many things to display here, so please look at displayHelp() to see the options and install options
 #
 # Changes:
+# v1.3.7
+# - Removed some changelog according to new rules
+#
 # v1.3.6
 # - Added a small question to coincide with an update to .bashrc, supporting easy log viewing
 # - Really all I did was support the option to add the "pwd" logDir to user's .bashrc
@@ -56,36 +59,6 @@
 # - Added a function to install and setup grive
 # - Other small functionality changes
 #
-# v1.0.3
-# - installUpdate() now installs the newly created installPackages.sh as well
-# - Putting a lot of faith in shellcheck, fixed every error it gave me for this script (untested for now because a commit is necessary to test on RPi)
-#
-# v1.0.2
-# - Fixed multiple issues I found when trying to install yesterday
-# - Added a check to tell user not to run script as root
-#
-# v1.0.1
-# - 30 mins of debugging, and shellcheck found the error seconds. Amazing program.
-# - Script fully functional, just need to test on system now
-#
-# v1.0.0
-# - Finally ready for a release version! Theoretically, everything should work and install properly
-#
-# v0.2.1
-# - Changed to dynamic logging
-#
-# v0.2.0
-# - Added installGit() and installUpdate()
-# - Created a system to notify the user if the script will require their attention (so they know not to wander off)
-#
-# v0.1.0
-# - Added linkCF() to check is commonFunctions.sh is linked to /usr/share
-# - Also added two checks to make sure it is linked
-# - Changed minor version because part of script actually functions now
-# 
-# v0.0.1
-# - Initial commit - only displayHelp() and processArgs() working currently
-#
 # TODO:
 # - Fix installation of programs
 #   ~ Differentiate between pacman and others, make script work with files (currently broken)
@@ -98,7 +71,7 @@
 #   ~ Installer, as well as the scripts them selves, can use these for logging and tmp output
 #   ~ In addition, using these the log names will be more consistent
 #
-# v1.3.6, 16 Mar. 2017 17:13 PST
+# v1.3.7, 07 Apr. 2017 11:06 PST
 
 ### Variables
 

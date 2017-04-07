@@ -1,0 +1,207 @@
+Decided one day to clean up the increasingly-lengthy changlogs at the beginning of each script.
+NOW, only the last three major versions will be kept in the changelog. The rest will go here for history!
+
+commonFunctions.sh
+# v1.8.1
+# - The best kind of updates are those that go untested, amirite? Lol, bug fixes
+# - Added a newline so text doesn't get chopped
+#
+# v1.8.0
+# - getUserAnswer() can now assume yes/no ans timeout for "headless" scripts. Doesn't effect legacy calls.
+#
+# v1.7.6
+# - Moved checkRequirements() to pmCF.sh
+# - Added a source argument for pmCF.sh
+# - Fixed SC2145
+#
+# v1.7.5
+# - A comment required a version change... Script now relies on $program not being set
+# - Added as close to an '#ifndef' statement as I could for sourcing
+#
+# v1.7.4
+# - Debug now supports levels! See function for more info (legacy calls are not effected)
+#
+# v1.7.3
+# - Didn't want to change major version since I was working on it today
+# - Added function editTextFile() that was originally built for improved programInstaller.sh
+#
+# v1.7.2
+# - Don't use pipes to separate variables... Changed to slashes, and this time I tested before uploading
+# - Small change to determinePM() to prevent pacman errors
+# - After testing, reverted the change to determinePM and moved it to universalInstaller()
+#
+# v1.7.1
+# - Fixed checkRequirements() so it accepts "program|installer" as an argument
+#
+# v1.7.0
+# - Added checkRequirements()
+#
+# v1.6.7
+# - Added a very tiny function that pauses the script (can't believe it took me this long to do something so simple...)
+# - Fixed a few issues found with shellcheck
+#
+# v1.6.6
+# - Changed the way updating and installing with pacman works
+#
+# v1.6.5
+# - Fixed determinePM() so 'which' is not so noisy
+# - Added some more debug statements
+# - Changed the way determinePrivilege() works due to a bug I discovered
+# - BIG (yet humble) CHANGE: debug() now redirects message to stderr instead of stdout if verbose is on
+#
+# v1.6.4
+# - Found a huge error in debug(), fixed now
+# - Fixed all errors from shellcheck (minus the ones that don't need fixing (SC2034) and ones that would break the functions)
+# - So many small changes I forgot to list
+#
+# v1.6.3
+# - checkPrivilege() now returns 0 if you are root and 777 if not
+# - Quick fix to universalInstaller() for apt-get, assumes yes for installation
+#
+# v1.6.2
+# - Added small 'function' that allows any script to have -v|--verbose as $1 to enable debugging
+# - Change to the way addCronJob() works, since it was non-functional before
+#
+# v1.6.1
+# - Finally got around to testing getUserAnswer, and it only half worked. Now works 97%.
+# - Other small changes I forgot to document and forgot hours later
+#
+# v1.6.0
+# - Big update - now, all scripts have a dynamically assigned logFile based on the script name!
+# - All scripts have been updated to reflect this, they can still be found in '$HOME/.logs'
+# - MAJOR update to announce(), now looks much cleaner!
+# - announce() now checks to make sure an argument is given as well
+#
+# v1.5.1
+# - Turned off ctrl_c() trap because it doesn't work properly, will fix later
+# - Added slackpkg to universalInstaller() and determinePM()
+#
+# v1.5.0
+# - Retroactively employed the better looking numbering scheme
+# - Added the addCronJob() function. Have yet to test it, however
+#
+# v1.4.0
+# - Added a re-run as sudo option to update.sh, then decided to make is common as part of checkPrivilege()
+# - ctrl_c now kill hung process first, then asks to exit. Safety measure
+#
+# v1.3.1
+# - ctrl_c() now send a SIGINT to kill process
+#
+# v1.3.0
+# - Added the ctrl_c() function, and corresponding trap for INT request
+#
+# v1.2.3
+# - First actual 'bugfix' - accidentally made it touch $debugPrefix instead of mkdir
+#
+# v1.2.2
+# - Added variable for a log directory prefix; small line, big impact
+# - debug() will also make sure directory exists before writing to it
+#
+# v1.2.1
+# - Added an initilizer to debug() so that time log was started is shown at beginning of log
+#
+# v1.2.0
+# - Added checkPrivilege(). Checks if user is root, and exits with code 777 if not
+#
+# v1.1.3
+# - Added a 'sleep 2' statement to the end of announce() since I keep doing it anyways
+#
+# v1.1.2
+# - Added 'dnf' to determinePM() and universalInstaller() after reading about it on DistroWatch. Similar changes made in programInstaller.sh
+#
+# v1.1.1
+# - debug() now touches logfile so script doesn't have to!
+# - Slightly changed the output of announce() to look more symmetrical
+#
+# v1.1.0
+# - Added announce() and debug() functions
+
+packageManager.sh
+# v0.2.0
+# - Updated displayHelp()
+# - Prep for -o|--option
+# - Runtime options can now be a single letter
+# - Added privilege check for arch-based distros
+#
+# v0.1.0
+# - Added displayHelp()
+#
+# v0.0.1
+# - No real scripting, but added a long list of things to-do
+# - Initial version
+
+pmCF.sh
+# v0.4.1
+# - Finished adding missing commands for emerge to other functions
+#
+# v0.4.0
+# - Finished queryPM()
+# - Added a completed removePM()
+#
+# v0.3.0
+# - Added queryPM()
+# - Started adding support for Portage/emerge for Gentoo based systems
+#
+# v0.2.0
+# - Changes to order of determining order of PM based on popularity online
+# - Added cleanPM(), upgradePM()
+# - Added a few more debug statements
+# - All functions now check if program is set before running (unneeded safety measure, but I hate complaints; not like it wastes cycles)
+#
+# v0.1.0
+# - Added updatePM()
+# - determinePM() no longer updates packages
+# - Added 'zypper' as a valid program for SUSE distributions, getting rid of YaST as well
+#
+# v0.0.1
+# - Updated to-do
+# - Initial version
+
+INSTALL.sh
+# v1.0.3
+# - installUpdate() now installs the newly created installPackages.sh as well
+# - Putting a lot of faith in shellcheck, fixed every error it gave me for this script (untested for now because a commit is necessary to test on RPi)
+#
+# v1.0.2
+# - Fixed multiple issues I found when trying to install yesterday
+# - Added a check to tell user not to run script as root
+#
+# v1.0.1
+# - 30 mins of debugging, and shellcheck found the error seconds. Amazing program.
+# - Script fully functional, just need to test on system now
+#
+# v1.0.0
+# - Finally ready for a release version! Theoretically, everything should work and install properly
+#
+# v0.2.1
+# - Changed to dynamic logging
+#
+# v0.2.0
+# - Added installGit() and installUpdate()
+# - Created a system to notify the user if the script will require their attention (so they know not to wander off)
+#
+# v0.1.0
+# - Added linkCF() to check is commonFunctions.sh is linked to /usr/share
+# - Also added two checks to make sure it is linked
+# - Changed minor version because part of script actually functions now
+# 
+# v0.0.1
+# - Initial commit - only displayHelp() and processArgs() working currently
+
+gitManager.sh
+#
+# v1.0.5
+# - Script now does more auto-configuration
+#
+# v1.0.4
+# - Got rid of extra statements for debug in case it breaks script like grive.sh. Seems to be working now.
+#
+# v1.0.3
+# - Switched to dynamic logging
+#
+# v1.0.2
+# - Changed where $logFile is declared
+# - Added end debug statement
+#
+# v1.0.1
+# - Script now uses $debugPrefix

@@ -3,6 +3,9 @@
 # packageManagerCF.sh - Common functions for package managers and similar functions
 #
 # Changes:
+# v1.2.3
+# - Updating changelog to new settings
+#
 # v1.2.2
 # - Changed updatePM() to only update pacman, no need to update twice with yaourt!
 # - Update: *Reaper voice* Didn't take
@@ -34,32 +37,6 @@
 # - determinePM() will now state if no package manager was found, then quit
 # - Added as close to an '#ifndef' statement as I could for sourcing this script
 #
-# v0.4.1
-# - Finished adding missing commands for emerge to other functions
-#
-# v0.4.0
-# - Finished queryPM()
-# - Added a completed removePM()
-#
-# v0.3.0
-# - Added queryPM()
-# - Started adding support for Portage/emerge for Gentoo based systems
-#
-# v0.2.0
-# - Changes to order of determining order of PM based on popularity online
-# - Added cleanPM(), upgradePM()
-# - Added a few more debug statements
-# - All functions now check if program is set before running (unneeded safety measure, but I hate complaints; not like it wastes cycles)
-#
-# v0.1.0
-# - Added updatePM()
-# - determinePM() no longer updates packages
-# - Added 'zypper' as a valid program for SUSE distributions, getting rid of YaST as well
-#
-# v0.0.1
-# - Updated to-do
-# - Initial version
-#
 # TODO:
 # - determinePM()
 #   ~ If $packageManager is present in .bashrc, return and continue; else:
@@ -73,7 +50,7 @@
 # - For all functions - add ability to 'run PM as $1' if there is an argument
 #   ~ e.g. "upgradePM" will upgrade the current PM, "upgradePM npm" will (attempt to) upgrade npm
 #
-# v1.2.2, 17 Mar. 2017 09:04 PST
+# v1.2.3, 07 Apr. 2017 11:05 PST
 
 ### Variables
 

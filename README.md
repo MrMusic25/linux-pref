@@ -139,6 +139,9 @@ Created for my other script, [m3uToUSB.sh] (https://github.com/mrmusic25/bash-pr
 #### checkout()
 Used in parallel processing; checkout a function for use, using a lock variable. See documentation for more info.
 
+#### importText()
+Finally decided to make this a common function, reads an input text file into a variable for script use
+
 #### Other jobs
 There is now a small function that runs each time commonFunctions.sh is sourced - `if $1 is -v|--verbose`, it will enable debugging and shift arguments for use.
 
@@ -192,6 +195,13 @@ NOTE: This is not a replacement .bashrc! I recommend adding the following line t
 `source ~/linux-pref/.bashrc`
 
 I would also recommend doing the same for .bash_aliases. Perform the same actions for root as well. (All of this is done by INSTALL.sh, of course)
+
+### oldChangelogs.txt
+This is where I keep old versions of the different scripts' changelogs, so the script itself isn't so cluttered.
+
+From now on, script will only keep the last three major revisions of a script, including the minor revisions to each. Everything else will be put here.
+
+e.g. If script is version 1.7.2, it will only keep revisions of 1.7.x, 1.6.x, and 1.5.x. All else stored here.
 
 ### programLists/
 I tried putting all my favorite programs in one document, but found it to be inefficient as I didn't want ALL the packages installaed on EVERY computer.
