@@ -4,6 +4,10 @@
 # Note: this script whould not be run by itself, as it only contains functions and variables
 #
 # Changes:
+# v1.11.1
+# - Impressive, broke ALL my scripts by not testing that function. Fixed it now
+# - Note: That means I fixed it so this properly imports now, haven't actually tested functionality YET
+#
 # v1.11.0
 # - Added importText() since I use it so often in many scripts. See documentation, pretty self-explanatory
 # - Moved most of the changelog to oldChangelogs.txt
@@ -75,7 +79,7 @@
 #   ~ Recommend when cF.sh should be updated
 #   ~ Log message if 'required' versions are mismatched
 #
-# v1.11.0, 07 Apr. 2017 10:58 PST
+# v1.11.1, 07 Apr. 2017 12:19 PST
 
 ### Variables
 
@@ -753,7 +757,7 @@ function importText() {
 		[[ "$line" == "" || "$line" == " " ]] && continue # Skip blank and empty lines, everytime
 		[[ "$line" == \#* && -z $comments ]] && continue # Conditionally skip comments
 		
-		${var}+=("$line")
+		${var[count]}="$line"
 		((count++))
 	done < "${fileName}"
 	debug "l5" "INFO: Read $count lines into variable $var!"
