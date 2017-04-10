@@ -4,6 +4,10 @@
 # Note: this script whould not be run by itself, as it only contains functions and variables
 #
 # Changes:
+# v1.11.2
+# - importText() now uses mapfile to import variable
+# - Tested importText(), fixed what wasn't working. Function is ready to go!
+#
 # v1.11.1
 # - Impressive, broke ALL my scripts by not testing that function. Fixed it now
 # - Note: That means I fixed it so this properly imports now, haven't actually tested functionality YET
@@ -79,7 +83,7 @@
 #   ~ Recommend when cF.sh should be updated
 #   ~ Log message if 'required' versions are mismatched
 #
-# v1.11.1, 07 Apr. 2017 12:19 PST
+# v1.11.2, 10 Apr. 2017 16:27 PST
 
 ### Variables
 
@@ -744,7 +748,7 @@ function importText() {
 		return 1
 	fi
 	local var="$2"
-	declare -a ${var}
+	#declare -a "${var}"
 	if [[ ! -z $3 ]]; then
 		debug "INFO: importText will import comments as well!"
 		comments=1
@@ -757,7 +761,7 @@ function importText() {
 		[[ "$line" == "" || "$line" == " " ]] && continue # Skip blank and empty lines, everytime
 		[[ "$line" == \#* && -z $comments ]] && continue # Conditionally skip comments
 		
-		${var[count]}="$line"
+		 mapfile -t -O "$count" "${var}" <<< "$line"
 		((count++))
 	done < "${fileName}"
 	debug "l5" "INFO: Read $count lines into variable $var!"
