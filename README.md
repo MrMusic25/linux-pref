@@ -8,7 +8,7 @@ i.e. OSX, BSD, UNIX, and Windows 10!
 - If a script requires root privileges, it will notify you and attempt to re-run itself as root.
 - All scripts will save their logs to `~/.logs/`, look there for additional debug info when diagnosing errors.
 - Please feel free to fork this for yourself, or leave a note here. I accept any input or suggestions/improvements.
-- If you are interested in writing scripts like these, you can begin learning the syntax from the [Bash Hackers Wiki] (http://wiki.bash-hackers.org/), or look at the files in `examples/`
+- If you are interested in writing scripts like these, you can begin learning the syntax from the [Bash Hackers Wiki](http://wiki.bash-hackers.org/), or look at the files in `examples/`
 - I wrote most of these on a Manjaro system, but also do a lot of it with Bash for Windows. Below are the versions my scripts have been tested on:
   ~ Bash for Windows: version 4.3.11(1)-release (x86_64-pc-linux-gnu)
   ~ Manjaro Linux: Bash version 4.4? (will verify)
@@ -28,7 +28,7 @@ INSTALLATION INSTRUCTIONS:
 
 If you receive any type of execution error, run the following command:
 
-`for script in $(ls | grep *.sh); do chmod +x $script; done`
+`for script in *.sh; do chmod +x "$script"; done`
 
 The script has a lot of interactive parts and will ask before changing most settings.
 
