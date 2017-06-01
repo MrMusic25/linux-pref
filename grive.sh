@@ -36,6 +36,13 @@
 # - Overhauled other parts of script to be 'self-friendly' (uses my own functions)
 # - Also updated to use $updatePrefix
 #
+# TODO:
+# - Add a "Windows mode"
+#   - Remove the .grive folder and store it in $HOME
+#   - Restore it before syncing
+#   - Warn if folder cannot be found in either place
+#   - Prevents Windows version from syncing folder with credentials
+#
 # v1.2.1, 16 Feb. 2017, 22:07 PST
 
 ### Variables
