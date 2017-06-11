@@ -11,6 +11,10 @@
 # Relies on the .git folder in the directory to be able to pull, therefore must be setup beforehand!
 #
 # Changes:
+# v2.0.13
+# - Took me long enough, added sanity check for added folders
+# - Checks for absolute path instead of relative, now
+#
 # v2.0.12
 # - Removed some changelog for new rules
 #
@@ -73,7 +77,7 @@
 #   ~ Also output git diff to a tmp file (shortName_repo_date.txt)
 # - https://git-scm.com/book/en/v2/Git-Basics-Recording-Changes-to-the-Repository
 #
-# v2.0.12, 07 Apr. 2016 11:08 PST
+# v2.0.13, 10 June, 2017 17:38 PST
 
 ### Variables
 
@@ -192,8 +196,15 @@ function addRepo() {
 		exit 1
 	fi
 	
+	# Make sure path is absolute, not relative
+	if [[ "$1" == /* ]]; then
+		newFolder="$(pwd)/$1"
+	else
+		newFolder="$1"
+	fi
+	
 	# Valid directory at this point
-	echo "$1" >>$directoryList
+	echo "$newFolder" >>$directoryList
 }
 
 function cloneRepo() {
