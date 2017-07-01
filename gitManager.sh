@@ -11,6 +11,11 @@
 # Relies on the .git folder in the directory to be able to pull, therefore must be setup beforehand!
 #
 # Changes:
+# v2.1.1
+# - Added pullRepo() to make life easier with new capabilities
+# - Updated various functions/calls to use it
+# - Fixed a bug that was probably preventing the whole script from working for some time
+#
 # v2.1.0
 # - Added folder scanning capabilites
 # - Updated related functions for support
@@ -165,15 +170,13 @@ function processArgs() {
 			-f|--folder)
 			#debug "l2" "INFO: Attempting to update parent directory of Git repos!"
 			#folderMode=1
+			if [[ -z $2 ]]; then
+				debug "l2" "FATAL: No folder given with $key argument! Please fix and re-run"
+				exit 1
+			fi
 			debug "l2" "INFO: Updating parent directory $2!"
-			OPWD="$(pwd)"
-			cd $2
-			for subdir in $(find . -maxdepth 1 -type d)
-			do
-				pullRepo "$(pwd)/$subdir"
-			done
-			cd "$OPWD"
-			exit 0
+			processFolder "$2"
+			exit $?
 			;;
 			-d|--daemon)
 			debug "INFO: Daemon mode enabled"
@@ -339,15 +342,18 @@ function listRepos() {
 
 function pullRepo() {
 	debug "INFO: Attempting to update repo $1 on current branch"
+	oldPWD="$(pwd)"
 	cd "$1"
 	
 	# First, check if repo is ready to pul; warn if there are errors
 	if [[ ! -z "$(git status | grep ahead)" ]]; then
 		debug "l2" "ERROR: Repo at $1 is not ready, there are uncommited changes!"
+		cd "$oldPWD"
 		return
 	fi
 	if [[ ! -z "$(git status | grep "not staged")" ]]; then
 		debug "l2" "FATAL: There are uncommitted changes for repo $1 ! Please fix, leaving for now..."
+		cd "$oldPWD"
 		return
 	fi
 	
@@ -361,6 +367,7 @@ function pullRepo() {
 	fi
 	cat .gitTmp >>$logFile
 	rm .gitTmp
+	cd "$oldPWD"
 	
 	# Warn user of any errors
 	if [[ $value -ne 0 ]]; then
@@ -368,6 +375,34 @@ function pullRepo() {
 	else
 		debug "l5" "INFO: Repo $1 was updated successfully for current branch!"
 	fi
+}
+
+# $1 = folder; return value 1 if error, 0 if successful (input dependent, not result dependent)
+function processFolder() {
+	if [[ -z $1 ]]; then
+		debug "l2" "ERROR: Incorrect call for processFolder()!"
+		return 1
+	elif [[ ! -d "$1" ]]; then
+		debug "l2" "ERROR: $1 is not a directory, incorrect usage of folder argument!"
+		return 1
+	fi
+	
+	# Folder exists and is a folder, continue working with it
+	debug "INFO: Attempting to pull parent Git folder $1"
+	OOPWD="$(pwd)"
+	cd "$1"
+	for dir in **
+	do
+		if [[ -d "$dir" && "$dir" != ".*" ]]; then # As long as directory isn't hidden
+			pullRepo "$(pwd)"/"$dir"
+		else
+			if [[ "$dir" == ".*" && -d "$dir" ]]; then
+				debug "WARN: Not attempting to pull hidden directory $dir"
+			fi
+		fi
+	done
+	cd "$OOPWD"
+	return 0
 }
 
 ### Main Script
@@ -400,13 +435,8 @@ OPWD="$(pwd)"
 while read -r directory;
 do
 	if [[ "$(echo "$directory" | cut -d' ' -f1)" == "folder" ]]; then
-		directory="$(echo "$directory" | rev | cut -d' ' -f1 --complement | rev)"
-		debug "l2" "INFO: Updating parent directory $directory!"
-		cd $directory
-		for subdir in $(find . -maxdepth 1 -type d)
-		do
-			pullRepo "$(pwd)/$subdir"
-		done
+		processFolder "$(echo "$directory" | rev | cut -d' ' -f1 --complement | rev)"
+		#debug "l2" "INFO: Updating parent directory $directory!"
 	else
 		pullRepo "$directory"
 	fi
