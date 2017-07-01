@@ -11,6 +11,11 @@
 # Relies on the .git folder in the directory to be able to pull, therefore must be setup beforehand!
 #
 # Changes:
+# v2.1.0
+# - Added folder scanning capabilites
+# - Updated related functions for support
+# - Fixed bug not allowing the sanity check from previous update to work
+#
 # v2.0.13
 # - Took me long enough, added sanity check for added folders
 # - Checks for absolute path instead of relative, now
@@ -77,7 +82,7 @@
 #   ~ Also output git diff to a tmp file (shortName_repo_date.txt)
 # - https://git-scm.com/book/en/v2/Git-Basics-Recording-Changes-to-the-Repository
 #
-# v2.0.13, 10 June, 2017 17:38 PST
+# v2.1.0, 30 June, 2017 17:38 PST
 
 ### Variables
 
@@ -86,6 +91,7 @@ daemonMode=0
 updateTime=15 # Time between updates, in minutes. Used when setting up a cronjob
 longName="gitManager"
 shortName="gm"
+folderMode=0 # Whether to scan 
 
 ### Functions
 
@@ -113,15 +119,17 @@ Run script once to complete setup!
 Usage: ./gitManager.sh [options] [git_repository]
 
 Options:
--h | --help                       : Display this help message and exit
--v | --verbose                    : Enable verbose debug messages. (Note: MUST be first argument!)
--c | --clone <git_URL> [folder]   : Clone a remote repository, and add it to the update list, then exit
--a | --add <git_folder>           : Add an existing git folder to the update list and exit
--d | --daemon                     : Run script in daemon mode, no interactive elements
--l | --list                       : Display locations and info of installed repositories and exit
--i | --install                    : Setup or re-setup the git parameters and exit
+-h | --help                         : Display this help message and exit
+-v | --verbose                      : Enable verbose debug messages. (Note: MUST be first argument!)
+-c | --clone <git_URL> [folder]     : Clone a remote repository, and add it to the update list, then exit
+-a | --add <git_folder> [parent     : Add an existing git folder to the update list and exit
+-d | --daemon                       : Run script in daemon mode, no interactive elements
+-l | --list                         : Display locations and info of installed repositories and exit
+-i | --install                      : Setup or re-setup the git parameters and exit
+-f | --folder [folder]              : Scans each folder of given parent folder, and updates each found repository. Exits when done.
 
 Information from "git pull" command is not shown by default; run the script with the verbose flag to see the data, or check the log!
+Add the word "parent" to the end of an -a|--add to indicate it is a parent folder of Git repositories
 
 endHelp
 echo "$helpVar"
@@ -154,6 +162,19 @@ function processArgs() {
 			cloneRepo "$gitURL" "$gitFolder"
 			exit 0 # Shouldn't get here, but just in case
 			;;
+			-f|--folder)
+			#debug "l2" "INFO: Attempting to update parent directory of Git repos!"
+			#folderMode=1
+			debug "l2" "INFO: Updating parent directory $2!"
+			OPWD="$(pwd)"
+			cd $2
+			for subdir in $(find . -maxdepth 1 -type d)
+			do
+				pullRepo "$(pwd)/$subdir"
+			done
+			cd "$OPWD"
+			exit 0
+			;;
 			-d|--daemon)
 			debug "INFO: Daemon mode enabled"
 			daemonMode=1
@@ -169,8 +190,13 @@ function processArgs() {
 			exit 0
 			;;
 			-a|--add)
-			debug "INFO: Attempting to add repo from $2"
-			addRepo "$2"
+			if [[ "$2" == "fo*" ]]; then
+				debug "l2" "INFO: Adding parent folder $3 without checking!"
+				addRepo "$3" "folder"
+			else
+				debug "INFO: Attempting to add repo from $2"
+				addRepo "$2"
+			fi
 			exit 0
 			;;
 			*)
@@ -190,19 +216,27 @@ function processArgs() {
 }
 
 function addRepo() {
-	# Check if git directory is valid
-	if [[ ! -d "$1"/.git ]]; then
-		debug "l2" "ERROR: $folder is not a valid git directory! Unable to add to list! Exiting..."
-		exit 1
+	if [[ "$2" == "folder" ]]; then
+		debug "l2" "WARN: Parent directory $1 is being added, subdirectories will NOT be checked!"
+	else
+		# Check if git directory is valid
+		if [[ ! -d "$1"/.git ]]; then
+			debug "l2" "ERROR: $folder is not a valid git directory! Unable to add to list! Exiting..."
+			exit 1
+		fi
 	fi
 	
 	# Make sure path is absolute, not relative
-	if [[ "$1" == /* ]]; then
+	if [[ "$1" != /* ]]; then
 		newFolder="$(pwd)/$1"
 	else
 		newFolder="$1"
 	fi
 	
+	# Indicate if folder is a parent or not
+	if [[ "$2" == "folder" ]]; then
+		newFolder="folder $newFolder"
+	fi
 	# Valid directory at this point
 	echo "$newFolder" >>$directoryList
 }
@@ -365,7 +399,17 @@ fi
 OPWD="$(pwd)"
 while read -r directory;
 do
-	pullRepo "$directory"
+	if [[ "$(echo "$directory" | cut -d' ' -f1)" == "folder" ]]; then
+		directory="$(echo "$directory" | rev | cut -d' ' -f1 --complement | rev)"
+		debug "l2" "INFO: Updating parent directory $directory!"
+		cd $directory
+		for subdir in $(find . -maxdepth 1 -type d)
+		do
+			pullRepo "$(pwd)/$subdir"
+		done
+	else
+		pullRepo "$directory"
+	fi
 done <"$directoryList"
 cd "$OPWD"
 
