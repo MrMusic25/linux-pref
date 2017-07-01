@@ -87,7 +87,7 @@
 #   ~ Also output git diff to a tmp file (shortName_repo_date.txt)
 # - https://git-scm.com/book/en/v2/Git-Basics-Recording-Changes-to-the-Repository
 #
-# v2.1.0, 30 June, 2017 17:38 PST
+# v2.1.1, 01 July, 2017 16:34 PST
 
 ### Variables
 
