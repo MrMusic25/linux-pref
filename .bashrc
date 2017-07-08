@@ -165,13 +165,15 @@ if [[ -z $logDir ]]; then
 fi
 
 function log() {
+
 read -d '' logUsage << endHelp
 Usage: log <logFile> [numLines] OR log <command>
 Type 'log command' to see supported commands.
 numLines is the number of lines you would like to be read (via tail).
 endHelp
+
 	if [[ -z $1 ]]; then
-		printf "ERROR: No arguments given with log()!\n%s\n" "$logUsage"
+		printf "ERROR: No arguments given with log()!\n\n%s\n" "$logUsage"
 		return 1
 	fi
 
@@ -223,4 +225,24 @@ endHelp
 	tail -n "$nlines" "$logRead"
 	cd "$OPWD"
 	return 0
+}
+
+# Tired of starting a graphical program from the terminal but hate the stdout? Daemonize it!
+# Runs 'eval' on all output, and runs it as a daemon
+# Fun fact: I came up with this fun name while watching Supernatural, lol
+function daemonize() {
+
+read -d '' daemonizeUsage << endHelp
+Usage: daemonize <program> [arguments]
+All arguments will be run as given.
+Use this function to run any function as a daemon.
+endHelp
+
+	if [[ -z $1 ]]; then
+		printf "ERROR: No arguments given with daemonize()!\n\n%s\n" "$daemonizeUsage"
+		return 1
+	fi
+	
+	# Only real requirement. Run everything else in an eval statement
+	eval "$@" &>/dev/null 2>&1 &disown;
 }
