@@ -3,6 +3,12 @@
 # packageManagerCF.sh - Common functions for package managers and similar functions
 #
 # Changes:
+# v1.3.0
+# - Added distUpgradePM() for full distributions upgrades
+# - Fixed apt-get in upgradePM() accordingly
+# - Updated all functions to use yaourt exclusively from now on (personal decision)
+# - Removed warning for cleaning Arch systems, turns out I didn't know what it did
+#
 # v1.2.3
 # - Updating changelog to new settings
 #
@@ -50,7 +56,7 @@
 # - For all functions - add ability to 'run PM as $1' if there is an argument
 #   ~ e.g. "upgradePM" will upgrade the current PM, "upgradePM npm" will (attempt to) upgrade npm
 #
-# v1.2.3, 07 Apr. 2017 11:05 PST
+# v1.3.0, 21 July 2017 16:31 PST
 
 ### Variables
 
@@ -148,8 +154,7 @@ function updatePM() {
 		apt-get $pmOptions update
 		;;
 		pacman)
-		sudo pacman $pmOptions -Syy
-		#yaourt $pmOptions -Syy
+		sudo yaourt $pmOptions -Syy
 		;;
 		dnf)
 		dnf $pmOptions check-update
@@ -221,13 +226,14 @@ function universalInstaller() {
 			emerge $pmOptions "$var"
 			;;
 			pacman)
-			sudo pacman $pmOptions -S "$var"
-			
-			# If pacman can't install it, it can likely be found in AUR/yaourt
-			if [[ $? -eq 1 ]]; then
-				debug "l2" "$var not found with pacman, attempting install with yaourt!"
-				yaourt $pmOptions -S "$var"
-			fi 
+			yaourt $pmOptions -S "$var"
+			if [[ "$?" -ne 0 ]]; then
+				debug "l2" "WARN: Package $var not found in Arch repos! Checking AUR..."
+				yaourt $pmOptions -S --aur "$var"
+				if [[ "$?" -ne 0 ]]; then
+					debug "l2" "ERROR: $var was not found or could not be installed!"
+				fi
+			fi
 			;;
 			*)
 			debug "Unsupported package manager detected! Please contact script maintainer to get yours added to the list!"
@@ -259,8 +265,8 @@ function upgradePM() {
 	debug "Preparing to upgrade $program"
 	case $program in
 		apt)
-		announce "NOTE: script will be running a dist-upgrade!"
-		apt-get $pmOptions dist-upgrade
+		#announce "NOTE: script will be running a dist-upgrade!"
+		apt-get $pmOptions upgrade
 		;;
 		dnf)
 		dnf $pmOptions upgrade
@@ -279,7 +285,7 @@ function upgradePM() {
 		rpm $pmOptions -F
 		;;
 		pacman)
-		sudo pacman $pmOptions -Syu
+		#sudo pacman $pmOptions -Syu
 		yaourt $pmOptions -Syu --aur # Remember to refresh the AUR as well
 		;;
 		emerge)
@@ -332,8 +338,7 @@ function cleanPM() {
 		# Nothing to be done
 		;;
 		pacman)
-		#pacman -cq
-		announce "For your safety, please clean pacman yourself." "Use the command: pacman -Sc"
+		yaourt -Sc
 		;;
 		zypper)
 		announce "Zypper has no clean function"
@@ -376,11 +381,11 @@ function queryPM() {
 			apt-cache $pmOptions search "$var"
 			;;
 			pacman)
-			pacman $pmOptions -Ss "$var" # No sudo required for this one, same for yaourt
-			if [[ $? -ne 0 ]]; then
-				debug "l3" "Package $var not found in pacman, searching AUR via yaourt instead."
-				yaourt $pmOptions -Ss "$var"
-			fi
+			#pacman $pmOptions -Ss "$var" # No sudo required for this one, same for yaourt
+			#if [[ $? -ne 0 ]]; then
+			#	debug "l3" "Package $var not found in pacman, searching AUR via yaourt instead."
+			yaourt $pmOptions -Ss --aur "$var" # Program automatically displays Arch-repo AND AUR programs
+			#fi
 			;;
 			yum)
 			yum $pmOptions search "$var" # Change to 'yum search all' if the results aren't good enough
@@ -435,10 +440,10 @@ function removePM() {
 			apt-get $pmOptions remove "$var"
 			;;
 			pacman)
-			sudo pacman -R "$var"
+			yaourt $pmOptions -R "$var"
 			if [[ $? -ne 0 ]]; then
-				debug "l3" "Couldn't find package $var with pacman, trying yaourt"
-				sudo yaourt $pmOptions -R "$var"
+				debug "l3" "Couldn't find package $var with yaourt, trying pacman"
+				sudo pacman $pmOptions -R "$var"
 			fi
 			;;
 			yum)
@@ -491,11 +496,11 @@ function pkgInfo() {
 		debug "l3" "Displaying package info of: $var"
 		case "$program" in
 			pacman)
-			pacman $pmOptions -Qi "$var"
-			if [[ $? -ne 0 ]]; then
-				debug "l3" "$var could not be found in pacman, trying yaourt!"
-				yaourt $pmOptions -Qi "$var"
-			fi
+			#pacman $pmOptions -Qi "$var"
+			#if [[ $? -ne 0 ]]; then
+			#	debug "l3" "$var could not be found in pacman, trying yaourt!"
+			yaourt $pmOptions -Qi --aur "$var"
+			#fi
 			;;
 			apt)
 			apt-cache show "$var"
@@ -603,6 +608,62 @@ function checkRequirements() {
 	
 	# If everything is installed, it will reach this point
 	debug "All requirements met, continuing with script."
+}
+
+## distUpgradePM()
+#
+# Function: Upgrade the distribution according to package manager's default instructions (if the feature exists)
+#
+# Call: distUpgradePM
+#
+# Input: None
+#
+# Output: stdout
+#
+# Other: A warning will be given before proceeding, as this can break systems and dependencies
+function distUpgradePM() {
+	# Check to make sure $program is set
+	if [[ -z $program || "$program" == "NULL" ]]; then
+		debug "Attempted to upgrade package manager without setting program! Fixing..."
+		announce "You are attempting to upgradePM() without setting \$program!" "Script will fix this for you, but please fix your script."
+		determinePM
+	fi
+	
+	debug "INFO: Warning user about running a distribution upgrade"
+	announce "WARNING! User indicated to run a distribution upgrade!" "This can be dangerous as it can break system dependencies. Be sure before proceeding."
+	pause "Press CTRL+C twice to exit script, or [Enter] to continue"
+	case $program in
+		apt)
+		apt-get $pmOptions dist-upgrade
+		;;
+		dnf)
+		dnf $pmOptions upgrade
+		;;
+		yum)
+		yum $pmOptions upgrade
+		;;
+		slackpkg)
+		slackpkg $pmOptions install-new # Required line
+		slackpkg $pmOptions upgrade-all
+		;;
+		zypper)
+		zypper $pmOptions update
+		;;
+		rpm)
+		rpm $pmOptions -F
+		;;
+		pacman)
+		debug "l2" "INFO: Beginning upgrade with pacman, as it is recommended"
+		sudo pacman $pmOptions -Syu
+		yaourt $pmOptions -Syu --aur # Remember to refresh the AUR as well
+		;;
+		emerge)
+		emerge $pmOptions --update --deep world # Gentoo is strange
+		;;
+		*)
+		debug "Unsupported package manager detected! Please contact script maintainer to get yours added to the list!"
+		;;
+	esac
 }
 
 #EOF
