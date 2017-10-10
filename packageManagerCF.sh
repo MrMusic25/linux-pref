@@ -3,6 +3,9 @@
 # packageManagerCF.sh - Common functions for package managers and similar functions
 #
 # Changes:
+# v1.3.1
+# - Turns out yaourt is not recommended. Changed all functions to use pacaur instead
+#
 # v1.3.0
 # - Added distUpgradePM() for full distributions upgrades
 # - Fixed apt-get in upgradePM() accordingly
@@ -56,7 +59,7 @@
 # - For all functions - add ability to 'run PM as $1' if there is an argument
 #   ~ e.g. "upgradePM" will upgrade the current PM, "upgradePM npm" will (attempt to) upgrade npm
 #
-# v1.3.0, 21 July 2017 16:31 PST
+# v1.3.1, 09 October 2017 21:34 PST
 
 ### Variables
 
@@ -108,7 +111,7 @@ function determinePM() {
 		#sudo pacman -Syy &>/dev/null # Refreshes the repos, always read the man pages!
 		
 		# Conditional statement to install yaourt
-		[[ -z $(which yaourt 2>/dev/null) ]] && announce "pacman detected! yaourt will be installed as well!" "This insures all packages can be found and installed" && sudo pacman -S base-devel yaourt
+		[[ -z $(which yaourt 2>/dev/null) ]] && announce "pacman detected! yaourt will be installed as well!" "This insures all packages can be found and installed" && sudo pacman -S sudo git cower expac pacaur
 	elif [[ ! -z $(which slackpkg 2>/dev/null) ]]; then
 		export program="slackpkg"
 		#slackpkg update
@@ -154,7 +157,7 @@ function updatePM() {
 		apt-get $pmOptions update
 		;;
 		pacman)
-		sudo yaourt $pmOptions -Syy
+		pacaur $pmOptions -Syy
 		;;
 		dnf)
 		dnf $pmOptions check-update
@@ -226,14 +229,14 @@ function universalInstaller() {
 			emerge $pmOptions "$var"
 			;;
 			pacman)
-			yaourt $pmOptions -S "$var"
-			if [[ "$?" -ne 0 ]]; then
-				debug "l2" "WARN: Package $var not found in Arch repos! Checking AUR..."
-				yaourt $pmOptions -S --aur "$var"
-				if [[ "$?" -ne 0 ]]; then
-					debug "l2" "ERROR: $var was not found or could not be installed!"
-				fi
-			fi
+			pacaur $pmOptions -S "$var"
+			#if [[ "$?" -ne 0 ]]; then
+			#	debug "l2" "WARN: Package $var not found in Arch repos! Checking AUR..."
+			#	yaourt $pmOptions -S --aur "$var"
+			#	if [[ "$?" -ne 0 ]]; then
+			#		debug "l2" "ERROR: $var was not found or could not be installed!"
+			#	fi
+			#fi
 			;;
 			*)
 			debug "Unsupported package manager detected! Please contact script maintainer to get yours added to the list!"
@@ -286,7 +289,7 @@ function upgradePM() {
 		;;
 		pacman)
 		#sudo pacman $pmOptions -Syu
-		yaourt $pmOptions -Syu --aur # Remember to refresh the AUR as well
+		pacaur $pmOptions -Syu # Remember to refresh the AUR as well
 		;;
 		emerge)
 		emerge $pmOptions --update --deep world # Gentoo is strange
@@ -338,7 +341,7 @@ function cleanPM() {
 		# Nothing to be done
 		;;
 		pacman)
-		yaourt -Sc
+		pacaur -Sc
 		;;
 		zypper)
 		announce "Zypper has no clean function"
@@ -384,7 +387,7 @@ function queryPM() {
 			#pacman $pmOptions -Ss "$var" # No sudo required for this one, same for yaourt
 			#if [[ $? -ne 0 ]]; then
 			#	debug "l3" "Package $var not found in pacman, searching AUR via yaourt instead."
-			yaourt $pmOptions -Ss --aur "$var" # Program automatically displays Arch-repo AND AUR programs
+			pacaur $pmOptions -Ss "$var" # Program automatically displays Arch-repo AND AUR programs
 			#fi
 			;;
 			yum)
@@ -440,11 +443,11 @@ function removePM() {
 			apt-get $pmOptions remove "$var"
 			;;
 			pacman)
-			yaourt $pmOptions -R "$var"
-			if [[ $? -ne 0 ]]; then
-				debug "l3" "Couldn't find package $var with yaourt, trying pacman"
-				sudo pacman $pmOptions -R "$var"
-			fi
+			pacaur $pmOptions -R "$var"
+			#if [[ $? -ne 0 ]]; then
+			#	debug "l3" "Couldn't find package $var with yaourt, trying pacman"
+			#	sudo pacman $pmOptions -R "$var"
+			#fi
 			;;
 			yum)
 			yum $pmOptions remove "$var"
@@ -499,7 +502,7 @@ function pkgInfo() {
 			#pacman $pmOptions -Qi "$var"
 			#if [[ $? -ne 0 ]]; then
 			#	debug "l3" "$var could not be found in pacman, trying yaourt!"
-			yaourt $pmOptions -Qi --aur "$var"
+			pacaur $pmOptions -Qi "$var"
 			#fi
 			;;
 			apt)
@@ -655,7 +658,7 @@ function distUpgradePM() {
 		pacman)
 		debug "l2" "INFO: Beginning upgrade with pacman, as it is recommended"
 		sudo pacman $pmOptions -Syu
-		yaourt $pmOptions -Syu --aur # Remember to refresh the AUR as well
+		pacaur $pmOptions -Syu # Remember to refresh the AUR as well
 		;;
 		emerge)
 		emerge $pmOptions --update --deep world # Gentoo is strange
