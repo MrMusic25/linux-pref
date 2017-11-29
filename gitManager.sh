@@ -11,6 +11,10 @@
 # Relies on the .git folder in the directory to be able to pull, therefore must be setup beforehand!
 #
 # Changes:
+# v2.1.2
+# - Fixed cloneRepo()
+# - Various other small tweaks
+#
 # v2.1.1
 # - Added pullRepo() to make life easier with new capabilities
 # - Updated various functions/calls to use it
@@ -87,7 +91,7 @@
 #   ~ Also output git diff to a tmp file (shortName_repo_date.txt)
 # - https://git-scm.com/book/en/v2/Git-Basics-Recording-Changes-to-the-Repository
 #
-# v2.1.1, 01 July, 2017 16:34 PST
+# v2.1.2, 28 Nov., 2017 22:56 PST
 
 ### Variables
 
@@ -241,7 +245,7 @@ function addRepo() {
 		newFolder="folder $newFolder"
 	fi
 	# Valid directory at this point
-	echo "$newFolder" >>$directoryList
+	echo "$newFolder" >>"$directoryList"
 }
 
 function cloneRepo() {
@@ -325,7 +329,7 @@ function listRepos() {
 	while read -r directory;
 	do
 		printf "\nRepo location: %s\nGit status output:\n\n" "$directory"
-		cd $directory
+		cd "$directory"
 		git status
 		headVar="$(head -n5 READ* 2>/dev/null)" # Sends errors to null so string is empty if README* is missing
 		if [[ -z $headVar ]]; then
@@ -434,8 +438,8 @@ fi
 OPWD="$(pwd)"
 while read -r directory;
 do
-	if [[ "$(echo "$directory" | cut -d' ' -f1)" == "folder" ]]; then
-		processFolder "$(echo "$directory" | rev | cut -d' ' -f1 --complement | rev)"
+	if [[ "$(echo "$directory" | cut -d' ' -f1)" == [Ff][Oo][Ll][Dd][Ee][Rr]* ]]; then
+		processFolder "$(echo "$directory" | rev | cut -d' ' -f1 --complement | rev)" # Don't delete the revs, keeps spaces in folder names
 		#debug "l2" "INFO: Updating parent directory $directory!"
 	else
 		pullRepo "$directory"
