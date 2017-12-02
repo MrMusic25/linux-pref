@@ -6,6 +6,9 @@
 # There are too many things to display here, so please look at displayHelp() to see the options and install options
 #
 # Changes:
+# v1.3.8
+# - raspi-config requires sudo, updated accordingly
+#
 # v1.3.7
 # - Removed some changelog according to new rules
 #
@@ -71,7 +74,7 @@
 #   ~ Installer, as well as the scripts them selves, can use these for logging and tmp output
 #   ~ In addition, using these the log names will be more consistent
 #
-# v1.3.7, 07 Apr. 2017 11:06 PST
+# v1.3.8, 01 Dec. 2017 17:05 PST
 
 ### Variables
 
@@ -608,7 +611,7 @@ if [[ -e "/usr/bin/raspi-config" ]]; then
 		case $? in
 			0)
 			debug "l1" "User chose to run raspi-config"
-			raspi-config
+			sudo raspi-config
 			;;
 			1)
 			debug "l1" "User chose not to run raspi-config!"
