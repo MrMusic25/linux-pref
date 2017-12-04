@@ -6,6 +6,9 @@
 
 ### Variables
 
+longName="setupCommands"
+shortName="sc"
+
 ### Functions
 
 if [[ -f commonFunctions.sh ]]; then

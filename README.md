@@ -142,6 +142,9 @@ Used in parallel processing; checkout a function for use, using a lock variable.
 #### importText()
 Finally decided to make this a common function, reads an input text file into a variable for script use
 
+#### dynamicLinker()
+Dynamically links the longName, shortName, and filename of a script to /usr/bin, or any other given path. Helps with ease of use.
+
 #### Other jobs
 There is now a small function that runs each time commonFunctions.sh is sourced - `if $1 is -v|--verbose`, it will enable debugging and shift arguments for use.
 

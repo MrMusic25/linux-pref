@@ -4,6 +4,10 @@
 # Note: this script whould not be run by itself, as it only contains functions and variables
 #
 # Changes:
+# v1.12.1
+# - Fixed and tested dynamicLinker(), working as intended
+# - Polished with shellcheck
+#
 # v1.12.0
 # - Finished writing dynamicLinker()
 # - Untested, but should be working. Testing and subsequent bug fixes to come.
@@ -87,7 +91,7 @@
 #   ~ Recommend when cF.sh should be updated
 #   ~ Log message if 'required' versions are mismatched
 #
-# v1.12.0, 03 Dec. 2017, 17:12 PST
+# v1.12.1, 03 Dec. 2017, 17:44 PST
 
 ### Variables
 
@@ -783,7 +787,7 @@ function importText() {
 #
 # Output: Stderr if problems occur, otherwise nothing besides log
 #
-# Other: This can be used for any file, as well
+# Other: Works on all files. Also, NOTE: all links will be symbolic!
 function dynamicLinker() {
 	if [[ -z $1 ]]; then
 		debug "l2" "ERROR: No arguments given with dynamicLinker! Please read documentation and try again!"
@@ -794,7 +798,7 @@ function dynamicLinker() {
 	if [[ "$1" == \/* ]]; then
 		debug "l1" "INFO: Argument given to dynamicLinker ($1) is absolute, moving on..."
 		fullScriptPath="$1"
-	else if [[ -z $(ls *"$1"* 2>/dev/null) ]]; then
+	elif [[ -z $(ls *"$1"* 2>/dev/null) ]]; then
 		debug "l1" "WARN: Script $1 is not in current folder, attempting to determine absolute path..."
 		# The following is brought to you by none other than StackOverflow!
 		# https://stackoverflow.com/questions/59895/getting-the-source-directory-of-a-bash-script-from-within
@@ -823,7 +827,7 @@ function dynamicLinker() {
 		fi
 		debug "l1" "INFO: Given argument $2 is in user's path! Moving on..."
 		linkLocation="$2"
-	else if [[ ! -z $(echo "$PATH" | grep /usr/bin) ]]; then
+	elif [[ ! -z $(echo "$PATH" | grep /usr/bin) ]]; then
 		debug "l1" "INFO: No PATH given, assuming /usr/bin. Continuing..."
 		linkLocation="/usr/bin"
 	else
@@ -839,10 +843,10 @@ function dynamicLinker() {
 	
 	# Finally, figure out the how many links to do
 	numLinks=1 # Full script name
-	if [[ ! -z $(cat "$fullScriptLocation" | grep longName=) ]]; then
+	if [[ ! -z $(cat "$fullScriptPath" | grep longName=) ]]; then
 		((numLinks++))
 	fi
-	if [[ ! -z $(cat "$fullScriptLocation" | grep shortName=) ]]; then
+	if [[ ! -z $(cat "$fullScriptPath" | grep shortName=) ]]; then
 		((numLinks++))
 	fi
 	
@@ -851,35 +855,36 @@ function dynamicLinker() {
 	while [[ $numLinks -gt 0 ]]; do
 		case $numLinks in
 		1)
-			linkName="$linkLocation"
+			linkName="$linkLocation"/"$(echo "$fullScriptPath" | rev | cut -d'/' -f1 | rev)"
 			;;
 		2)
 			#linkName="$(echo "$fullScriptLocation" | rev | cut -d'/' -f1 --complement | rev)"
-			linkName="$linkLocation"/"$(cat "$fullScriptLocation" | grep longName= | cut -d'=' -f2 | sed -e 's/\"//g')"
+			linkName="$linkLocation"/"$(cat "$fullScriptPath" | grep longName= | cut -d'=' -f2 | sed -e 's/\"//g')"
 			;;
 		3)
 			#linkName="$(echo "$fullScriptLocation" | rev | cut -d'/' -f1 --complement | rev)"
-			linkName="$linkLocation"/"$(cat "$fullScriptLocation" | grep shortName= | cut -d'=' -f2 | sed -e 's/\"//g')"
+			linkName="$linkLocation"/"$(cat "$fullScriptPath" | grep shortName= | cut -d'=' -f2 | sed -e 's/\"//g')"
 			;;
 		*)
 			debug "l2" "ERROR: Unexpected case number in dynamicLinker()! Returning, please link manually..."
 			return
 			;;
 		esac
-		if [[ ! -e "$linkName" ]]; then
+		if [[ -e "$linkName" ]]; then
 			debug "l2" "ERROR: Link/file at $linkName already exists, skipping and continuing!"
 		else
-			debug "l1" "INFO: Attempting to link $fullScriptLocation to $linkName"
-			sudo ln -s "$fullScriptLocation" "$linkName"
+			debug "l1" "INFO: Attempting to link $fullScriptPath to $linkName"
+			sudo ln -s "$fullScriptPath" "$linkName"
 			val="$?"
 			if [[ $val -ne 0 ]]; then
-				debug "l2" "ERROR: And error occurred while attempting a link $fullScriptLocation to $linkName! Error code: $val"
+				debug "l2" "ERROR: And error occurred while attempting a link $fullScriptPath to $linkName! Error code: $val"
 			fi
 		fi
 		((numLinks--))
 	done
 	# Done with function
 }
+
 # This following, which SHOULD be run in every script, will enable debugging if -v|--verbose is enabled.
 # The 'shift' command lets the scripts use the rest of the arguments
 if [[ "$1" == "-v" || "$1" == "--verbose" ]]; then
