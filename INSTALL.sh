@@ -6,6 +6,9 @@
 # There are too many things to display here, so please look at displayHelp() to see the options and install options
 #
 # Changes:
+# v2.0.0
+# - Started work on re-written, more efficient install script
+#
 # v1.3.8
 # - raspi-config requires sudo, updated accordingly
 #
@@ -70,7 +73,7 @@
 #   ~ https://en.wikibooks.org/wiki/Bash_Shell_Scripting/Whiptail
 #   ~ Got the idea from looking ad raspi-config code
 # - Dynamic linking
-#   ~ Each script gets two vars - shortName="pm" and longName="packageManager"
+#   ~ Each script gets two vars - shortName and longName
 #   ~ Installer, as well as the scripts them selves, can use these for logging and tmp output
 #   ~ In addition, using these the log names will be more consistent
 #
