@@ -8,6 +8,7 @@
 # Changes:
 # v2.0.0
 # - Started work on re-written, more efficient install script
+# - Use 0b664c6 to get original script, most of it was erased after that commit
 #
 # v1.3.8
 # - raspi-config requires sudo, updated accordingly
