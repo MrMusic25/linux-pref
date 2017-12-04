@@ -11,6 +11,9 @@
 # Relies on the .git folder in the directory to be able to pull, therefore must be setup beforehand!
 #
 # Changes:
+# v2.1.3
+# - Fixed folder updating
+#
 # v2.1.2
 # - Fixed cloneRepo()
 # - Various other small tweaks
@@ -91,7 +94,7 @@
 #   ~ Also output git diff to a tmp file (shortName_repo_date.txt)
 # - https://git-scm.com/book/en/v2/Git-Basics-Recording-Changes-to-the-Repository
 #
-# v2.1.2, 28 Nov., 2017 22:56 PST
+# v2.1.3, 03 Dec. 2017, 20:21 PST
 
 ### Variables
 
@@ -439,7 +442,7 @@ OPWD="$(pwd)"
 while read -r directory;
 do
 	if [[ "$(echo "$directory" | cut -d' ' -f1)" == [Ff][Oo][Ll][Dd][Ee][Rr]* ]]; then
-		processFolder "$(echo "$directory" | rev | cut -d' ' -f1 --complement | rev)" # Don't delete the revs, keeps spaces in folder names
+		processFolder "$(echo "$directory" | cut -d' ' -f1 --complement)"
 		#debug "l2" "INFO: Updating parent directory $directory!"
 	else
 		pullRepo "$directory"
