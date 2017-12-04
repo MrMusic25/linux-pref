@@ -6,7 +6,7 @@
 
 ### Variables
 
-longName="setupCommands"
+lngName="setupCommands"
 shortName="sc"
 
 ### Functions

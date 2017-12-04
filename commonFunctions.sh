@@ -4,6 +4,9 @@
 # Note: this script whould not be run by itself, as it only contains functions and variables
 #
 # Changes:
+# v1.12.2
+# - Figured out a small math/logic error with dL(), fixed it
+#
 # v1.12.1
 # - Fixed and tested dynamicLinker(), working as intended
 # - Polished with shellcheck
@@ -91,7 +94,7 @@
 #   ~ Recommend when cF.sh should be updated
 #   ~ Log message if 'required' versions are mismatched
 #
-# v1.12.1, 03 Dec. 2017, 17:44 PST
+# v1.12.2, 03 Dec. 2017, 17:54 PST
 
 ### Variables
 
@@ -844,10 +847,10 @@ function dynamicLinker() {
 	# Finally, figure out the how many links to do
 	numLinks=1 # Full script name
 	if [[ ! -z $(cat "$fullScriptPath" | grep longName=) ]]; then
-		((numLinks++))
+		((numLinks+=2))
 	fi
 	if [[ ! -z $(cat "$fullScriptPath" | grep shortName=) ]]; then
-		((numLinks++))
+		((numLinks+=4))
 	fi
 	
 	# And now, for our grand finale, watch as we link everything together!
@@ -856,14 +859,17 @@ function dynamicLinker() {
 		case $numLinks in
 		1)
 			linkName="$linkLocation"/"$(echo "$fullScriptPath" | rev | cut -d'/' -f1 | rev)"
-			;;
-		2)
-			#linkName="$(echo "$fullScriptLocation" | rev | cut -d'/' -f1 --complement | rev)"
-			linkName="$linkLocation"/"$(cat "$fullScriptPath" | grep longName= | cut -d'=' -f2 | sed -e 's/\"//g')"
+			((numLinks-=1))
 			;;
 		3)
 			#linkName="$(echo "$fullScriptLocation" | rev | cut -d'/' -f1 --complement | rev)"
+			linkName="$linkLocation"/"$(cat "$fullScriptPath" | grep longName= | cut -d'=' -f2 | sed -e 's/\"//g')"
+			((numLinks-=2))
+			;;
+		[57])
+			#linkName="$(echo "$fullScriptLocation" | rev | cut -d'/' -f1 --complement | rev)"
 			linkName="$linkLocation"/"$(cat "$fullScriptPath" | grep shortName= | cut -d'=' -f2 | sed -e 's/\"//g')"
+			((numLinks-=4))
 			;;
 		*)
 			debug "l2" "ERROR: Unexpected case number in dynamicLinker()! Returning, please link manually..."
@@ -880,7 +886,7 @@ function dynamicLinker() {
 				debug "l2" "ERROR: And error occurred while attempting a link $fullScriptPath to $linkName! Error code: $val"
 			fi
 		fi
-		((numLinks--))
+		#((numLinks--))
 	done
 	# Done with function
 }
