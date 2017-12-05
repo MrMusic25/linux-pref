@@ -1,20 +1,47 @@
 # All of my favorite pentesting programs from kali, backbox, etc...
+
+# Used for port scanning. Zenmap is a fairly comprehensive GUI for nmap
 nmap
-zenmap
+#zenmap
+
+# Kali-specific tools that are good at automating pen-testing tasks
 #theharvester
-metasploit
-john
-crunch
-ophcrack
-pdfcrack
-dsniff
-sslsniff
-wireshark
-setoolkit
-testdisk
-photorec
-btscanner
-aircrack-ng
-wifite
-pyrit
+#metasploit
+
+# John the Ripper, used to brute force passwords
+#john
+
+# crunch is a customizable wordlist generator to be used with brute force and other cracking programs
+#crunch
+
+# Used to crack Windows passwords with rainbow tables (up to Win7 currently)
+#ophcrack
+
+# Use to brute force password protected PDF files
+#pdfcrack
+
+# Command line packet sniffer. Also has a few cousins for specific types of traffic (sslsniff being one of them)
+#dsniff
+#sslsniff
+
+# Command line and base package for popular sniffing program Wireshark. GTK is the better Wireshark theme
+#wireshark
+#wireshark-gtk
+
+# trustedsec/social-engineer-toolkit. Included by default in kali
+#setoolkit
+
+# Couple of programs used to recover lost partitions and data from bad drives
+#testdisk
+#photorec
+
+# Programs that vacuums up Bluetooth information available without pairing
+#btscanner
+
+# Programs used to capture WiFi authentications, and then crack them
+#aircrack-ng
+#wifite
+#pyrit
+
+# Used to capture NetBIOS information on the network
 nbtscan

@@ -1,10 +1,22 @@
 # 'Fun' programs, why not enjoy linux?
 # All of these are commandline based, add others to requires-desktop-manager.txt
+
+# For those times you accidentally mistype an ls command
 sl
-cowsay
-toilet
-cmatrix
+
+# An instant perk to your day, be sure to add 'fortune | cowsay | lolcat' to your .bashrc!
 fortune-mod
-oneko
-espeak
+cowsay
 lolcat
+
+# A program to convert text to giant ASCII-art letters
+#toilet
+
+# Have a throwback to the 90s
+cmatrix
+
+# A fun program where a mouse chases your cursor, if you have a desktop environment (technically not terminal only
+#oneko
+
+# Text-to-Speech program for the command line. Outputs to file, or directly to speakers
+#espeak

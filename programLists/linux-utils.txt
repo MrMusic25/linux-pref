@@ -1,36 +1,58 @@
 # Linux utilities I recquire that not every distribution installs by default
+
+# Essentials for developers, and for compiling your own packages
 git
 coreutils
-build-essential linux-firmware make
+build-essential
+linux-firmware
+make
 gcc
+g++
 python
 python3
-screen
+
+# Dynamically includes modules when upgrading kernels (might be placebo but I always feel better when it is installed)
+dkms
+
+# Attach and detatch virtual terminals that run in the background
+#screen
+
+# Useful for dealing with exFAT file systems
 exfat-utils
-hardinfo fancontrol
+
+# Displays information about computer componenets
+#hardinfo
+
+# Hardware health monitoring (temperatures)
+#fancontrol
 
 # Cool wireless connection wizard (by-channel!) I found with ArchStrike
-wicd-daemon
+#wicd-daemon
 
 # This saved me from hours of headaches. Website version of this rocks!
 shellcheck
 
 # Uncomment below if you are running a laptop
-synaptics
+#synaptics
 
 # Uncomment if you plan on installing some Windows programs
-wine
+#wine
 
 # Couple of monitoring programs I found on Reddit
-iftop
-htop
+#iftop
+#htop
 
 # Added from an issue of Distrowatch Weekly, looks interesting and helpful
-moreutils
+#moreutils
 
 # Graphically display disk usage tree
-baobab
+#baobab
 
 # Not a default in most systems, but a lifesaver!
-gnome-disk-utility
+#gnome-disk-utility
 
+# One of my favorite programs, graphical terminal program displaying local WiFi networks and signal strengths
+wavemon
+
+# Important for laptops: automatic power management
+#tlp

@@ -1,6 +1,13 @@
 # Programs that may require extra repos or a PPA, depending on distribution
-grive
+
+# vitalif/grive2. Google Drive client for Linux, since they still don't provide an official one
+grive2
+
+# notepadqq/notepadqq. Linux version of the popular Notepad++ program for Windows
 notepadqq
-tlp
+
+# Used to create virtual tunnels between your computers (requires account)
 hamachi
+
+# Popular remote desktop software
 teamviewer
