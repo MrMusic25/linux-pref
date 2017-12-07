@@ -5,6 +5,13 @@
 # Run with the -h|--help option to see full list of install options (or look at displayHelp())
 #
 # Changes:
+# v2.0.1
+# - Added all the installation functions, wrote them all (read: wrote one, then copy+pasted the rest)
+# - Added folder check
+# - All functions except grive ready for testing
+# - Backup for crontab enabled
+# - No need to backup .bashrc now because of new sourcing method
+#
 # v2.0.0
 # - Started work on re-written, more efficient install script
 # - Use 0b664c6 to get original script, most of it was erased after that commit
@@ -13,7 +20,7 @@
 #
 # TODO:
 #
-# v2.0.0, 03 Dec. 2017, 22:32 PST
+# v2.0.1, 06 Dec. 2017, 22:50 PST
 
 ### Variables
 
@@ -36,11 +43,11 @@ function linkCF() {
 	fi
 	
 	if [[ "$EUID" -ne 0 ]]; then
-		echo "Linking to /usr/share requires root permissions, please login"
+		echo "WARN: Linking to /usr/share requires root permissions, please login"
 		sudo ln -s "$(pwd)"/commonFunctions.sh /usr/share/commonFunctions.sh
 		sudo ln -s "$(pwd)"/packageManagerCF.sh /usr/share/packageManagerCF.sh
 	else
-		echo "Linking to commonFunctions.sh to /usr/share/ !"
+		echo "INFO: Linking to commonFunctions.sh to /usr/share!"
 		sudo ln -s "$(pwd)"/commonFunctions.sh /usr/share/commonFunctions.sh
 		sudo ln -s "$(pwd)"/packageManagerCF.sh /usr/share/packageManagerCF.sh
 	fi
@@ -66,7 +73,7 @@ INSTALL.sh - A script that sets up a new computer with other scripts and setting
 
 Usage: ./INSTALL.sh [options] <install_option>
        ./INSTALL.sh [options] -e <iOption>,[iOption]
-	   ./INSTALL.sh [options] -o <iOption>,[iOption]
+       ./INSTALL.sh [options] -o <iOption>,[iOption]
 
 Options:
   -h | --help                         : Display this help message and exit
@@ -146,10 +153,10 @@ function processArgs() {
 			specific="only"
 			loopFlag=1
 			;;
-			--dry-run)
-			dryRun="set" # Oh, a secret argument! When run, script will only output anticipated changes/debug messages without making changes
-			debug "l1" "WARN: Doing a dry-run, nothing will be changed!"
-			;;
+			#--dry-run)
+			#dryRun="set" # Oh, a secret argument! When run, script will only output anticipated changes/debug messages without making changes
+			#debug "l1" "WARN: Doing a dry-run, nothing will be changed!"
+			#;;
 			*)
 			# If it is not an option, assume it is the run mode and continue
 			loopFlag=1
@@ -157,6 +164,199 @@ function processArgs() {
 		esac
 		shift
 	done
+}
+
+function installPM() {
+	debug "l1" "INFO: Installing packageManager.sh and related functions!"
+	
+	# Make sure script is here
+	if [[ ! -f packageManager.sh || ! -f packageManagerCF.sh ]]; then
+		debug "l2" "FATAL: packageManager.sh or packageManagerCF.sh could not be found! Could not be successfully installed!"
+		return 1
+	fi
+	
+	dynamicLinker "$(pwd)/packageManager.sh" /usr/bin
+	dynamicLinker "$(pwd)/packageManagerCF.sh" /usr/share
+	
+	# Verify links exist
+	if [[ -e /usr/bin/pm && -e /usr/share/packageManager.sh ]]; then
+		debug "l1" "INFO: pm.sh and pmCF.sh successfully installed! Moving on..."
+	else
+		debug "l2" "ERROR: Links not found, terminating packageManager installation..."
+		return 1
+	fi
+	
+	if [[ $run -ne 0 ]]; then
+		debug "l1" "WARN: User indicated not to run scripts! Moving on..."
+	elif [[ $ask -ne 0 ]]; then
+		debug "l1" "WARN: User has chosen to be asked about running scripts, asking for confirmation..."
+		getUserAnswer "pm.sh has been installed, would you like to update your computer now?"
+		case $? in
+			0) #true
+			debug "l1" "INFO: User indicated to run pm.sh!"
+			# continue with function
+			;;
+			1)
+			debug "l1" "INFO: User chose not to run script, returning!"
+			return 0 # technically a success
+			;;
+		esac
+	fi
+	
+	# If you made it this far, script is meant to be run
+	debug "l2" "WARN: Now running pm.sh and upgrading current system!"
+	pm fu
+	
+	debug "l1" "INFO: Done installing and running pm.sh!"
+	return 0
+}
+
+function installPrograms() {
+	# Check to see if function should even be run
+	if [[ $run -ne 0 || $ask -ne 0 ]]; then # Two birds, one stone
+		debug "l2" "ERROR: User asked not to run scripts, but indicated to install programs!"
+		getUserAnswer "n" "Would you like to install programs anyways?"
+		case $? in
+			0)
+			true # debug message below, no need to duplicate it
+			;;
+			*)
+			debug "l2" "INFO: User indicated not to install programs, returning..."
+			return 0
+			;;
+		esac
+	fi
+	
+	# Making it this far means user wants programs installed
+	debug "l1" "INFO: Installing programs in programLists/ folder!"
+	pm i programLists
+	
+	debug "l1" "INFO: Done installing programs!"
+}
+
+function installGit() {
+	debug "l1" "INFO: Installing gitManager.sh and related functions!"
+	
+	# Make sure script is here
+	if [[ ! -f gitManager.sh ]]; then
+		debug "l2" "FATAL: gitManager.sh could not be found! Could not be successfully installed!"
+		return 1
+	fi
+	
+	dynamicLinker "$(pwd)/gitManager.sh" /usr/bin
+	
+	# Verify link exists
+	if [[ -e /usr/bin/gm ]]; then
+		debug "l1" "INFO: gm.sh and pmCF.sh successfully installed! Moving on..."
+	else
+		debug "l2" "ERROR: Link not found, terminating gitManager installation..."
+		return 1
+	fi
+	
+	if [[ $run -ne 0 ]]; then
+		debug "l1" "WARN: User indicated not to run scripts! Moving on..."
+	elif [[ $ask -ne 0 ]]; then
+		debug "l1" "WARN: User has chosen to be asked about running scripts, asking for confirmation..."
+		getUserAnswer "gm.sh has been installed, would you like to update your computer now?"
+		case $? in
+			0) #true
+			debug "l1" "INFO: User indicated to run gm.sh!"
+			# continue with function
+			;;
+			1)
+			debug "l1" "INFO: User chose not to run script, returning!"
+			return 0 # technically a success
+			;;
+		esac
+	fi
+	
+	# If you made it this far, script is meant to be run
+	debug "l2" "WARN: Now running gm.sh in setup mode and adding repo to update list!"
+	gm -i
+	gm -d --add $(pwd)
+	
+	# Finally, ask if user wants to setup a cron job to update repos
+	getUserAnswer "Would you like to periodically update all Git directories?" gitTime "How many minutes would you like between updates? (0-60)"
+	if [[ $? -eq 0 ]]; then
+		addCronJob "$gitTime" min "/usr/bin/gm --daemon" # Added as current user
+		debug "l1" "INFO: Cron job added, will check every $gitTime minutes."
+	else
+		debug "l2" "WARN: Not installing cron job! Please run manually periodically, or setup your own cron job!"
+	fi
+	
+	debug "l1" "INFO: Done installing and running gm.sh!"
+	return 0
+}
+
+function installBash() {
+	# No run not affected here, only check if ask is set
+	if [[ $ask -ne 0 ]]; then
+		debug "l2" "INFO: User indicated to be asked before running scripts, asking before installing bash"
+		getUserAnswer "Would you like to install .bashrc and .bash_aliases?"
+		case $? in
+			0)
+			debug "l1" "INFO: Installing .bashrc and .bash_aliases per user's choice (will confirm for root)"
+			;;
+			*)
+			debug "l1" "INFO: User chose not to install bash"
+			return 0
+			;;
+		esac
+	fi
+	
+	# Proceed with installation
+	# After making sure some stuff exists first
+	if [[ ! -e $HOME/.bashrc ]]; then
+		touch .bashrc
+	fi
+	
+	touch "$HOME"/.lp # Got smart, this make it so link sent to .bashrc are no longer deleted upon uninstallation
+	printf "# Locations of .bashrc and .bash_aliases as added by linux-pref on %s\nsource %s\nsource %s\n" "$(date)" "$(pwd)/.bashrc" "$(pwd)/.bash_aliases" >> "$HOME"/.lp
+	
+	printf "# Added by linux-pref to import .bashrc and .bash_aliases from git repo\nif [[ -f .lp ]]; then\n   source .lp\nfi\n" >> "$HOME"/.bashrc
+	
+	if [[ -d /etc/skel ]]; then
+		debug "l1" "ERROR: skel directory not found! Unable to install bash for future users! Continuing..."
+	else
+		getUserAnswer "n" "Would you like to install bash for future users through the skel directory?"
+		case $? in
+			0)
+			debug "l1" "INFO: Installing bash to skel directory as user indicated"
+			debug "l2" "WARN: Installing bash to skel directory will require sudo premission!"
+			sudo touch /etc/skel/.lp
+			printf "# Locations of .bashrc and .bash_aliases as added by linux-pref on %s\nsource %s\nsource %s\n" "$(date)" "$(pwd)/.bashrc" "$(pwd)/.bash_aliases" | sudo tee -a /etc/skel/.lp > /dev/null
+			printf "# Added by linux-pref to import .bashrc and .bash_aliases from git repo\nif [[ -f .lp ]]; then\n   source .lp\nfi\n" | sudo tee -a /etc/skel/.bashrc > /dev/null
+			;;
+			*)
+			debug "l1" "INFO: Skipping installation to skel directory..."
+			;;
+		esac
+	fi
+	
+	if [[ $sudoCheck -eq 0 ]]; then
+		debug "l1" "INFO: Asking to install bash for root user"
+		getUserAnswer "Would you like to install .bashrc and aliases for root user?"
+		case $? in
+			0)
+			debug "l1" "INFO: Installing .bashrc and .bash_aliases for root user"
+			debug "l2" "WARN: Installing bash for root will require sudo premission!"
+			sudo touch /root/.lp
+			printf "# Locations of .bashrc and .bash_aliases as added by linux-pref on %s\nsource %s\nsource %s\n" "$(date)" "$(pwd)/.bashrc" "$(pwd)/.bash_aliases" | sudo tee -a /root/.lp > /dev/null
+			printf "# Added by linux-pref to import .bashrc and .bash_aliases from git repo\nif [[ -f .lp ]]; then\n   source .lp\nfi\n" | sudo tee -a /root/.bashrc > /dev/null
+			;;
+			*)
+			debug "l1" "WARN: User indicated not to install bash for root user!"
+			;;
+		esac
+	else
+		debug "l1" "WARN: sudoCheck disabled, assuming root user has already been installed and continuing!"
+	fi
+	return 0
+}
+
+function installGrive() {
+	debug "l3" "ERROR: Grive2 installation not ready yet, check back for updates!"
+	return 0
 }
 
 ### Main Script
@@ -174,6 +374,50 @@ if [[ $EUID -eq 0 ]]; then
 	fi
 fi
 
+# Check to make sure pwd is git directory
+if [[ "$(pwd)" != *linux-pref ]]; then
+	debug "l2" "FATAL: Current directory is incorrect! Please re-run script inside linux-pref folder! Exiting..."
+	exit 1
+fi
+
+# Verify home dir
+if [[ -z $HOME ]]; then
+		HOME="$(echo ~/)"
+fi
+
+# Check if computer is Raspberry Pi
+if [[ -e "/usr/bin/raspi-config" ]]; then
+		announce "Raspberry Pi detected!" "If this is the first time being run, please make sure locale is correct!" "Also make sure SSH is enabled in advanced options!"
+		getUserAnswer "Would you like to run raspi-config before running the rest of the script?"
+		case $? in
+			0)
+			debug "l1" "INFO: User chose to run raspi-config"
+			sudo raspi-config
+			;;
+			*)
+			debug "l1" "INFO: User chose not to run raspi-config!"
+			;;
+		esac
+fi
+
+# Backup crontab, just in case it is used
+if [[ ! -e "$HOME"/.crontab.bak ]]; then
+	debug "l2" "INFO: Creating backup of current user's crontab at $HOME/crontab.bak"
+	crontab -l > "$HOME"/.crontab.bak
+else
+	debug "l2" "ERROR: Backup of crontab already exists at $HOME/crontab.bak"
+	getUserAnswer "n" "Would you like to overwrite the backup?"
+	case $? in
+		0)
+		debug "l1" "WARN: Overwriting crontab backup at user's request"
+		crontab -l > "$HOME"/.crontab.bak
+		;;
+		*)
+		debug "l1" "INFO: Skipping crontab backup, as one already exists"
+		;;
+	esac
+fi
+
 # Now, time to decide what to run
 # Scripts to install/run are decided by an array with the following values
 # Program:    pm  programs  gm  bash  grive 
@@ -184,16 +428,17 @@ do
 	iOptions[$i]=0 # Initialize array, nothing by default
 done
 
-case $specific in:
+case $specific in
 	except)
 	for i in {0..4}
 	do
 		iOptions[$i]=1
 	done
-	for i in {0.."$(awk -F',' '{print NF-1}' <<< "$1")"..1} # char count of commas in string; hopefully 0 doesn't cause it to fail
+	commaCount="$(awk -F',' '{print NF-1}' <<< "$1")"
+	for i in $(seq 0 1 $commaCount); # char count of commas in string; hopefully 0 doesn't cause it to fail
 	do
 		iOpt="$(echo "$1" | cut -d',' -f $i)" # By this point, $1 should be the only arg left
-		case "$iOpt" in:
+		case "$iOpt" in
 			all)
 			debug "l2" "FATAL: iOption all is not compatible with -e|--except! Please fix and re-run!"
 			exit 1
@@ -224,10 +469,11 @@ case $specific in:
 	done
 	;;
 	only)
-	for i in {0.."$(awk -F',' '{print NF-1}' <<< "$1")"..1} # char count of commas in string; hopefully 0 doesn't cause it to fail
+	commaCount="$(awk -F',' '{print NF-1}' <<< "$1")"
+	for i in $(seq 0 1 $commaCount); # char count of commas in string; hopefully 0 doesn't cause it to fail
 	do
 		iOpt="$(echo "$1" | cut -d',' -f $i)"
-		case "$iOpt" in:
+		case "$iOpt" in
 			all)
 			debug "l2" "FATAL: iOption all is not compatible with -o|--only! Please fix and re-run!"
 			exit 1
@@ -258,7 +504,7 @@ case $specific in:
 	done
 	;;
 	*)
-	case "$1" in:
+	case "$1" in
 		all)
 		for i in {0..4}
 		do
@@ -290,5 +536,33 @@ case $specific in:
 	esac
 	;;
 esac
+
+# Now, run all the specified options
+announce "Now installing selected options!" "You will be asked for permission to link to /usr/share and /usr/bin" "Please provide password when/if prompted!"
+for i in {0..4}; # Remember to change this if more options are added
+do
+	if [[ ${iOptions[$i]} -ne 0 ]]; then
+		case $i in
+			0)
+			installPM
+			;;
+			1)
+			installPrograms
+			;;
+			2)
+			installGit
+			;;
+			3)
+			installBash
+			;;
+			4)
+			installGrive
+			;;
+			*)
+			debug "l2" "ERROR: Invalid sequence during installation! Attempting to continue..."
+			;;
+		esac
+	fi
+done
 
 #EOF
