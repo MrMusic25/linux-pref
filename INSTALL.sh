@@ -2,100 +2,39 @@
 #
 # INSTALL.sh - A script meant to automatically install and setup my personal favorite options
 # Usage: ./INSTALL.sh [options] <install_option>
-#
-# There are too many things to display here, so please look at displayHelp() to see the options and install options
+# Run with the -h|--help option to see full list of install options (or look at displayHelp())
 #
 # Changes:
+# v2.0.1
+# - Added all the installation functions, wrote them all (read: wrote one, then copy+pasted the rest)
+# - Added folder check
+# - All functions except grive ready for testing
+# - Backup for crontab enabled
+# - No need to backup .bashrc now because of new sourcing method
+#
 # v2.0.0
 # - Started work on re-written, more efficient install script
 # - Use 0b664c6 to get original script, most of it was erased after that commit
-#
-# v1.3.8
-# - raspi-config requires sudo, updated accordingly
-#
-# v1.3.7
-# - Removed some changelog according to new rules
-#
-# v1.3.6
-# - Added a small question to coincide with an update to .bashrc, supporting easy log viewing
-# - Really all I did was support the option to add the "pwd" logDir to user's .bashrc
-#
-# v1.3.5
-# - Added longName and shortName for debugging
-#
-# v1.3.4
-# - This monstrosity of a script was changed to reflect the new gitManager.sh
-#
-# v1.3.3
-# - Changed the order of certain installation functions
-#
-# v1.3.2
-# - Script will now check for, and possibly run raspi-config if detected
-#
-# v1.3.1
-# - Script now checks to make sure pmCF.sh is also linked
-# - Script will now attempt to switch to main LP directory if not already in that directory
-#
-# v1.3.0
-# - Added a check for a link to pmCF.sh
-# - update -> pm, for pm.sh
-# - Changed programs to install using pm.sh
-# - This is why functions are the best - easy fixes for future changes
-#
-# v1.2.2
-# - Made some minor changes
-# - setupCommands and nonScriptCommands now ask before running, and don't run in "except" mode
-#
-# v1.2.1
-# - Learned that lesson the hard way... Use full directory names when using symbolic links!
-# - Apparently I never tested -e, but it should work now
-#
-# v1.2.0
-# - Script now installs everything using symbolic links, as hard links don't update anymore
-# - Created a function to uninstall the changes this script makes
-# - installBash() now creates a backup (.bashrc.bak) in case the user tries to uninstall later
-# - Script now backs up the user's crontab, and can now restore said crontab
-#
-# v1.1.2
-# - Changed te way installBash() works - sources instead of linking now
-#
-# v1.1.1
-# - Minor text fixes :3
-#
-# v1.1.0
-# - Added a function to install and setup grive
-# - Other small functionality changes
+# - Wrote displayHelp and supporting variables/processArgs() fills
+# - Added a monstorosity of a switch to decide which options to run
 #
 # TODO:
-# - Fix installation of programs
-#   ~ Differentiate between pacman and others, make script work with files (currently broken)
-# - Add custom .bashrc rules, such as LP=$(pwd)
-# - Add checkRequirements line for git, possibly whiptail and coreutils
-#   ~ https://en.wikibooks.org/wiki/Bash_Shell_Scripting/Whiptail
-#   ~ Got the idea from looking ad raspi-config code
-# - Dynamic linking
-#   ~ Each script gets two vars - shortName and longName
-#   ~ Installer, as well as the scripts them selves, can use these for logging and tmp output
-#   ~ In addition, using these the log names will be more consistent
 #
-# v1.3.8, 01 Dec. 2017 17:05 PST
+# v2.0.1, 06 Dec. 2017, 22:50 PST
 
 ### Variables
 
-#sudoRequired=0 # Set to 0 by default - script will close if sudo is false and sudoRequired is true
-installOnly=0 # Used by -n|--no-run, if 1 then files will be copied and verified, but not executed
-programsFile="programLists/"
-#kaliFile=".kaliPrograms.txt"
-runMode="NULL" # Variable used to hold which install option will be run
-pathCheck=0 # Used to tell other functions if path check has be run or not
-pathLocation="/usr/bin"
-#interactiveFlag=0 # Tells the script whether or not to inform the user that the script will require their interaction
-longName="INSTALL"
+longName="INSTALL" #shortName and longName used for logging
 shortName="iS" # installScript
+specific="unset" # Used to tell if except/only mode is on
+sudoCheck=0 # Tells script whether to ignore sudo warning
+run=0 # Indicates whether or not scripts will be run by default
+ask=0 # Whether or not user will be asked before running each script
 
 ### Functions
 
 # Used to link commonFunctions.sh to /usr/share, in case it is not there already
+# This version only used in the installer script, as it is usually the first thing run from the repo
 function linkCF() {
 	if [[ ! -f commonFunctions.sh ]]; then
 		echo "ERROR: commonFunctions.sh is somehow not available, please correct and re-run!"
@@ -104,11 +43,11 @@ function linkCF() {
 	fi
 	
 	if [[ "$EUID" -ne 0 ]]; then
-		echo "Linking to /usr/share requires root permissions, please login"
+		echo "WARN: Linking to /usr/share requires root permissions, please login"
 		sudo ln -s "$(pwd)"/commonFunctions.sh /usr/share/commonFunctions.sh
 		sudo ln -s "$(pwd)"/packageManagerCF.sh /usr/share/packageManagerCF.sh
 	else
-		echo "Linking to commonFunctions.sh to /usr/share/ !"
+		echo "INFO: Linking to commonFunctions.sh to /usr/share!"
 		sudo ln -s "$(pwd)"/commonFunctions.sh /usr/share/commonFunctions.sh
 		sudo ln -s "$(pwd)"/packageManagerCF.sh /usr/share/packageManagerCF.sh
 	fi
@@ -116,644 +55,514 @@ function linkCF() {
 
 if [[ -f /usr/share/commonFunctions.sh ]]; then
 	source /usr/share/commonFunctions.sh
-	#export installLog="$debugPrefix/installer.log"
 elif [[ -f commonFunctions.sh ]]; then
 	source commonFunctions.sh
 	linkCF
-	#export installLog="$debugPrefix/installer.log"
 else
 	echo "commonFunctions.sh could not be located!"
-	
-	# Comment/uncomment below depending on if script actually uses common functions
 	echo "Script will now exit, please put file in same directory as script, or link to /usr/share!"
 	exit 1
 fi
 
+function displayHelp() {
+# The following will read all text between the words 'helpVar' into the variable $helpVar
+# The echo at the end will output it, exactly as shown, to the user
+read -d '' helpVar <<"endHelp"
+
+INSTALL.sh - A script that sets up a new computer with other scripts and settings from mrmusic25/linux-pref
+
+Usage: ./INSTALL.sh [options] <install_option>
+       ./INSTALL.sh [options] -e <iOption>,[iOption]
+       ./INSTALL.sh [options] -o <iOption>,[iOption]
+
+Options:
+  -h | --help                         : Display this help message and exit
+  -v | --verbose                      : Prints verbose debug information. MUST be the first argument!
+  -s | --sudo                         : Ignores sudo-check (use this option if root is only user being used on system)
+  -n | --no-run                       : Only setup links, don't run any of the scripts
+  -a | --ask                          : Ask before running each script
+  -e | --except <iOption>,[iOption]   : Assumes install option 'all'. See note below for usage.
+  -o | --only <iOption>,[iOption]     : Only installs selected options; similar to -e|--except
+
+Install Options (iOptions):
+  all                                 : Installs all the below options/scripts
+  pm | packageManager                 : Universal package manager script
+  programs                            : Installs programs from the local programLists folder
+  gm | gitManager                     : Git management and update script
+  bash                                : Installs .bashrc and .bash_aliases for selected users (will be asked)
+  grive                               : Installs grive2, and the grive2 management script
+  uninstall                           : Uninstalls all scripts and changes listed in ~/.lpChanges.conf
+
+For --except and --only options, specify programs you don't (or do) want installed in comma delimited format.
+  e.g. ./INSTALL.sh -e pm,bash   <-- This command will install everything but pm and bash
+       ./INSTALL.sh -o pm,bash   <-- This command will only install pm and bash, nothing else
+If your package manager does not have grive2 by default, it will be installed from the repo vitalif/grive2
+
+endHelp
+echo "$helpVar"
+}
+
 function processArgs() {
-	if [[ $# -eq 0 ]]; then
-		export debugFlag=1
-		debug "ERROR: Script must be run with at least one argument!"
+	# displayHelp and exit if there is less than the required number of arguments
+	# Remember to change this as your requirements change!
+	if [[ $# -lt 1 ]]; then
+		debug "l2" "ERROR: No arguments given! Please fix and re-run"
 		displayHelp
 		exit 1
 	fi
-	loopFlag=0
 	
-	debug "Processing arguments..."
-	while [[ $loopFlag -eq 0 ]];
-	do
+	# This is an example of how most of my argument processors look
+	# Psuedo-code: until condition is met, change values based on input; shift variable, then repeat
+	while [[ $loopFlag -eq 0 ]]; do
 		key="$1"
-		
-		case $key in
+			
+		case "$key" in
 			-h|--help)
-			debug "Displaying help then exiting!"
 			displayHelp
 			exit 0
 			;;
-			-s|--sudo)
-			debug "Checking for root privileges"
-			checkPrivilege "exit" # This is why we make functions
+			-v|--verbose)
+			debugFlag=1
+			debugLevel=2
+			debug "l2" "WARN: Vebose mode enabled! In the future, however, please make -v|--verbose the first argument!"
 			;;
-			-e|--except)
-			if [[ $2 == "all" ]]; then
-				export debugFlag=1
-				debug "ERROR: -e | --except option cannot be used with install option 'all' !"
-				displayHelp
-				exit 1
-			elif [[ $2 == "uninstall" ]]; then
-				echo "The except option is not compatible with uninstall! Please run $0 uninstall instead!"
-				displayHelp
-				exit 1
-			elif [[ ! -z $2 || $2 == "update" || $2 == "programs" || $2 == "git" || $2 == "bash" || $2 == "grive" ]]; then
-				export except="$2"
-				export runMode="except" # I forgot tis statement for like 3 weeks until I finally tested this functionality
-				export loopFlag=1
-			else
-				export debugFlag=1
-				debug "ERROR: -e | --except must have an option following it! Please fix and re-run script!"
-				displayHelp
-				exit 1
-			fi
+			-s|--sudo)
+			sudoCheck=1
 			;;
 			-n|--no-run)
-			export installOnly=1
+			run=1
+			debug "l1" "INFO: User has indicated not to run scripts"
 			;;
-			-v|--verbose)
-			export debugFlag=1 # Again, this is why we like shared functions
+			-a|--ask)
+			ask=1
+			debug "l1" "INFO: User will be asked before each script is run"
 			;;
-			all)
-			export runMode="all"
-			export loopFlag=1
-			;;
-			pm|packageManager|packagemanager)
-			export runMode="update"
-			export loopFlag=1
-			;;
-			grive)
-			export runMode="grive"
-			export loopFlag=1
-			;;
-			programs)
+			-e|--except)
 			if [[ -z $2 ]]; then
-				debug "No argument provided for 'programs' applet, assuming default file location"
-				if [[ -f $programsFile ]]; then
-					debug "Default location of programs file is working, using for script..."
-					export runMode="programs"
-					export loopFlag=1	
-				else
-					debug "Default location not valid, quitting script!"
-					export debugFlag=1
-					debug "ERROR: Default file ($programsFile) not found, please locate or specify"
-					displayHelp
-					exit 1
-				fi
-			elif [[ ! -z $2 ]]; then
-				export programsFile="$2"
-				export runMode="programs"
-				export loopFlag=1
-				debug "Running in programs mode, using file/directory $programsFile"
-			#else
-			#	export runMode="programs"
-			#	debug "Programs mode set, file provided is valid!"
-			#	export programsFile="$2"
-			#	export loopFlag=1
+				debug "l2" "ERROR: No arguments given with $key, please fix and re-run!"
+				exit 1
 			fi
+			specific="except"
+			loopFlag=1 # Assume the rest is install options and continue
 			;;
-			#kali)
-			#if [[ -z $2 ]]; then
-			#	debug "No argument provided for 'kali' applet, assuming default file location"
-			#	if [[ -f $kaliFile ]]; then
-			#		debug "Default location of kali file is working, using for script..."
-			#		export runMode="kali"
-			#		export loopFlag=1	
-			#	else
-			#		debug "Default location not valid, quitting script!"
-			#		export debugFlag=1
-			#		debug "ERROR: Default file ($kaliFile) not found, please locate or specify"
-			#		displayHelp
-			#		exit 1
-			#	fi
-			#elif [[ ! -f $2 ]]; then
-			#	export debugFlag=1
-			#	debug "ERROR: File provided for kali is invalid, or does not exist! Please fix and re-run script!"
-			#	displayHelp
-			#	exit 1
-			#else
-			#	export runMode="kali"
-			#	debug "Kali mode set, file provided is valid!"
-			#	export programsFile="$2"
-			#	export loopFlag=1
-			#fi
+			-o|--only)
+			if [[ -z $2 ]]; then
+				debug "l2" "ERROR: No arguments given with $key, please fix and re-run!"
+				exit 1
+			fi
+			specific="only"
+			loopFlag=1
+			;;
+			#--dry-run)
+			#dryRun="set" # Oh, a secret argument! When run, script will only output anticipated changes/debug messages without making changes
+			#debug "l1" "WARN: Doing a dry-run, nothing will be changed!"
 			#;;
-			git)
-			export runMode="git"
-			export loopFlag=1
-			;;
-			bash)
-			export runMode="bash"
-			export loopFlag=1
-			;;
-			uninstall)
-			export runMode="uninstall"
-			export loopFlag=1
-			;;
 			*)
-			export debugFlag=1
-			debug "ERROR: Unknown option '$1' "
-			displayHelp
-			exit 1
+			# If it is not an option, assume it is the run mode and continue
+			loopFlag=1
+			;;
 		esac
 		shift
 	done
-	
-	if [[ $runMode == "NULL" ]]; then
-		export debugFlag=1
-		debug "ERROR: Please provide a run mode and re-run script!"
-		displayHelp
-		exit 1
-	fi
 }
 
-function pathCheck() {
-	echo "$PATH" | grep "$pathLocation" &>/dev/null # This shouldn't show anything, I hope
-	if [[ $? -eq 0 ]]; then
-		debug "$pathLocation is in the user's path!"
-		export pathCheck=1
+function installPM() {
+	debug "l1" "INFO: Installing packageManager.sh and related functions!"
+	
+	# Make sure script is here
+	if [[ ! -f packageManager.sh || ! -f packageManagerCF.sh ]]; then
+		debug "l2" "FATAL: packageManager.sh or packageManagerCF.sh could not be found! Could not be successfully installed!"
+		return 1
+	fi
+	
+	dynamicLinker "$(pwd)/packageManager.sh" /usr/bin
+	dynamicLinker "$(pwd)/packageManagerCF.sh" /usr/share
+	
+	# Verify links exist
+	if [[ -e /usr/bin/pm && -e /usr/share/packageManager.sh ]]; then
+		debug "l1" "INFO: pm.sh and pmCF.sh successfully installed! Moving on..."
 	else
-		announce "WARNING: $pathLocation is not in the PATH for $USER!"
-		answer="NULL"
-		echo "Would you like to specify a different directory in your PATH? (y/n): "
-		
-		while [[ $answer != "y" && $answer != "n" && $answer != "yes" && $answer != "no" ]]; do
-			read -r answer
-			case $answer in
-				n|no)
-					debug "User chose not to specify new directory for PATH!"
-					announce "Not updating path!" "Please add $pathLocation to your PATH manually!"
-					exit 1
-					;;
-				y|yes)
-					announce "Please choose one of the following directories when prompted:" "$PATH"
-					export pathLocation="NULL"
-					
-					echo "Which directory in your path would you like to use? "
-					while [[ ! -d $pathLocation ]]; do
-						read pathLocation
-						echo "$PATH" | grep "$pathLocation" &>/dev/null
-						
-						if [[ -d $pathLocation && $? -eq 0 ]]; then
-							echo "$pathLocation is valid, continuing with script!"
-							export pathCheck=1
-						else
-							debug "ERROR: PATH given not valid!"
-							echo " Path given not valid, please try again: "
-						fi
-					done
-					;;
-				*)
-					echo "Please enter 'yes' or 'no': "
-					;;
-			esac
-		done
-	fi
-}
-
-function installUpdate() {
-	announce "Now installing the update and installer scripts!" "NOTE: This will require sudo permissions."
-	if [[ $installOnly -ne 0 ]]; then
-		debug "User indicated not to run scripts, only installing package manager script!"
+		debug "l2" "ERROR: Links not found, terminating packageManager installation..."
+		return 1
 	fi
 	
-	sudo ln -s $(pwd)/packageManager.sh /usr/bin/pm
-	sudo ln -s $(pwd)/packageManager.sh /usr/bin/packageManager
-	announce "Universal package installer script has been installed!" "Run pm -h or packageManager --help for more info."
-	sleep 5 # Give the user time to read before more script runs
-	
-	determinePM # Used later
-	if [[ $installOnly -eq 0 ]]; then
-		sudo packageManager.sh update upgrade
+	if [[ $run -ne 0 ]]; then
+		debug "l1" "WARN: User indicated not to run scripts! Moving on..."
+	elif [[ $ask -ne 0 ]]; then
+		debug "l1" "WARN: User has chosen to be asked about running scripts, asking for confirmation..."
+		getUserAnswer "pm.sh has been installed, would you like to update your computer now?"
+		case $? in
+			0) #true
+			debug "l1" "INFO: User indicated to run pm.sh!"
+			# continue with function
+			;;
+			1)
+			debug "l1" "INFO: User chose not to run script, returning!"
+			return 0 # technically a success
+			;;
+		esac
 	fi
-}
-
-function installGit() {
-	announce "Now installing the git auto-updating script!" "NOTE: This will require sudo premissions."
-	if [[ $installOnly -ne 0 ]]; then
-		debug "User indicated not to run scripts, so I will only install the script!"
-	fi
 	
-	sudo ln -s $(pwd)/gitManager.sh /usr/bin/gm
+	# If you made it this far, script is meant to be run
+	debug "l2" "WARN: Now running pm.sh and upgrading current system!"
+	pm fu
 	
-	announce "This script can be used for any git repository, read the documentation for more info!" "Make sure to add a cron job for any new directories!"
-	
-	getUserAnswer "Would you like to periodically update this directory?" gitTime "How many minutes would you like between updates? (0-60)"
-	if [[ $? -eq 0 ]]; then
-		addCronJob "$gitTime" min "/usr/bin/gm --daemon" # Added as current user
-		debug "Cron job added, will check every $gitTime minutes."
-	fi
+	debug "l1" "INFO: Done installing and running pm.sh!"
+	return 0
 }
 
 function installPrograms() {
-	# If no-run enabled, ask user if they want to continue
-	if [[ $installOnly -eq 1 ]]; then
-		#export debugFlag=1
-		debug "ERROR: User indicated not to run scripts, then tried to install programs! Asking for verification..."
-		getUserAnswer "You indicated not to run scripts! Do you still want to install programs?"
-		if [[ $? -eq 1 ]]; then
-			debug "Not installing programs, returning..."
-			return
-		fi
+	# Check to see if function should even be run
+	if [[ $run -ne 0 || $ask -ne 0 ]]; then # Two birds, one stone
+		debug "l2" "ERROR: User asked not to run scripts, but indicated to install programs!"
+		getUserAnswer "n" "Would you like to install programs anyways?"
+		case $? in
+			0)
+			true # debug message below, no need to duplicate it
+			;;
+			*)
+			debug "l2" "INFO: User indicated not to install programs, returning..."
+			return 0
+			;;
+		esac
 	fi
 	
-	announce "Installing programs using programInstaller.sh!" "Script is interactive, so pay attention!" "Look at the programLists folder to see what will be installed!"
-	if [[ "$program" == "pacman" ]]; then
-		pm install "$programsFile"
-	else
-		sudo pm install "$programsFile"
-	fi
+	# Making it this far means user wants programs installed
+	debug "l1" "INFO: Installing programs in programLists/ folder!"
+	pm i programLists
+	
+	debug "l1" "INFO: Done installing programs!"
 }
 
-function displayHelp() {
-	# Don't use announce() in here in case script fails from beng unable to source comonFunctions.sh
-	echo " "
-	echo " Usage: $0 [options] <install_option>"
-	echo " "
-	#echo " NOTE: Running any install option will check if /usr/share/commonFunctions.sh exists. If not, sudo permission will be requested to install."
-	#echo "       Each script will be run after it is installed as well, to verify it is working properly."
-	#echo " "
-	echo " Install Options:"
-	echo "    all                             : Installs all the scripts below"
-	echo "    pm | packageManager             : Installs the universal package manager script"
-	echo "    programs [file]                 : Installs programs using default locations, or provided text-based tab-delimited file"
-	#echo "    kali [file]                     : Same as 'programs', but installs from .kaliPrograms.txt by default. Also accepts file input."
-	echo "    git                             : Installs git monitoring script and sets up cron job to run at boot"
-	echo "    bash                            : Links or sources the .bashrc and .bash_aliases from the git repo"
-	echo "    grive                           : Helps create and sync Google Drive using grive2"
-	echo "    uninstall                       : Uninstalls any file or settings that may have been installed, highly interactive"
-	echo " "
-	echo " Options:"
-	echo "    -h | --help                        : Displays this help message"
-	echo "    -s | --sudo                        : Makes script check for root privileges before running anything"
-	echo "    -e | --except <install_option>     : Installs everything except option specified. e.g './INSTALL.sh -e git' "
-	echo "                                       : NOTE: Make sure to put -e <install_option> last!" 
-	echo "    -n | --no-run                      : Only installs scripts to be used, does not execute scripts"
-	echo "    -v | --verbose                     : Displays additional debug info, also found in logfile"
+function installGit() {
+	debug "l1" "INFO: Installing gitManager.sh and related functions!"
+	
+	# Make sure script is here
+	if [[ ! -f gitManager.sh ]]; then
+		debug "l2" "FATAL: gitManager.sh could not be found! Could not be successfully installed!"
+		return 1
+	fi
+	
+	dynamicLinker "$(pwd)/gitManager.sh" /usr/bin
+	
+	# Verify link exists
+	if [[ -e /usr/bin/gm ]]; then
+		debug "l1" "INFO: gm.sh and pmCF.sh successfully installed! Moving on..."
+	else
+		debug "l2" "ERROR: Link not found, terminating gitManager installation..."
+		return 1
+	fi
+	
+	if [[ $run -ne 0 ]]; then
+		debug "l1" "WARN: User indicated not to run scripts! Moving on..."
+	elif [[ $ask -ne 0 ]]; then
+		debug "l1" "WARN: User has chosen to be asked about running scripts, asking for confirmation..."
+		getUserAnswer "gm.sh has been installed, would you like to update your computer now?"
+		case $? in
+			0) #true
+			debug "l1" "INFO: User indicated to run gm.sh!"
+			# continue with function
+			;;
+			1)
+			debug "l1" "INFO: User chose not to run script, returning!"
+			return 0 # technically a success
+			;;
+		esac
+	fi
+	
+	# If you made it this far, script is meant to be run
+	debug "l2" "WARN: Now running gm.sh in setup mode and adding repo to update list!"
+	gm -i
+	gm -d --add $(pwd)
+	
+	# Finally, ask if user wants to setup a cron job to update repos
+	getUserAnswer "Would you like to periodically update all Git directories?" gitTime "How many minutes would you like between updates? (0-60)"
+	if [[ $? -eq 0 ]]; then
+		addCronJob "$gitTime" min "/usr/bin/gm --daemon" # Added as current user
+		debug "l1" "INFO: Cron job added, will check every $gitTime minutes."
+	else
+		debug "l2" "WARN: Not installing cron job! Please run manually periodically, or setup your own cron job!"
+	fi
+	
+	debug "l1" "INFO: Done installing and running gm.sh!"
+	return 0
 }
 
 function installBash() {
-	# Install .bashrc and .bash_aliases for current user
-	announce "Installing .bashrc and aliases from the repo for current user!"
-	if [[ -e ~/.bashrc ]]; then
-		debug ".bashrc present for $USER, backing up and adding source arguments"
-		cp ~/.bashrc ~/.bashrc.bak # Creates a backup in case it is needed later
-		printf "\n# Added by %s at %s, gets .bashrc from linux-pref git\nsource %s\n" "$0" "$(date)" "$(readlink -f "$(basename .bashrc)")" >>~/.bashrc
-	else
-		debug "No .bashrc was would, creating one for user!"
-		touch ~/.bashrc
-		printf "\n# Added by %s at %s, gets .bashrc from linux-pref git\nsource %s\n" "$0" "$(date)" "$(readlink -f "$(basename .bashrc)")" >>~/.bashrc
-		#ln -s .bashrc ~/
-	fi
-	
-	# Script will now only source .bash_aliases, that way user can add their own ~/.bash_aliases if desired
-	printf "\n# Added by %s at %s, gets aliases from linux-pref git\nsource %s\n" "$0" "$(date)" "$(readlink -f "$(basename .bash_aliases)")" >>~/.bashrc
-	
-	# Now ask if they want it installed for root
-	checkPrivilege
-	if [[ $? -ne 0 ]]; then
-		getUserAnswer "Installed for current user, would you like to install .bashrc for root as well?"
+	# No run not affected here, only check if ask is set
+	if [[ $ask -ne 0 ]]; then
+		debug "l2" "INFO: User indicated to be asked before running scripts, asking before installing bash"
+		getUserAnswer "Would you like to install .bashrc and .bash_aliases?"
 		case $? in
 			0)
-			announce "Installing .bashrc from the repo for root user!"
-			# If either of these if statements fail, chmod the root directory to 744
-			if sudo test -e /root/.bashrc; then
-				debug "/root/.bashrc present, backing up and adding source arguments"
-				sudo cp /root/.bashrc /root/.bashrc.bak
-				printf "\n# Added by %s at %s, gets .bashrc from linux-pref git\nsource %s\n" "$0" "$(date)" "$(readlink -f "$(basename .bashrc)")" | sudo tee -a /root/.bashrc > /dev/null
-			else
-				#sudo ln -s .bashrc /root/
-				debug "/root/.bashrc not found, creating now!"
-				sudo touch /root/.bashrc
-				printf "\n# Added by %s at %s, gets .bashrc from linux-pref git\nsource %s\n" "$0" "$(date)" "$(readlink -f "$(basename .bashrc)")" | sudo tee -a /root/.bashrc > /dev/null
-			fi
-			
-			# Script will now only source .bash_aliases, that way user can add their own .bash_aliases if desired
-			printf "\n# Added by %s at %s, gets aliases from linux-pref git\nsource %s\n" "$0" "$(date)" "$(readlink -f "$(basename .bash_aliases)")" | sudo tee -a /root/.bashrc > /dev/null
-			;;
-			1)
-			debug "Not installing .bashrc for root user..."
+			debug "l1" "INFO: Installing .bashrc and .bash_aliases per user's choice (will confirm for root)"
 			;;
 			*)
-			debug "Something went wrong in the universe! Please call The Doctor and diagnose!"
-			exit 1
+			debug "l1" "INFO: User chose not to install bash"
+			return 0
+			;;
+		esac
+	fi
+	
+	# Proceed with installation
+	# After making sure some stuff exists first
+	if [[ ! -e $HOME/.bashrc ]]; then
+		touch .bashrc
+	fi
+	
+	touch "$HOME"/.lp # Got smart, this make it so link sent to .bashrc are no longer deleted upon uninstallation
+	printf "# Locations of .bashrc and .bash_aliases as added by linux-pref on %s\nsource %s\nsource %s\n" "$(date)" "$(pwd)/.bashrc" "$(pwd)/.bash_aliases" >> "$HOME"/.lp
+	
+	printf "# Added by linux-pref to import .bashrc and .bash_aliases from git repo\nif [[ -f .lp ]]; then\n   source .lp\nfi\n" >> "$HOME"/.bashrc
+	
+	if [[ -d /etc/skel ]]; then
+		debug "l1" "ERROR: skel directory not found! Unable to install bash for future users! Continuing..."
+	else
+		getUserAnswer "n" "Would you like to install bash for future users through the skel directory?"
+		case $? in
+			0)
+			debug "l1" "INFO: Installing bash to skel directory as user indicated"
+			debug "l2" "WARN: Installing bash to skel directory will require sudo premission!"
+			sudo touch /etc/skel/.lp
+			printf "# Locations of .bashrc and .bash_aliases as added by linux-pref on %s\nsource %s\nsource %s\n" "$(date)" "$(pwd)/.bashrc" "$(pwd)/.bash_aliases" | sudo tee -a /etc/skel/.lp > /dev/null
+			printf "# Added by linux-pref to import .bashrc and .bash_aliases from git repo\nif [[ -f .lp ]]; then\n   source .lp\nfi\n" | sudo tee -a /etc/skel/.bashrc > /dev/null
+			;;
+			*)
+			debug "l1" "INFO: Skipping installation to skel directory..."
+			;;
+		esac
+	fi
+	
+	if [[ $sudoCheck -eq 0 ]]; then
+		debug "l1" "INFO: Asking to install bash for root user"
+		getUserAnswer "Would you like to install .bashrc and aliases for root user?"
+		case $? in
+			0)
+			debug "l1" "INFO: Installing .bashrc and .bash_aliases for root user"
+			debug "l2" "WARN: Installing bash for root will require sudo premission!"
+			sudo touch /root/.lp
+			printf "# Locations of .bashrc and .bash_aliases as added by linux-pref on %s\nsource %s\nsource %s\n" "$(date)" "$(pwd)/.bashrc" "$(pwd)/.bash_aliases" | sudo tee -a /root/.lp > /dev/null
+			printf "# Added by linux-pref to import .bashrc and .bash_aliases from git repo\nif [[ -f .lp ]]; then\n   source .lp\nfi\n" | sudo tee -a /root/.bashrc > /dev/null
+			;;
+			*)
+			debug "l1" "WARN: User indicated not to install bash for root user!"
 			;;
 		esac
 	else
-		debug "User is root, no other installation is needed!"
-		announce "NOTE: If you ran script this as root, you will need to run it again as normal user!" "To save time, run: $0 bash!"
+		debug "l1" "WARN: sudoCheck disabled, assuming root user has already been installed and continuing!"
 	fi
-	
-	# Ask whether or not universal log directory should be setup
-	getUserAnswer "Would you like to export the current log directory for universal use?"
-	case $? in
-		0)
-		# Yes
-		debug "WARN: User is setting $debugPrefix as default log directory universally!"
-		echo logDir="$debugPrefix" | tee -a $HOME/.bashrc &>/dev/null
-		echo logDir="$debugPrefix" | sudo tee -a /root/.bashrc &>/dev/null # This assumes 'universal' also means root, plus default root home dir. Will fix when I have more time.
-		;;
-		1)
-		# Nah, bro
-		debug "INFO: User chose not to install default logDir"
-		;;
-		*)
-		debug "l2" "ERROR: Bad return value from getUserAnswer()!"
-		;;
-	esac
+	return 0
 }
 
 function installGrive() {
-	if [[ $installOnly -eq 1 ]]; then
-		announce "You indicated not to run scripts, but are trying to install grive." "Would you like to run grive as well or just install?"
-		getUserAnswer "Answer yes if you want to run grive.sh: "
-		if [[ $? -eq 1 ]]; then
-			debug "User cose not to run grive"
-			#sudo ln -s grive.sh /usr/bin/grive.sh
-			return
-		fi
-	fi
-	debug "Installing and setting up Grive..."
-	
-	# Ask user which directory they would like to use
-	export griveSetupDir="$HOME/Grive"
-	getUserAnswer "Would you like to change grive directory from: $griveSetupDir ?" griveSetupDir "Please enter the location you would like to use: "
-	
-	# Check to see if directory exists, mkdir if not
-	if [[ -d $griveSetupDir ]]; then
-		debug "Directory already exists, moving on!"
-	else
-		debug "Directory does not exist, creating now!"
-		mkdir "$griveSetupDir"
-	fi
-	
-	# Tell user what to do then install grive
-	announce "Changing into directory and setting up grive." "Follow instructions given. Once installed, it may take some time to sync all your files."
-	cd "$griveSetupDir"
-	grive -a
-	
-	# Finally, setup a cronjob to sync grive every 5 mins
-	debug "Creating a cronjob for current user to update grive"
-	export griveSync=5
-	#sudo ln -s grive.sh /usr/bin/grive.sh
-	getUserAnswer "Grive will sync every $griveSync minutes, would you like to change this? " griveSync "Please enter how many mintues between updates you would like: "
-	addCronJob $griveSync min "$(pwd)/grive.sh $griveSetupDir"
-	
-	debug "Grive has been installed!"
-}
-
-function uninstallScript() {
-	# Remove all the links created
-	links=( "/usr/share/commonFunctions.sh" "/usr/share/packageManagerCF.sh" "/usr/bin/grive.sh" "/usr/bin/gitcheck" "/usr/bin/pm" "/usr/bin/packageManager" )
-	
-	debug "Running uninstaller function."
-	getUserAnswer "Would you like to uninstall all the program links that have been made?"
-	case $? in
-		1)
-		debug "Not destroying links as per user choice."
-		# Don't return, see if they want to uninstall other options
-		;;
-		0)
-		debug "Destroying links."
-		announce "Uninstalling links, this will require sudo permission!"
-		for link in "${links[@]}"; do
-			if sudo test -e "$link"; then
-				debug "Deleting link located at $link"
-				sudo rm -v "$link"
-			else
-				debug "$link was either not found, or is not a link. Skipping..."
-			fi
-		done
-		;;
-		*)
-		debug "Unknown option received"
-		exit 1
-		;;
-	esac
-	
-	# Offer to fix bash settings
-	getUserAnswer "Would you like to restore the backup .bashrc for current user?"
-	case $? in
-		1)
-		debug "Not restoring .bashrc backup - user decision"
-		;;
-		0)
-		debug "Restoring .bashrc from backup"
-		rm ~/.bashrc
-		cp ~/.bachrc.bak ~/.bashrc # ALWAYS keep the backup
-		;;
-		*)
-		debug "Unknown option received!"
-		exit 1
-		;;
-	esac
-	
-	# Do the same, but for root
-	if ! [ "$EUID" -eq 0 ] && sudo test -e /root/.bashrc.bak; then # Only run this if user is NOT root AND backup exists
-		getUserAnswer "Would you like to restore .bashrc backup for root user as well?"
-		case $? in
-			1)
-			debug "Not restoring root's .bashrc"
-			;;
-			0)
-			debug "Restoring .bashrc for root user!"
-			sudo rm /root/.bashrc
-			sudo cp /root/.bashrc.bak /root/.bashrc
-			;;
-			*)
-			debug "Unknown option received!"
-			exit 1
-			;;
-		esac
-	fi
-	
-	# Restore the user's crontab
-	getUserAnswer "Would you like to restore the original crontab?"
-	case $? in
-		1)
-		debug "Keeping the current crontab, be careful as links may have been destroyed!"
-		;;
-		0)
-		debug "Restoring the original crontab from backup"
-		cp ~/.crontab.bak ~/.crontab.txt # Once again, always keep the backup
-		crontab ~/.crontab.txt
-		;;
-		*)
-		debug "Unknown option received!"
-		exit 1
-		;;
-	esac
-	
-	# Too dangerous to try uninstalling Grive from script
-	announce "If you installed Grive, please uninstall manually by deleting folder and crontab entry" "Use rm -rf <Directory> to delete, but use extreme caution!"
-	
-	exit 0 # So that the rest of the script doesn't run
+	debug "l3" "ERROR: Grive2 installation not ready yet, check back for updates!"
+	return 0
 }
 
 ### Main Script
 
-# This doesn't really need to be here now, but double-checking never hurts!
-if [[ ! -f /usr/share/commonFunctions.sh || ! -f /usr/share/packageManagerCF.sh ]]; then
-	echo "commonFunctions.sh not linked to /usr/share, fixing now!"
-	linkCF
+processArgs "$@"
+
+# First, make sure user isn't sudo
+if [[ $EUID -eq 0 ]]; then
+	if [[ $sudoCheck -ne 0 ]]; then
+		debug "l1" "WARN: Ignoring sudo check, continuing with script as root!"
+	else
+		announce "This script is meant to be run as a normal user, not root!" "Please run the script without sudo." "Or, if root is the only user, run with the -s|--sudo option!"
+		debug "l1" "INFO: Warned user about using script as sudo, exiting..."
+		exit 1
+	fi
 fi
 
-if [[ $(pwd) != *linux-pref ]]; then
-	debug "l2" "Script is being run outside of source directory, switching to main directory!"
-	cd $(dirname $0) || cd linux-pref || debug "l2" "An error has occurred!"; exit 1
+# Check to make sure pwd is git directory
+if [[ "$(pwd)" != *linux-pref ]]; then
+	debug "l2" "FATAL: Current directory is incorrect! Please re-run script inside linux-pref folder! Exiting..."
+	exit 1
 fi
 
+# Verify home dir
+if [[ -z $HOME ]]; then
+		HOME="$(echo ~/)"
+fi
+
+# Check if computer is Raspberry Pi
 if [[ -e "/usr/bin/raspi-config" ]]; then
 		announce "Raspberry Pi detected!" "If this is the first time being run, please make sure locale is correct!" "Also make sure SSH is enabled in advanced options!"
 		getUserAnswer "Would you like to run raspi-config before running the rest of the script?"
 		case $? in
 			0)
-			debug "l1" "User chose to run raspi-config"
+			debug "l1" "INFO: User chose to run raspi-config"
 			sudo raspi-config
 			;;
-			1)
-			debug "l1" "User chose not to run raspi-config!"
-			;;
 			*)
-			debug "l2" "ERROR: Unknown return value for getUserAnswer!"
-			exit 1
+			debug "l1" "INFO: User chose not to run raspi-config!"
 			;;
 		esac
 fi
 
-debug "Processing arguments passed to script"
-processArgs "$@"
-
-announce "Please stay by your computer, there are interactive parts of this script!" "It moves fast though, so no need to worry about standing by for 20 mins!"
-
-if [[ "$EUID" -eq 0 ]]; then
-	announce "This script is meant to be run as local user, not root!" "Script will continue, but CTRL+C now if you want changes to effect current user!"
-fi
-
-pathCheck # Checks if /usr/bin is in the user's path, since scripts rely on it
-
-# Backup the crontab, used for uninstallation
-crontab -l > ~/.crontab.bak
-
-# Now, run the install mode!
-case $runMode in
-	update)
-	installUpdate
-	;;
-	programs)
-	installPrograms
-	;;
-	git)
-	installGit
-	;;
-	bash)
-	installBash
-	;;
-	grive)
-	installGrive
-	;;
-	uninstall)
-	uninstallScript
-	;;
-	all)
-	installUpdate
-	installPrograms
-	installGit
-	installBash
-	installGrive
-	;;
-	except)
-	case $except in
-		programs)
-		installUpdate
-		installGit
-		installBash
-		installGrive
-		;;
-		git)
-		installUpdate
-		installPrograms
-		installBash
-		installGrive
-		;;
-		update)
-		installPrograms
-		installGit
-		installBash
-		installGrive
-		;;
-		bash)
-		installUpdate
-		installPrograms
-		installGit
-		installGrive
-		;;
-		grive)
-		installUpdate
-		installPrograms
-		installGit
-		installBash
+# Backup crontab, just in case it is used
+if [[ ! -e "$HOME"/.crontab.bak ]]; then
+	debug "l2" "INFO: Creating backup of current user's crontab at $HOME/crontab.bak"
+	crontab -l > "$HOME"/.crontab.bak
+else
+	debug "l2" "ERROR: Backup of crontab already exists at $HOME/crontab.bak"
+	getUserAnswer "n" "Would you like to overwrite the backup?"
+	case $? in
+		0)
+		debug "l1" "WARN: Overwriting crontab backup at user's request"
+		crontab -l > "$HOME"/.crontab.bak
 		;;
 		*)
-		debug "Script has encountered a fatal error! Except has created an exception!"
-		exit 1
+		debug "l1" "INFO: Skipping crontab backup, as one already exists"
 		;;
 	esac
+fi
+
+# Now, time to decide what to run
+# Scripts to install/run are decided by an array with the following values
+# Program:    pm  programs  gm  bash  grive 
+# Location:  [0]    [1]    [2]  [3]    [4]
+declare -a iOptions
+for i in {0..4}
+do
+	iOptions[$i]=0 # Initialize array, nothing by default
+done
+
+case $specific in
+	except)
+	for i in {0..4}
+	do
+		iOptions[$i]=1
+	done
+	commaCount="$(awk -F',' '{print NF-1}' <<< "$1")"
+	for i in $(seq 0 1 $commaCount); # char count of commas in string; hopefully 0 doesn't cause it to fail
+	do
+		iOpt="$(echo "$1" | cut -d',' -f $i)" # By this point, $1 should be the only arg left
+		case "$iOpt" in
+			all)
+			debug "l2" "FATAL: iOption all is not compatible with -e|--except! Please fix and re-run!"
+			exit 1
+			;;
+			pm|pac*)
+			iOptions[0]=0
+			;;
+			pr*)
+			iOptions[1]=0
+			;;
+			gm|gi*)
+			iOptions[2]=0
+			;;
+			ba*)
+			iOptions[3]=0
+			;;
+			gr*)
+			iOptions[4]=0
+			;;
+			uni*)
+			debug "l2" "FATAL: iOption uninstall is not compatible with -e|--except! Please fix and re-run!"
+			exit 1
+			;;
+			*)
+			debug "l2" "ERROR: $iOpt is not a valid install option. Attempting to continue..."
+			;;
+		esac
+	done
+	;;
+	only)
+	commaCount="$(awk -F',' '{print NF-1}' <<< "$1")"
+	for i in $(seq 0 1 $commaCount); # char count of commas in string; hopefully 0 doesn't cause it to fail
+	do
+		iOpt="$(echo "$1" | cut -d',' -f $i)"
+		case "$iOpt" in
+			all)
+			debug "l2" "FATAL: iOption all is not compatible with -o|--only! Please fix and re-run!"
+			exit 1
+			;;
+			pm|pac*)
+			iOptions[0]=1
+			;;
+			pr*)
+			iOptions[1]=1
+			;;
+			gm|gi*)
+			iOptions[2]=1
+			;;
+			ba*)
+			iOptions[3]=1
+			;;
+			gr*)
+			iOptions[4]=1
+			;;
+			uni*)
+			debug "l2" "FATAL: iOption uninstall is not compatible with -o|--only! Please fix and re-run!"
+			exit 1
+			;;
+			*)
+			debug "l2" "ERROR: $iOpt is not a valid install option. Attempting to continue..."
+			;;
+		esac
+	done
 	;;
 	*)
-	echo "Command not found, please re-run script!"
+	case "$1" in
+		all)
+		for i in {0..4}
+		do
+			iOptions[$i]=1
+		done
+		;;
+		pm|pac*)
+		iOptions[0]=1
+		;;
+		pr*)
+		iOptions[1]=1
+		;;
+		gm|gi*)
+		iOptions[2]=1
+		;;
+		ba*)
+		iOptions[3]=1
+		;;
+		gr*)
+		iOptions[4]=1
+		;;
+		uni*)
+		debug "l2" "FATAL: iOption uninstall is not compatible with -o|--only! Please fix and re-run!"
+		exit 1
+		;;
+		*)
+		debug "l2" "ERROR: $iOpt is not a valid install option. Attempting to continue..."
+		;;
+	esac
 	;;
 esac
 
-# Now install all my necessary and fun commands to user and root .bashrc
-if [[ $installOnly -eq 0 && "$runMode" != "except" ]]; then
-	getUserAnswer "Would you like to run setup commands?"
-	case $? in
-	0)
-	debug "Running setupCommands.sh!"
-	./setupCommands.sh
-	;;
-	1)
-	debug "User chose not to run setupCommands.sh"
-	;;
-	*)
-	debug "Unknown option! $?"
-	announce "An error occurred! Please consult log!"
-	exit 1
-	;;
-	esac
-	getUserAnswer "Would you like to have the nonScriptCommands read to you?"
-	case $? in
-	0)
-	debug "Reading nonScriptCommands.txt to user"
-	announce "The following commands cannot be scripted." "Manually install each command as they are given"
-	while read -r lined;
-	do
-		[[ $lined = \#* || -z $lined ]] && continue
-		echo "$lined"
-		sleep 5
-	done < "nonScriptCommands.txt"
-	;;
-	1)
-	debug "User chose not to have nonScriptCommands read to them"
-	;;
-	*)
-	debug "Unkown option received: $?"
-	announce "Unknown erropr has occurred! Please look at your log!"
-	exit 1
-	;;
-	esac
-else
-	debug "Not running setupCommands.sh because user specified not to"
-fi
-
-debug "Done with script!"
-announce "Everything was installed successfully!"
+# Now, run all the specified options
+announce "Now installing selected options!" "You will be asked for permission to link to /usr/share and /usr/bin" "Please provide password when/if prompted!"
+for i in {0..4}; # Remember to change this if more options are added
+do
+	if [[ ${iOptions[$i]} -ne 0 ]]; then
+		case $i in
+			0)
+			installPM
+			;;
+			1)
+			installPrograms
+			;;
+			2)
+			installGit
+			;;
+			3)
+			installBash
+			;;
+			4)
+			installGrive
+			;;
+			*)
+			debug "l2" "ERROR: Invalid sequence during installation! Attempting to continue..."
+			;;
+		esac
+	fi
+done
 
 #EOF
