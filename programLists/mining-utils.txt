@@ -1,0 +1,38 @@
+# Programs useful for mining, based on coin desired
+
+## ethereum
+# Recommended: Download ethminer from https://github.com/ethereum-mining/ethminer.git and compile from source using cmake/make
+make
+cmake
+g++
+
+# Uncomment below if you will be using OpenCL. Skip the next block if so
+#opencl-mesa
+
+# Next, install CUDA toolkit (if running NVIDIA graphics cards). Download the latest client from the following link
+#   https://developer.nvidia.com/cuda-toolkit
+# Then, run the following command in the downloaded directory
+#   sudo ./cuda_*.run 
+# Install the driver and toolkit at the minimum. If the installation gives you trouble, disable the desktop manager and then install (press CTRL+ALT+F1 to use a terminal)
+
+# After installing above, run the following commands:
+#   git clone https://github.com/ethereum-mining/ethminer.git
+#   cd ethminer/
+#   mkdir build && cd build
+#   cmake .. -DETHASHCUDA=ON (NOTE: You can run just 'cmake ..' if you will be using OpenCL)
+#   cmake --build .
+#   sudo make install
+# You can then run ethminer from anywhere. Run 'ethminer --help' to decide what options are best for you
+
+## Gridcoin
+# If you do not have something like an AUR, you will need to compile from source (find directions at http://www.gridcoin.us/Guides/gridcoin-install.htm)
+# For Debian/Ubuntu users, you can add from ppa using the following commands
+#   sudo apt-get install software-properties-common
+#   sudo add-apt-repository ppa:gridcoin/gridcoin-stable 
+#   sudo apt-get update
+# Then, you can run the following section
+boinc
+gridcoinresearchd
+gridcoinresearch-qt
+
+# Make sure you setup boinc BEFORE running the gridcoin wallet!

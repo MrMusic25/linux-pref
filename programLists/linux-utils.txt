@@ -6,6 +6,7 @@ coreutils
 build-essential
 linux-firmware
 make
+cmake
 gcc
 g++
 python
