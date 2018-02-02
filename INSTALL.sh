@@ -5,6 +5,10 @@
 # Run with the -h|--help option to see full list of install options (or look at displayHelp())
 #
 # Changes:
+# v2.0.2
+# - Got rid of adding cronjob in this script for gm; already has that implemented
+# - Started work on uninstall()
+#
 # v2.0.1
 # - Added all the installation functions, wrote them all (read: wrote one, then copy+pasted the rest)
 # - Added folder check
@@ -20,7 +24,7 @@
 #
 # TODO:
 #
-# v2.0.1, 06 Dec. 2017, 22:50 PST
+# v2.0.2, 02 Feb. 2018, 09:20 PST
 
 ### Variables
 
@@ -229,7 +233,7 @@ function installPrograms() {
 	
 	# Making it this far means user wants programs installed
 	debug "l1" "INFO: Installing programs in programLists/ folder!"
-	pm i programLists
+	pm i programLists/
 	
 	debug "l1" "INFO: Done installing programs!"
 }
@@ -274,15 +278,6 @@ function installGit() {
 	debug "l2" "WARN: Now running gm.sh in setup mode and adding repo to update list!"
 	gm -i
 	gm -d --add $(pwd)
-	
-	# Finally, ask if user wants to setup a cron job to update repos
-	getUserAnswer "Would you like to periodically update all Git directories?" gitTime "How many minutes would you like between updates? (0-60)"
-	if [[ $? -eq 0 ]]; then
-		addCronJob "$gitTime" min "/usr/bin/gm --daemon" # Added as current user
-		debug "l1" "INFO: Cron job added, will check every $gitTime minutes."
-	else
-		debug "l2" "WARN: Not installing cron job! Please run manually periodically, or setup your own cron job!"
-	fi
 	
 	debug "l1" "INFO: Done installing and running gm.sh!"
 	return 0
@@ -357,6 +352,31 @@ function installBash() {
 function installGrive() {
 	debug "l3" "ERROR: Grive2 installation not ready yet, check back for updates!"
 	return 0
+}
+
+function uninstall() {
+	debug "l2" "WARN: Uninstalling linux-pref from the system!"
+	
+	# Restore crontab
+	if [[ ! -e "$HOME"/.crontab.bak ]]; then
+		debug "l2" "ERROR: No crontab backup found! Please fix cron manually using `crontab -e`!"
+	else
+		debug "INFO: Attempting to restore crontab from backup..."
+		announce "Be carfeul with this step! Cron jobs could be messed up!" "Script will attempt to restore original crontab" "If you have custom jobs, please fix manually"
+		getUserAnswer "Would you like to edit cron manually? (Hint: No will restore backup)"
+		if [[ $? -eq 0 ]]; then
+			debug "INFO: User has decided to manually edit crontab"
+			announce "As you wish, manually editing crontab!" "Remove all linux-pref scripts from the list, or comment them out!"
+			crontab -e
+		else
+			debug "WARN: User has been wardned, now attempting to restore original crontab
+			crontab "$HOME"/.crontab.bak
+			val="$?"
+			if [[ $val -ne 0 ]]; then
+				debug "l2" "ERROR: Crontab restoration was not successful! Error code: $val"
+			fi
+		fi
+	fi
 }
 
 ### Main Script
