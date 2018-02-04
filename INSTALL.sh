@@ -5,6 +5,9 @@
 # Run with the -h|--help option to see full list of install options (or look at displayHelp())
 #
 # Changes:
+# v2.0.3
+# - More work on uninstall()
+#
 # v2.0.2
 # - Got rid of adding cronjob in this script for gm; already has that implemented
 # - Started work on uninstall()
@@ -24,7 +27,7 @@
 #
 # TODO:
 #
-# v2.0.2, 02 Feb. 2018, 09:20 PST
+# v2.0.3, 03 Feb. 2018, 19:49 PST
 
 ### Variables
 
@@ -356,8 +359,9 @@ function installGrive() {
 
 function uninstall() {
 	debug "l2" "WARN: Uninstalling linux-pref from the system!"
+	announce "NOTE: EVERYTHING will be uninstalled after running this!" "If you only want a couple things installed, you will have to reinstall them manually" "Press CTRL+C now to stop uninstallation"
 	
-	# Restore crontab
+	# Restore crontab (and grive)
 	if [[ ! -e "$HOME"/.crontab.bak ]]; then
 		debug "l2" "ERROR: No crontab backup found! Please fix cron manually using `crontab -e`!"
 	else
@@ -369,7 +373,7 @@ function uninstall() {
 			announce "As you wish, manually editing crontab!" "Remove all linux-pref scripts from the list, or comment them out!"
 			crontab -e
 		else
-			debug "WARN: User has been wardned, now attempting to restore original crontab
+			debug "WARN: User has been warned, now attempting to restore original crontab"
 			crontab "$HOME"/.crontab.bak
 			val="$?"
 			if [[ $val -ne 0 ]]; then
@@ -377,6 +381,56 @@ function uninstall() {
 			fi
 		fi
 	fi
+	
+	# Can't think of a good way to uninstall programs, so just warn the user and move on
+	debug "l3" "WARN: Script will not uninstall programs from package manager, please do so manually"
+	
+	# Remove grive dir
+	if [[ -f "$HOME"/Grive ]]; then
+		debug "INFO: Grive found in default location, asking user to delete"
+		getUserAnswer "Grive found in default location, would you like to remove folder?"
+		if [[ $? -eq 0 ]]; then
+			debug "WARN: Attempting to delete Grive at $HOME/Grive!"
+			rm -rf "$HOME"/Grive
+		else
+			debug "INFO: User chose not to delete Grive folder, moving on!"
+		fi
+	else
+		debug "WARN: Grive not found in default location!"
+		announce "WARN: Grive not found in default directory, or is not installed!" "Please remove directory manually" "This message can be ignored if grive is not installed"
+	fi
+	
+	# Ask to delete directories in .gitDirectoryList, if it exists
+	if [[ -e "$HOME"/.gitDirectoryList ]]; then
+		debug "INFO: .gitDirectoryList found, asking user if they would like to remove repos"
+		getUserAnswer "Would you like to delete the repositories listed in .gitDirectoryList? (NOTE: Interactively)"
+		if [[ $? -eq 0 ]]; then
+			debug "WARN: Deleting git repos"
+			while read dir; do
+				getUserAnswer "Would you like to remove the repo at: $dir ?"
+				if [[ $? -eq 0 ]]; then
+					debug "WARN: Removing git repo $dir at user request"
+					rm -v -rf "$dir"
+					if [[ $? -ne 0 ]]; then
+						debug "l2" "ERROR: Directory at $dir could not be removed, please do so manually!"
+					fi
+				fi
+			done<"$HOME"/.gitDirectoryList
+			debug "INFO: Now deleting .gitDirectoryList as well"
+			rm -v "$HOME"/.gitDirectoryList
+		else
+			debug "WARN: Not deleting repos, just deleting directory list!"
+			rm -v "$HOME"/.gitDirectoryList
+		fi
+	else
+		debug "l2" "WARN: .gitDirectoryList not found, assuming it is not installed. Moving on...
+	fi
+	
+	# Ask to restore .bashrc.bak, if it exists
+	
+	# Offer to remove .logs directories
+	
+	# Finally, remove all symlinks
 }
 
 ### Main Script
