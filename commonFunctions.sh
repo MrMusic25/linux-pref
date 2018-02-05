@@ -4,6 +4,9 @@
 # Note: this script whould not be run by itself, as it only contains functions and variables
 #
 # Changes:
+# v1.12.3
+# - Added function to store all links in .linkList
+#
 # v1.12.2
 # - Figured out a small math/logic error with dL(), fixed it
 #
@@ -94,7 +97,7 @@
 #   ~ Recommend when cF.sh should be updated
 #   ~ Log message if 'required' versions are mismatched
 #
-# v1.12.2, 03 Dec. 2017, 17:54 PST
+# v1.12.3, 04 Jan. 2018, 17:07 PST
 
 ### Variables
 
@@ -855,6 +858,7 @@ function dynamicLinker() {
 	
 	# And now, for our grand finale, watch as we link everything together!
 	debug "l2" "WARN: Linking requires sudo privileges, please provide when asked!"
+	touch "$HOME"/.linkList # Place to store links so they can be removed later
 	while [[ $numLinks -gt 0 ]]; do
 		case $numLinks in
 		1)
@@ -885,6 +889,7 @@ function dynamicLinker() {
 			if [[ $val -ne 0 ]]; then
 				debug "l2" "ERROR: And error occurred while attempting a link $fullScriptPath to $linkName! Error code: $val"
 			fi
+			echo "$linkName" >> "$HOME"/.linkList
 		fi
 		#((numLinks--))
 	done

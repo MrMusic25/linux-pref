@@ -5,6 +5,12 @@
 # Run with the -h|--help option to see full list of install options (or look at displayHelp())
 #
 # Changes:
+# v2.1.0
+# - Fixed a problem keeping skel installation from working in installBash()
+# - Added backup function to installBash() for user, root, and skel
+# - Made rmLink() to make removing links at the end of uninstall() easier
+# - Finished writing uninstall()
+#
 # v2.0.3
 # - More work on uninstall()
 #
@@ -27,7 +33,7 @@
 #
 # TODO:
 #
-# v2.0.3, 03 Feb. 2018, 19:49 PST
+# v2.1.0, 04 Feb. 2018, 17:08 PST
 
 ### Variables
 
@@ -309,11 +315,12 @@ function installBash() {
 	fi
 	
 	touch "$HOME"/.lp # Got smart, this make it so link sent to .bashrc are no longer deleted upon uninstallation
+	cp "$HOME"/.bashrc "$HOME"/.bashrc.bak # Gotta do those backups
 	printf "# Locations of .bashrc and .bash_aliases as added by linux-pref on %s\nsource %s\nsource %s\n" "$(date)" "$(pwd)/.bashrc" "$(pwd)/.bash_aliases" >> "$HOME"/.lp
 	
 	printf "# Added by linux-pref to import .bashrc and .bash_aliases from git repo\nif [[ -f .lp ]]; then\n   source .lp\nfi\n" >> "$HOME"/.bashrc
 	
-	if [[ -d /etc/skel ]]; then
+	if [[ ! -d /etc/skel ]]; then
 		debug "l1" "ERROR: skel directory not found! Unable to install bash for future users! Continuing..."
 	else
 		getUserAnswer "n" "Would you like to install bash for future users through the skel directory?"
@@ -322,6 +329,7 @@ function installBash() {
 			debug "l1" "INFO: Installing bash to skel directory as user indicated"
 			debug "l2" "WARN: Installing bash to skel directory will require sudo premission!"
 			sudo touch /etc/skel/.lp
+			sudo cp /etc/skel/.bashrc /etc/skel/.bashrc.bak 2>/dev/null # Suppress warning if .bashrc doesn't exist, like on some systems
 			printf "# Locations of .bashrc and .bash_aliases as added by linux-pref on %s\nsource %s\nsource %s\n" "$(date)" "$(pwd)/.bashrc" "$(pwd)/.bash_aliases" | sudo tee -a /etc/skel/.lp > /dev/null
 			printf "# Added by linux-pref to import .bashrc and .bash_aliases from git repo\nif [[ -f .lp ]]; then\n   source .lp\nfi\n" | sudo tee -a /etc/skel/.bashrc > /dev/null
 			;;
@@ -339,6 +347,7 @@ function installBash() {
 			debug "l1" "INFO: Installing .bashrc and .bash_aliases for root user"
 			debug "l2" "WARN: Installing bash for root will require sudo premission!"
 			sudo touch /root/.lp
+			sudo cp /root/.bashrc.bak 2>/dev/null # Suppressed for same reason as skel
 			printf "# Locations of .bashrc and .bash_aliases as added by linux-pref on %s\nsource %s\nsource %s\n" "$(date)" "$(pwd)/.bashrc" "$(pwd)/.bash_aliases" | sudo tee -a /root/.lp > /dev/null
 			printf "# Added by linux-pref to import .bashrc and .bash_aliases from git repo\nif [[ -f .lp ]]; then\n   source .lp\nfi\n" | sudo tee -a /root/.bashrc > /dev/null
 			;;
@@ -427,10 +436,93 @@ function uninstall() {
 	fi
 	
 	# Ask to restore .bashrc.bak, if it exists
+	if [[ -e "$HOME"/.bashrc.bak ]]; then
+		debug "INFO: .bashrc.bak found, asking user to restore"
+		announce ".bashrc.bak was found! Script will try to restore it!" "WARN: This could get rid of other aliases and custom functions!" "You can choose not to restore with no consequences or errors"
+		getUserAnswer "Would you like script to restore .bashrc.bak?"
+		if [[ $? -eq 0 ]]; then
+			debug "WARN: User chose to restore .bashrc, attempting to do so!"
+			rm -v "$HOME"/.bashrc
+			mv -v "$HOME"/.bashrc.bak "$HOME"/.bashrc
+		else
+			debug "l2" "INFO: User chose not to restore .bashrc, deleting .bashrc.bak"
+			rm -v "$HOME"/.bashrc.bak
+		fi
+	else
+		debug "l2" "WARN: .bashrc backup not found! Cannot restore!"
+	fi
+
+	# Remove .lp ifpresent. no need to confirm with user
+	debug "INFO: Removing .lp if it exists"
+	rm "$HOME"/.lp 2>/dev/null # Didn't feel like writing an if statement for this
+	
+	# Restore /etc/skel
+	debug "l2" "INFO: Attempting to restore bash for root and skel directory, requiring sudo permissions!"
+	if [[ -e /etc/skel/.lp ]]; then
+		debug "l2" "WARN: .lp found in skel directory, removing!"
+		sudo rm -v /etc/skel/.lp
+	fi
+	if [[ -e /etc/skel/.bashrc.bak ]]; then
+		debug "l2" "WARN: .bashrc backup found in /etc/skel, restoring..."
+		sudo rm -v /etc/skel/.bashrc
+		sudo mv -v /etc/skel/.bashrc.bak /etc/skel/.bashrc
+	fi
+	
+	# Do the same for root. Little more complicated as it requires sudo
+	if [[ ! -z $(sudo cat /root/.lp) ]]; then
+		debug "l2" "WARN: .lp found in /root, attempting to uninstall
+		sudo rm -v /root/.lp
+	fi
+	if [[ ! -z $(sudo cat /root/.bashrc.bak) ]]; then
+		debug "l2" "WARN: .bashrc backup found in /root, restoring..."
+		sudo rm -v /root/.bashrc 2>/dev/null # No reason it shouldn't be there, but suppress error just in case
+		sudo mv -v /root/.bashrc.bak /root/.bashrc
+	else
+		debug "l2" "ERROR: No backup found for root! Shouldn't cause any issues, but beware!"
+	fi
 	
 	# Offer to remove .logs directories
+	debug "INFO: Offering to remove logs directory"
+	announce "Script will now offer to remove log directories" "NOTE: There will be no more logged debug statements until end of script!" "Only thing left to do is to remove symbolic links, anyways"
+	getUserAnswer "Would you like to remove log directories for user and root?"
+	if [[ $? -eq 0 ]]; then
+		echo "INFO: Removing log directories!"
+		rm -rf "$HOME"/.logs
+		sudo rm -rf "$HOME"/.logs 2>/dev/null
+	fi
+	# I promised no more debug after that point, so no logging that the user chose not to remove directory
 	
 	# Finally, remove all symlinks
+	if [[ ! -e "$HOME"/.linkList ]]; then
+		echo "ERROR: .linkList not found, cannot unlink! Please do so manually with the following link:"
+		echo "  https://unix.stackexchange.com/questions/34248/how-can-i-find-broken-symlinks"
+		printf "\nSearch /usr/bin and /usr/share for broken links. Common install point.\n"
+	else
+		while read line; do
+			rmLink "$line"
+		done<"$HOME"/.linkList
+		rm -v "$HOME"/.linkList
+	fi
+	echo "Done uninstalling everything, thanks for using my scripts! Hope to see you again soon!"
+	exit 0
+}
+
+# Accepts input of a link. Returns 0 for success, 1 for error. No debug, since it runs at the end of uninstall()
+function rmLink() {
+	if [[ -z $1 ]]; then
+		echo "ERROR: Incorrect call for rmLink()!"
+		return 1
+	fi
+	
+	if [[ ! -L "$1" ]]; then
+		echo "ERROR: $1 is not a symbolic link! Not removing"
+		return 1
+	else
+		echo "WARN: Removing symbolic link at $1"
+		sudo rm -v "$1"
+		return $?
+	fi
+	return 0 # Not necessary, but I like to be consistent
 }
 
 ### Main Script
