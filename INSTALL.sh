@@ -104,7 +104,7 @@ Install Options (iOptions):
   gm | gitManager                     : Git management and update script
   bash                                : Installs .bashrc and .bash_aliases for selected users (will be asked)
   grive                               : Installs grive2, and the grive2 management script
-  uninstall                           : Uninstalls all scripts and changes listed in ~/.lpChanges.conf
+  uninstall                           : Uninstalls all scripts, links, and files
 
 For --except and --only options, specify programs you don't (or do) want installed in comma delimited format.
   e.g. ./INSTALL.sh -e pm,bash   <-- This command will install everything but pm and bash
@@ -375,7 +375,7 @@ function uninstall() {
 		debug "l2" "ERROR: No crontab backup found! Please fix cron manually using `crontab -e`!"
 	else
 		debug "INFO: Attempting to restore crontab from backup..."
-		announce "Be carfeul with this step! Cron jobs could be messed up!" "Script will attempt to restore original crontab" "If you have custom jobs, please fix manually"
+		announce "Be careful with this step! Cron jobs could be messed up!" "Script will attempt to restore original crontab" "If you have custom jobs, please fix manually"
 		getUserAnswer "Would you like to edit cron manually? (Hint: No will restore backup)"
 		if [[ $? -eq 0 ]]; then
 			debug "INFO: User has decided to manually edit crontab"
@@ -432,7 +432,7 @@ function uninstall() {
 			rm -v "$HOME"/.gitDirectoryList
 		fi
 	else
-		debug "l2" "WARN: .gitDirectoryList not found, assuming it is not installed. Moving on...
+		debug "l2" "WARN: .gitDirectoryList not found, assuming it is not installed. Moving on..."
 	fi
 	
 	# Ask to restore .bashrc.bak, if it exists
@@ -470,7 +470,7 @@ function uninstall() {
 	
 	# Do the same for root. Little more complicated as it requires sudo
 	if [[ ! -z $(sudo cat /root/.lp) ]]; then
-		debug "l2" "WARN: .lp found in /root, attempting to uninstall
+		debug "l2" "WARN: .lp found in /root, attempting to uninstall"
 		sudo rm -v /root/.lp
 	fi
 	if [[ ! -z $(sudo cat /root/.bashrc.bak) ]]; then
