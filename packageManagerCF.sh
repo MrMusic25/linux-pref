@@ -105,7 +105,7 @@ function determinePM() {
 		true
 	elif [[ ! -z $(which apt-get 2>/dev/null) ]]; then # Most common, so it goes first
 		export program="apt"
-		[[ ! -z $(which snap 2>/dev/null) ]] && debug "l3" "INFO: apt detected, installing snapd!" && pm install snapd
+		[[ ! -z $(which snap 2>/dev/null) ]] && debug "l3" "INFO: apt detected, installing snapd!" && sudo apt-get install snapd
 		#apt-get update
 	elif [[ ! -z $(which dnf 2>/dev/null) ]]; then # This is why we love DistroWatch, learned about the 'replacement' to yum!
 		export program="dnf"
