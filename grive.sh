@@ -116,7 +116,7 @@ function installFromSource() {
 		
 		cmake ..
 		vaq=$?
-		((va+=$vaq))
+		((va+=vaq))
 		if [[ "$vaq" -ne 0 ]]; then
 			debug "ERROR: cmake exited in error, cannot continue!"
 			return "$vaq"
@@ -124,7 +124,7 @@ function installFromSource() {
 		
 		make -j4
 		vaq=$?
-		((va+=$vaq))
+		((va+=vaq))
 		if [[ "$vaq" -ne 0 ]]; then
 			debug "ERROR: make could not compile grive 2!"
 			return "$vaq"
@@ -132,7 +132,7 @@ function installFromSource() {
 		
 		sudo make install
 		vaq=$?
-		((va+=$vaq))
+		((va+=vaq))
 		if [[ "$vaq" -ne 0 ]]; then
 			debug "ERROR: grive2 compiled, but could not be installed! Diagnose manually!"
 			return "$vaq"
@@ -163,6 +163,7 @@ if [[ "$1" == install ]]; then
 	if [[ ! -z $(which grive 2>/dev/null) ]]; then
 		debug "l2" "WARN: grive already installed from another source, exiting..."
 		exit 0
+	fi
 	installFromSource
 	exit "$?"
 fi
@@ -214,7 +215,7 @@ fi
 # If checks pass, sync!
 debug "INFO: Computer and servers ready, now syncronizing!"
 OPWD="$(pwd)"
-cd $griveDir
+cd "$griveDir"
 grive sync &>> "$logFile"
 val=$?
 
@@ -239,7 +240,7 @@ if [[ ! -z $conflictList ]]; then
 	done
 fi
 
-debug "l2" "INFO: 
+debug "l2" "INFO: Done syncing with grive!"
 
 cd "$OPWD"
 #debug "Done with script!"

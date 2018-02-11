@@ -71,7 +71,7 @@
 
 pmCFvar=0 # Ignore shellcheck saying this isn't used. Lets script know if this has been sourced or not.
 pmOptions="" # Options to be added before running any package manager
-
+rval=0 # Just to make sure 
 ### Functions
 
 if [[ -z $cfVar ]]; then
@@ -221,12 +221,12 @@ function universalInstaller() {
 			apt)
 			sudo apt-get $pmOptions install "$var" 
 			v=$?
-			((rval+=$v))
+			((rval+=v))
 			if [[ $v -ne 0 ]]; then
 				debug "l2" "WARN: $var not found with apt, checking snapd!"
 				sudo snap install "$var"
-				$v1=$?
-				((rval+=$v1))
+				v1=$?
+				((rval+=v1))
 				[[ $v1 -ne 0 ]] && debug "l2" "ERROR: $var not found with snapd either! Could not be installed!"
 			fi
 			;;
@@ -436,13 +436,14 @@ function queryPM() {
 			apt)
 			apt-cache $pmOptions search "$var"
 			v=$?
-			((rval+=$v))
+			((rval+=v))
 			if [[ "$v" -ne 0 ]]; then
 				debug "l2" "WARN: $var was not found in apt, checking snapd!"
 				snap find "$var" 2>/dev/null
 				v1=$?
-				((rval+=$?v1)
+				((rval+=v1))
 				[[ $v1 -ne 0 ]] && debug "l2" "ERROR: $var not found with snapd either!"
+			fi
 			;;
 			pacman)
 			pacaur $pmOptions -Ss "$var" # Program automatically displays Arch-repo AND AUR programs
@@ -499,7 +500,7 @@ function removePM() {
 		#announce "You are attempting to removePM() without setting \$program!" "Script will fix this for you, but please fix your script."
 		determinePM
 	fi
-	ravl=0
+	rval=0
 	
 	for var in "$@"
 	do
@@ -508,13 +509,14 @@ function removePM() {
 			apt)
 			sudo apt-get $pmOptions remove "$var"
 			v=$?
-			((rval+=$v))
+			((rval+=v))
 			if [[ $v -ne 0 ]]; then
 				debug "l2" "WARN: $var not found with apt, attempting to remove with snapd"
 				sudo snapd remove "$var"
 				v1=$?
-				((rval+=$v1))
+				((rval+=v1))
 				[[ "$v1" -ne 0 ]] && debug "l2" "ERROR: $var not found with snapd either, could not remove!"
+			fi
 			;;
 			pacman)
 			pacaur $pmOptions -R "$var"
@@ -591,13 +593,14 @@ function pkgInfo() {
 			apt)
 			apt-cache show "$var"
 			v=$?
-			((rval+=$v))
+			((rval+=v))
 			if [[ "$v" -ne 0 ]]; then
 				debug "l2" "WARN: $var not found with apt, checking snapd!"
 				snap info "$var"
 				v1=$?
-				((rval+=$v1))
+				((rval+=v1))
 				[[ "$v1" -ne 0 ]] && debug "l2" "ERROR: $var not found with snapd, could not display info!"
+			fi
 			;;
 			rpm)
 			# This allows to check a .rpm file for data info
