@@ -5,6 +5,9 @@
 # Run with the -h|--help option to see full list of install options (or look at displayHelp())
 #
 # Changes:
+# v2.1.1
+# - Don't really have a way to test the uninstall() feature, but it is now implemented
+#
 # v2.1.0
 # - Fixed a problem keeping skel installation from working in installBash()
 # - Added backup function to installBash() for user, root, and skel
@@ -287,7 +290,7 @@ function installGit() {
 	# If you made it this far, script is meant to be run
 	debug "l2" "WARN: Now running gm.sh in setup mode and adding repo to update list!"
 	gm -i
-	gm -d --add $(pwd)
+	gm -d --add "$(pwd)"
 	
 	debug "l1" "INFO: Done installing and running gm.sh!"
 	return 0
@@ -413,6 +416,7 @@ function installGrive() {
 	cd "$installDir"
 	announce "NOTE: This next step will take a while, depending on the size of your Google Drive" "Authenticating requires use of a web browser, the next step!"
 	grive -a
+	cd "$OOPWD"
 	
 	# Now, setup a cron job
 	gUpdateTime=5
@@ -631,6 +635,25 @@ if [[ -e "/usr/bin/raspi-config" ]]; then
 		esac
 fi
 
+# If uninstall is the argument, run it! Always confirm with user first, though!
+if [[ "$1" == un* ]]; then
+	debug "WARN: User has indicated to uninstall everything! Confirming..."
+	getUserAnswer "WARNING: You have indicated to uninstall linux-pref! Would you like to continue?"
+	case $? in
+		0)
+		debug "INFO: User has ben warned, continuing with uninstallation"
+		uninstall
+		exit 0
+		;;
+		*)
+		debug "l2" "INFO: User chose not to uninstall, exiting!"
+		displayHelp
+		exit 0
+		;;
+	esac
+fi
+
+# Now, for actual installation
 # Backup crontab, just in case it is used
 if [[ ! -e "$HOME"/.crontab.bak ]]; then
 	debug "l2" "INFO: Creating backup of current user's crontab at $HOME/crontab.bak"
