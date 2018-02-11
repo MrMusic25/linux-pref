@@ -10,6 +10,7 @@
 # - Added backup function to installBash() for user, root, and skel
 # - Made rmLink() to make removing links at the end of uninstall() easier
 # - Finished writing uninstall()
+# - Fixed issue with cut for -o|--only and -e|--except
 #
 # v2.0.3
 # - More work on uninstall()
@@ -33,7 +34,7 @@
 #
 # TODO:
 #
-# v2.1.0, 04 Feb. 2018, 17:08 PST
+# v2.1.0, 10 Feb. 2018, 16:35 PST
 
 ### Variables
 
@@ -362,7 +363,71 @@ function installBash() {
 }
 
 function installGrive() {
-	debug "l3" "ERROR: Grive2 installation not ready yet, check back for updates!"
+	debug "INFO: Installing grive"
+	dynamicLinker grive.sh /usr/bin
+	gs install
+	if [[ "$?" -ne 0 ]]; then
+		debug "l2" "ERROR: A problem occurred while installing grive 2! Might be already installed..."
+		getUserAnswer "n" "Would you like to continue setting up grive despite error?"
+		case $? in
+			0)
+			debug "INFO: Continuing grive setup at user request"
+			;;
+			*)
+			debug "l2" "FATAL: Grive installation failed! Moving on..."
+			return 1
+			;;
+		esac
+	fi
+	
+	# Make grive folder and set it up
+	installDir=$HOME/Grive
+	announce "NOTE: By default, grive installs to \$HOME/Grive" "You may change this to a directory of your choosing instead"
+	getUserAnswer "Would you like to use the default directory?" installDir "Pleaset enter full directory path now"
+	case $? in
+		0)
+		debug "INFO: Using default directory for Grive"
+		;;
+		*)
+		debug "WARN: Using user specified directory instead of default!"
+		;;
+	esac
+	
+	if [[ "$run" -ne 0 ]]; then
+		debug "WARN: User chose not to run script, exiting after installation!"
+		return 0
+	fi
+	
+	if [[ -e "$installDir" ]]; then
+		debug "l2" "FATAL: $installDir already exists! Aborting grive installation, please proceed manually!"
+		return 1
+	fi
+	
+	mkdir "$installDir"
+	if [[ "$?" -ne 0 ]]; then
+		debug "l2" "ERROR: Could not create grive directory! Does user have permission? Please fix manually!"
+		return 1
+	fi
+	
+	OOPWD="$(pwd)"
+	cd "$installDir"
+	announce "NOTE: This next step will take a while, depending on the size of your Google Drive" "Authenticating requires use of a web browser, the next step!"
+	grive -a
+	
+	# Now, setup a cron job
+	gUpdateTime=5
+	getUserAnswer "Would you like to setup a cronjob to automatically update grive?" gUpdateTime "How often, in minutes, would you like to update? (Default is 5)"
+	case $? in
+		0)
+		debug "INFO: Setting up cronjob for grive at user request"
+		addCronJob "$gUpdateTime" min "/usr/bin/gs $HOME/Grive"
+		;;
+		*)
+		debug "INFO: Not setting up cronjob for grive"
+		;;
+	esac
+	
+	debug "INFO: Done setting up grive!"
 	return 0
 }
 
@@ -601,7 +666,8 @@ case $specific in
 		iOptions[$i]=1
 	done
 	commaCount="$(awk -F',' '{print NF-1}' <<< "$1")"
-	for i in $(seq 0 1 $commaCount); # char count of commas in string; hopefully 0 doesn't cause it to fail
+	((commaCount++)) # cut cannot start at zero, so increment
+	for i in $(seq 1 1 $commaCount); # char count of commas in string; hopefully 0 doesn't cause it to fail
 	do
 		iOpt="$(echo "$1" | cut -d',' -f $i)" # By this point, $1 should be the only arg left
 		case "$iOpt" in
@@ -636,7 +702,8 @@ case $specific in
 	;;
 	only)
 	commaCount="$(awk -F',' '{print NF-1}' <<< "$1")"
-	for i in $(seq 0 1 $commaCount); # char count of commas in string; hopefully 0 doesn't cause it to fail
+	((commaCount++))
+	for i in $(seq 1 1 $commaCount); # char count of commas in string; hopefully 0 doesn't cause it to fail
 	do
 		iOpt="$(echo "$1" | cut -d',' -f $i)"
 		case "$iOpt" in

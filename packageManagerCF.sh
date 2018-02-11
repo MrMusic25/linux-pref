@@ -3,6 +3,12 @@
 # packageManagerCF.sh - Common functions for package managers and similar functions
 #
 # Changes:
+# v1.3.2
+# - Fixed debug messages
+# - Added return values to necessary functions for pm.sh
+# - Added snapd capabilities for Ubuntu/Debian systems
+# - Small functional change to checkRequirements()
+#
 # v1.3.1
 # - Turns out yaourt is not recommended. Changed all functions to use pacaur instead
 #
@@ -59,7 +65,7 @@
 # - For all functions - add ability to 'run PM as $1' if there is an argument
 #   ~ e.g. "upgradePM" will upgrade the current PM, "upgradePM npm" will (attempt to) upgrade npm
 #
-# v1.3.1, 09 October 2017 21:34 PST
+# v1.3.2, 10 Feb. 2018, 14:04 PST
 
 ### Variables
 
@@ -99,6 +105,7 @@ function determinePM() {
 		true
 	elif [[ ! -z $(which apt-get 2>/dev/null) ]]; then # Most common, so it goes first
 		export program="apt"
+		[[ ! -z $(which snap 2>/dev/null) ]] && debug "l3" "INFO: apt detected, installing snapd!" && pm install snapd
 		#apt-get update
 	elif [[ ! -z $(which dnf 2>/dev/null) ]]; then # This is why we love DistroWatch, learned about the 'replacement' to yum!
 		export program="dnf"
@@ -111,7 +118,7 @@ function determinePM() {
 		#sudo pacman -Syy &>/dev/null # Refreshes the repos, always read the man pages!
 		
 		# Conditional statement to install yaourt
-		[[ -z $(which yaourt 2>/dev/null) ]] && announce "pacman detected! yaourt will be installed as well!" "This insures all packages can be found and installed" && sudo pacman -S sudo git cower expac pacaur
+		[[ -z $(which yaourt 2>/dev/null) ]] && debug "l3" "INFO: pacman detected! pacaur will be installed for additional package availability." && sudo pacman -S git cower expac pacaur
 	elif [[ ! -z $(which slackpkg 2>/dev/null) ]]; then
 		export program="slackpkg"
 		#slackpkg update
@@ -127,7 +134,7 @@ function determinePM() {
 		debug "l2" "ERROR: Package manager not found! Please contact script maintainter!"
 		exit 1
 	fi
-	debug "Package manager found! $program"
+	debug "l5" "INFO: Package manager found! $program"
 }
 
 ## updatePM()
@@ -145,16 +152,17 @@ function determinePM() {
 function updatePM() {
 	# Check to make sure $program is set
 	if [[ -z $program || "$program" == "NULL" ]]; then
-		debug "Attempted to update package manager without setting program! Fixing..."
-		announce "You are attempting to updatePM() without setting \$program!" "Script will fix this for you, but please fix your script."
+		debug "l2" "WARN: Attempted to update package manager without setting program! Fixing..."
+		#announce "You are attempting to updatePM() without setting \$program!" "Script will fix this for you, but please fix your script."
 		determinePM
 	fi
 	
 	# Now, do the proper update command
-	debug "Refreshing the package manager's database"
+	debug "INFO: Refreshing the package manager's database"
 	case $program in
 		apt)
 		apt-get $pmOptions update
+		# No update option for snapd
 		;;
 		pacman)
 		pacaur $pmOptions -Syy
@@ -178,9 +186,10 @@ function updatePM() {
 		zypper $pmOptions refresh
 		;;
 		*)
-		debug "Unsupported package manager detected! Please contact script maintainer to get yours added to the list!"
+		debug "l2" "ERROR: Unsupported package manager detected! Please contact script maintainer to get yours added to the list!"
 		;;
 	esac
+	return $?
 }
 
 ## universalInstaller()
@@ -203,33 +212,51 @@ function universalInstaller() {
 		determinePM
 	fi
 	
+	rval=0 # Return value
+	
 	for var in "$@"
 	do
-		debug "Attempting to install $var"
+		debug "INFO: Attempting to install $var"
 		case $program in
 			apt)
-			apt-get $pmOptions install "$var"  
+			sudo apt-get $pmOptions install "$var" 
+			v=$?
+			((rval+=$v))
+			if [[ $v -ne 0 ]]; then
+				debug "l2" "WARN: $var not found with apt, checking snapd!"
+				sudo snap install "$var"
+				$v1=$?
+				((rval+=$v1))
+				[[ $v1 -ne 0 ]] && debug "l2" "ERROR: $var not found with snapd either! Could not be installed!"
+			fi
 			;;
 			dnf)
-			dnf $pmOptions install "$var"
+			sudo dnf $pmOptions install "$var"
+			((rval+=$?))
 			;;
 			yum)
-			yum $pmOptions install "$var" 
+			sudo yum $pmOptions install "$var"
+			((rval+=$?))
 			;;
 			slackpkg)
-			slackpkg $pmOptions install "$var"
+			sudo slackpkg $pmOptions install "$var"
+			((rval+=$?))
 			;;
 			zypper)
-			zypper $pmOptions install "$var"
+			sudo zypper $pmOptions install "$var"
+			((rval+=$?))
 			;;
 			rpm)
-			rpm $pmOptions -i "$var" 
+			sudo rpm $pmOptions -i "$var" 
+			((rval+=$?))
 			;;
 			emerge)
-			emerge $pmOptions "$var"
+			sudo emerge $pmOptions "$var"
+			((rval+=$?))
 			;;
 			pacman)
 			pacaur $pmOptions -S "$var"
+			((rval+=$?))
 			#if [[ "$?" -ne 0 ]]; then
 			#	debug "l2" "WARN: Package $var not found in Arch repos! Checking AUR..."
 			#	yaourt $pmOptions -S --aur "$var"
@@ -239,10 +266,11 @@ function universalInstaller() {
 			#fi
 			;;
 			*)
-			debug "Unsupported package manager detected! Please contact script maintainer to get yours added to the list!"
+			debug "l2" "ERROR: Unsupported package manager detected! Please contact script maintainer to get yours added to the list!"
 			;;
 		esac
 	done
+	return "$rval"
 }
 
 ## upgradePM()
@@ -260,44 +288,56 @@ function universalInstaller() {
 function upgradePM() {
 	# Check to make sure $program is set
 	if [[ -z $program || "$program" == "NULL" ]]; then
-		debug "Attempted to upgrade package manager without setting program! Fixing..."
-		announce "You are attempting to upgradePM() without setting \$program!" "Script will fix this for you, but please fix your script."
+		debug "l2" "WARN: Attempted to upgrade package manager without setting program! Fixing..."
+		#announce "You are attempting to upgradePM() without setting \$program!" "Script will fix this for you, but please fix your script."
 		determinePM
 	fi
+	rval=0
 	
-	debug "Preparing to upgrade $program"
+	debug "INFO Preparing to upgrade $program"
 	case $program in
 		apt)
 		#announce "NOTE: script will be running a dist-upgrade!"
-		apt-get $pmOptions upgrade
+		sudo apt-get $pmOptions upgrade
+		((rval+=$?))
+		# snapd has no formal upgrade option, done on a package-by-package system
 		;;
 		dnf)
-		dnf $pmOptions upgrade
+		sudo dnf $pmOptions upgrade
+		((rval+=$?))
 		;;
 		yum)
-		yum $pmOptions upgrade
+		sudo yum $pmOptions upgrade
+		((rval+=$?))
 		;;
 		slackpkg)
-		slackpkg $pmOptions install-new # Required line
-		slackpkg $pmOptions upgrade-all
+		sudo slackpkg $pmOptions install-new # Required line
+		((rval+=$?))
+		sudo slackpkg $pmOptions upgrade-all
+		((rval+=$?))
 		;;
 		zypper)
-		zypper $pmOptions update
+		sudo zypper $pmOptions update
+		((rval+=$?))
 		;;
 		rpm)
-		rpm $pmOptions -F
+		sudo rpm $pmOptions -F
+		((rval+=$?))
 		;;
 		pacman)
 		#sudo pacman $pmOptions -Syu
 		pacaur $pmOptions -Syu # Remember to refresh the AUR as well
+		((rval+=$?))
 		;;
 		emerge)
-		emerge $pmOptions --update --deep world # Gentoo is strange
+		sudo emerge $pmOptions --update --deep world # Gentoo is strange
+		((rval+=$?))
 		;;
 		*)
-		debug "Unsupported package manager detected! Please contact script maintainer to get yours added to the list!"
+		debug "l2" "ERROR: Unsupported package manager detected! Please contact script maintainer to get yours added to the list!"
 		;;
 	esac
+	return "$rval"
 }
 
 ## cleanPM()
@@ -319,22 +359,29 @@ function cleanPM() {
 		announce "You are attempting to cleanPM() without setting \$program!" "Script will fix this for you, but please fix your script."
 		determinePM
 	fi
+	rval=0
 	
-	debug "Preparing to clean with $program"
+	debug "INFO: Preparing to clean with $program"
 	case $program in
 		apt)
 		apt-get $pmOptions autoremove
+		((rval+=$?))
 		apt-get $pmOptions autoclean
+		((rval+=$?))
 		;;
 		dnf)
 		dnf $pmOptions clean all
+		((rval+=$?))
 		dnf $pmOptions autoerase
+		((rval+=$?))
 		;;
 		yum)
 		yum $pmOptions clean all
+		((rval+=$?))
 		;;
 		slackpkg)
 		slackpkg $pmOptions clean-system
+		((rval+=$?))
 		;;
 		rpm)
 		announce "RPM has no clean function"
@@ -342,18 +389,22 @@ function cleanPM() {
 		;;
 		pacman)
 		pacaur -Sc
+		((rval+=$?))
 		;;
 		zypper)
 		announce "Zypper has no clean function"
 		;;
 		emerge)
 		emerge $pmOptions --clean
+		((rval+=$?))
 		emerge $pmOptions --depclean # Couldn't tell which was the only one necessary, so I included both
+		((rval+=$?))
 		;;
 		*)
-		debug "Unsupported package manager detected! Please contact script maintainer to get yours added to the list!"
+		debug "l2" "ERROR: Unsupported package manager detected! Please contact script maintainer to get yours added to the list!"
 		;;
 	esac
+	return "$rval"
 }
 
 ## queryPM()
@@ -371,48 +422,62 @@ function cleanPM() {
 function queryPM() {
 	# Check to make sure $program is set
 	if [[ -z $program || "$program" == "NULL" ]]; then
-		debug "Attempted to query package manager without setting program! Fixing..."
-		announce "You are attempting to queryPM() without setting \$program!" "Script will fix this for you, but please fix your script."
+		debug "l2" "ERROR: Attempted to query package manager without setting program! Fixing..."
+		#announce "You are attempting to queryPM() without setting \$program!" "Script will fix this for you, but please fix your script."
 		determinePM
 	fi
 	
+	rval=0 # return value
+	
 	for var in "$@"
 	do
-		debug "l3" "Querying packagage database for: $var"
+		debug "l3" "INFO: Querying packagage database for: $var"
 		case $program in
 			apt)
 			apt-cache $pmOptions search "$var"
+			v=$?
+			((rval+=$v))
+			if [[ "$v" -ne 0 ]]; then
+				debug "l2" "WARN: $var was not found in apt, checking snapd!"
+				snap find "$var" 2>/dev/null
+				v1=$?
+				((rval+=$?v1)
+				[[ $v1 -ne 0 ]] && debug "l2" "ERROR: $var not found with snapd either!"
 			;;
 			pacman)
-			#pacman $pmOptions -Ss "$var" # No sudo required for this one, same for yaourt
-			#if [[ $? -ne 0 ]]; then
-			#	debug "l3" "Package $var not found in pacman, searching AUR via yaourt instead."
 			pacaur $pmOptions -Ss "$var" # Program automatically displays Arch-repo AND AUR programs
-			#fi
+			((rval+=$?))
 			;;
 			yum)
 			yum $pmOptions search "$var" # Change to 'yum search all' if the results aren't good enough
+			((rval+=$?))
 			;;
 			emerge)
 			emerge $pmOptions --search "$var" # Like yum, use 'emerge --searchdesc' if the results aren't enough
+			((rval+=$?))
 			;;
 			zypper)
 			zypper $pmOptions search "$var"
+			((rval+=$?))
 			;;
 			dnf)
 			dnf $pmOptions search "$var"
+			((rval+=$?))
 			;;
 			rpm)
 			rpm $pmOptions -q "$var"
+			((rval+=$?))
 			;;
 			slackpkg)
 			slackpkg $pmOptions search "$var"
+			((rval+=$?))
 			;;
 			*)
-			debug "Unsupported package manager detected! Please contact script maintainer to get yours added to the list!"
+			debug "l2" "ERROR: Unsupported package manager detected! Please contact script maintainer to get yours added to the list!"
 			;;
 		esac
 	done
+	return "$rval"
 }
 
 ## removePM()
@@ -430,48 +495,64 @@ function queryPM() {
 function removePM() {
 	# Check to make sure $program is set
 	if [[ -z $program || "$program" == "NULL" ]]; then
-		debug "Attempted to remove packages without setting program! Fixing..."
-		announce "You are attempting to removePM() without setting \$program!" "Script will fix this for you, but please fix your script."
+		debug "l2" "WARN: Attempted to remove packages without setting program! Fixing..."
+		#announce "You are attempting to removePM() without setting \$program!" "Script will fix this for you, but please fix your script."
 		determinePM
 	fi
+	ravl=0
 	
 	for var in "$@"
 	do
-		debug "l3" "Attempting to remove $var..."
+		debug "l3" "WARN: Attempting to remove program $var..."
 		case $program in
 			apt)
-			apt-get $pmOptions remove "$var"
+			sudo apt-get $pmOptions remove "$var"
+			v=$?
+			((rval+=$v))
+			if [[ $v -ne 0 ]]; then
+				debug "l2" "WARN: $var not found with apt, attempting to remove with snapd"
+				sudo snapd remove "$var"
+				v1=$?
+				((rval+=$v1))
+				[[ "$v1" -ne 0 ]] && debug "l2" "ERROR: $var not found with snapd either, could not remove!"
 			;;
 			pacman)
 			pacaur $pmOptions -R "$var"
+			((rval+=$?))
 			#if [[ $? -ne 0 ]]; then
 			#	debug "l3" "Couldn't find package $var with yaourt, trying pacman"
 			#	sudo pacman $pmOptions -R "$var"
 			#fi
 			;;
 			yum)
-			yum $pmOptions remove "$var"
+			sudo yum $pmOptions remove "$var"
 			;;
 			emerge)
-			emerge $pmOptions --remove --depclean "$var"
+			sudo emerge $pmOptions --remove --depclean "$var"
+			((rval+=$?))
 			;;
 			dnf)
-			dnf $pmOptions remove "$var"
+			sudo dnf $pmOptions remove "$var"
+			((rval+=$?))
 			;;
 			rpm)
-			rpm $pmOptions -e "$var"
+			sudo rpm $pmOptions -e "$var"
+			((rval+=$?))
 			;;
 			slackpkg)
-			slackpkg $pmOptions remove "$var"
+			sudo slackpkg $pmOptions remove "$var"
+			((rval+=$?))
 			;;
 			zypper)
-			zypper $pmOptions remove "$var"
+			sudo zypper $pmOptions remove "$var"
+			((rval+=$?))
 			;;
 			*)
-			debug "Unsupported package manager detected! Please contact script maintainer to get yours added to the list!"
+			debug "l2" "ERROR: Unsupported package manager detected! Please contact script maintainer to get yours added to the list!"
 			;;
 		esac
 	done
+	return "$rval"
 }
 
 ## pkgInfo()
@@ -489,55 +570,74 @@ function removePM() {
 function pkgInfo() {
 	# Check to make sure $program is set
 	if [[ -z $program || "$program" == "NULL" ]]; then
-		debug "Attempted to remove packages without setting program! Fixing..."
-		announce "You are attempting to removePM() without setting \$program!" "Script will fix this for you, but please fix your script."
+		debug "l2" "WARN: Attempted to remove packages without setting program! Fixing..."
+		#announce "You are attempting to removePM() without setting \$program!" "Script will fix this for you, but please fix your script."
 		determinePM
 	fi
+	rval=0
 	
 	for var in "$@"
 	do
-		debug "l3" "Displaying package info of: $var"
+		debug "l3" "INFO: Displaying package info of: $var"
 		case "$program" in
 			pacman)
 			#pacman $pmOptions -Qi "$var"
 			#if [[ $? -ne 0 ]]; then
 			#	debug "l3" "$var could not be found in pacman, trying yaourt!"
 			pacaur $pmOptions -Qi "$var"
+			((rval+=$?))
 			#fi
 			;;
 			apt)
 			apt-cache show "$var"
+			v=$?
+			((rval+=$v))
+			if [[ "$v" -ne 0 ]]; then
+				debug "l2" "WARN: $var not found with apt, checking snapd!"
+				snap info "$var"
+				v1=$?
+				((rval+=$v1))
+				[[ "$v1" -ne 0 ]] && debug "l2" "ERROR: $var not found with snapd, could not display info!"
 			;;
 			rpm)
 			# This allows to check a .rpm file for data info
 			if [[ -f "$var" ]]; then
 				debug "$var is a file, checking contents for documentation"
 				rpm $pmOptions -qip "$var"
+				((rval+=$?))
 			else
 				rpm $pmOptions -qi "$var"
+				((rval+=$?))
 			fi
 			;;
 			yum)
 			yum $pmOptions info "$var"
+			((rval+=$?))
 			;;
 			emerge)
 			equery $pmOptions meta "$var"
+			((rval+=$?))
 			equery $pmOptions depends "$var" # Shows dependencies
+			((rval+=$?))
 			;;
 			slackpkg)
 			slackpkg $pmOptions info "$var"
+			((rval+=$?))
 			;;
 			dnf)
 			dnf $pmOptions info "$var"
+			((rval+=$?))
 			;;
 			zypper)
 			zypper $pmOptions info "$var"
+			((rval+=$?))
 			;;
 			*)
-			debug "Unsupported package manager detected! Please contact script maintainer to get yours added to the list!"
+			debug "l2" "ERROR: Unsupported package manager detected! Please contact script maintainer to get yours added to the list!"
 			;;
 		esac
 	done
+	return "$rval"
 }
 
 ## checkRequirements()
@@ -557,6 +657,7 @@ function checkRequirements() {
 	if [[ -z $program || "$program" == "NULL" ]]; then
 		determinePM
 	fi
+	rval=0
 	
 	for req in "$@"
 	do
@@ -574,25 +675,16 @@ function checkRequirements() {
 			getUserAnswer "$reqt is not installed, would you like to do so now?"
 			case $? in
 				0)
-				debug "Installing $reqt based on user input"
-				if [[ "$program" == "pacman" ]]; then
-					if [[ -e packageManager.sh ]]; then
-						packageManager.sh install "$reqt"
-					elif [[ -e /usr/bin/pm ]]; then
-						pm install "$reqt"
-					else
-						debug "l2" "ERROR: Unable to locate packageManager.sh! Please install $reqt manually!"
-						exit 1
-					fi
+				debug "INFO: Installing $reqt based on user input"
+				if [[ -e packageManager.sh ]]; then
+					packageManager.sh install "$reqt"
+					((rval+=$?))
+				elif [[ -e /usr/bin/pm ]]; then
+					pm install "$reqt"
+					((rval+=$?))
 				else
-					if [[ -e packageManager.sh ]]; then
-						sudo packageManager.sh install "$reqt"
-					elif [[ -e /usr/bin/pm ]]; then
-						sudo pm install "$reqt"
-					else
-						debug "l2" "ERROR: Unable to locate packageManager.sh! Please install $reqt manually!"
-						exit 1
-					fi
+					debug "l2" "ERROR: Unable to locate packageManager.sh! Please install $reqt manually!"
+					exit 1
 				fi
 				;;
 				1)
@@ -610,7 +702,7 @@ function checkRequirements() {
 	done
 	
 	# If everything is installed, it will reach this point
-	debug "All requirements met, continuing with script."
+	debug "INFO: All requirements met, continuing with script."
 }
 
 ## distUpgradePM()
@@ -627,44 +719,69 @@ function checkRequirements() {
 function distUpgradePM() {
 	# Check to make sure $program is set
 	if [[ -z $program || "$program" == "NULL" ]]; then
-		debug "Attempted to upgrade package manager without setting program! Fixing..."
-		announce "You are attempting to upgradePM() without setting \$program!" "Script will fix this for you, but please fix your script."
+		debug "l2" "WARN: Attempted to upgrade package manager without setting program! Fixing..."
+		#announce "You are attempting to upgradePM() without setting \$program!" "Script will fix this for you, but please fix your script."
 		determinePM
 	fi
+	rval=0
 	
 	debug "INFO: Warning user about running a distribution upgrade"
 	announce "WARNING! User indicated to run a distribution upgrade!" "This can be dangerous as it can break system dependencies. Be sure before proceeding."
 	pause "Press CTRL+C twice to exit script, or [Enter] to continue"
 	case $program in
 		apt)
-		apt-get $pmOptions dist-upgrade
+		sudo apt-get $pmOptions dist-upgrade
+		((rval+=$?))
+		if [[ ! -z $(which do-release-upgrade 2>/dev/null) ]]; then
+			announce "Optionally, you can upgrade to the next release cycle, depending on your settings"
+			getUserAnswer "n" "Would you like to upgrade for the latest version of Ubuntu?"
+			case $? in
+				0)
+				debug "l2" "WARN: Upgrading Ubuntu system at user request!"
+				sudo do-release-upgrade
+				((rval+=$?))
+				;;
+				*)
+				debug "INFO: Not upgrading Ubuntu system"
+				;;
+			esac
+		fi
 		;;
 		dnf)
-		dnf $pmOptions upgrade
+		sudo dnf $pmOptions upgrade
+		((rval+=$?))
 		;;
 		yum)
-		yum $pmOptions upgrade
+		sudo yum $pmOptions upgrade
+		((rval+=$?))
 		;;
 		slackpkg)
-		slackpkg $pmOptions install-new # Required line
-		slackpkg $pmOptions upgrade-all
+		sudo slackpkg $pmOptions install-new # Required line
+		((rval+=$?))
+		sudo slackpkg $pmOptions upgrade-all
+		((rval+=$?))
 		;;
 		zypper)
-		zypper $pmOptions update
+		sudo zypper $pmOptions update
+		((rval+=$?))
 		;;
 		rpm)
-		rpm $pmOptions -F
+		sudo rpm $pmOptions -F
+		((rval+=$?))
 		;;
 		pacman)
 		debug "l2" "INFO: Beginning upgrade with pacman, as it is recommended"
 		sudo pacman $pmOptions -Syu
+		((rval+=$?))
 		pacaur $pmOptions -Syu # Remember to refresh the AUR as well
+		((rval+=$?))
 		;;
 		emerge)
-		emerge $pmOptions --update --deep world # Gentoo is strange
+		sudo emerge $pmOptions --update --deep world # Gentoo is strange
+		((rval+=$?))
 		;;
 		*)
-		debug "Unsupported package manager detected! Please contact script maintainer to get yours added to the list!"
+		debug "l2" "ERROR: Unsupported package manager detected! Please contact script maintainer to get yours added to the list!"
 		;;
 	esac
 }

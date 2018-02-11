@@ -3,6 +3,12 @@
 # packageManager.sh, a.k.a pm - A universal package manager script
 #
 # Changes:
+# v1.2.11
+# - Took away sudo, added it to pmCF.sh
+# - Now warns user when trying to run as sudo. Can be overridden with -o
+# - Side note: I love the fact the last real update to this was almost a year ago lol
+# - Script now returns incremental value based on number of errors, coincides with changes to pmCF.sh
+#
 # v1.2.10
 # - Removed some changelog to comply with new rules
 #
@@ -57,7 +63,7 @@
 # TODO:
 # - Code in distUpgrade() stuff
 #
-# v1.2.10, 07 Apr. 2017 11:04 PST
+# v1.2.11, 10 Feb. 2018, 13:17 PST
 
 ### Variables
 
@@ -66,6 +72,8 @@ pmOptions="" # Options to be added when running package manager
 program="NULL" # Uninitialized variables are unhappy variables
 programMode="name"
 confirm=0 # 0 Indicates no change, anything else indicates running noConfirm()
+rtnValue=0 # Used to indicate any problems while installing
+override=0 # Whether or not to suppress sudo/root error message
 
 # Used for logging
 longName="packageManager"
@@ -105,6 +113,7 @@ Options:
    -v | --verbose                   : Display detailed debugging info (note: MUST be first argument!)
    -o | --option <pm_option>        : Any options added here will be added when running the package manager
                                     : Use as many times as needed!
+   -r | --override					: Suppresses error message and allows script to be run as sudo/root
    -n | --no-confirm                : Runs specified actions without prompting user to continue. Not supported by all PMs!
    
 endHelp
@@ -157,20 +166,28 @@ function processArgs() {
 			fi
 			shift
 			;;
+			-r|--override)
+			debug "WARN: Enabling override for sudo/root users!"
+			override=1
+			;;
 			-n|--no-confirm)
 			confirm=1
 			noConfirm
 			;;
 			fu|FU)
-			[[ "$program" != "pacman" ]] && checkPrivilege "exit"
+			#[[ "$program" != "pacman" ]] && checkPrivilege "exit"
 			updatePM
+			((rtnValue+=$?))
 			upgradePM
+			((rtnValue+=$?))
 			updateOthers
 			;;
 			fuc|FUC)
-			[[ "$program" != "pacman" ]] && checkPrivilege "exit"
+			#[[ "$program" != "pacman" ]] && checkPrivilege "exit"
 			updatePM
+			((rtnValue+=$?))
 			upgradePM
+			((rtnValue+=$?))
 			updateOthers
 			if [[ $confirm -ne 0 ]]; then
 				debug "Warning user against cleaning the package manager non-interactively..."
@@ -178,29 +195,33 @@ function processArgs() {
 				sleep 5
 			fi
 			cleanPM
+			((rtnValue+=$?))
 			;;
 			f|F|refresh|Refresh|update|Update) # Such alias.
 			[[ "$program" != "pacman" ]] && checkPrivilege "exit" 
 			updatePM
+			((rtnValue+=$?))
 			;;
 			u|U|upgrade|Upgrade)
 			[[ "$program" != "pacman" ]] && checkPrivilege "exit" 
 			upgradePM
+			((rtnValue+=$?))
 			updateOthers
 			;;
 			c|C|clean|Clean)
 			# Give a warning if running in non-interactive mode
 			if [[ $confirm -ne 0 ]]; then
-				debug "Warning user against cleaning the package manager non-interactively..."
+				debug "WARN: Warning user against cleaning the package manager non-interactively..."
 				announce "WARNING: It can be dangerous to clean package managers without confirmation!" "Script will continue shortly, but it is recommended to CTRL+C now!"
 				sleep 5
 			fi
 			
-			[[ "$program" != "pacman" ]] && checkPrivilege "exit" 
+			#[[ "$program" != "pacman" ]] && checkPrivilege "exit" 
 			cleanPM
+			((rtnValue+=$?))
 			;;
 			i|I|install|Install)
-			[[ "$program" != "pacman" ]] && checkPrivilege "exit" 
+			#[[ "$program" != "pacman" ]] && checkPrivilege "exit" 
 			shift
 			for prog in "$@"
 			do
@@ -209,12 +230,12 @@ function processArgs() {
 			done
 			;;
 			r|R|remove|Remove)
-			[[ "$program" != "pacman" ]] && checkPrivilege "exit" 
+			#[[ "$program" != "pacman" ]] && checkPrivilege "exit" 
 			shift
 			
 			# Give a warning if running in non-interactive mode
 			if [[ $confirm -ne 0 ]]; then
-				debug "Warning user against removing programs non-interactively..."
+				debug "WARN: Warning user against removing programs non-interactively..."
 				announce "WARNING: It is dangerous to remove programs without confirmation!" "Script will continue shortly, but it is highly recommended to CTRL+C now!"
 				sleep 5
 			fi
@@ -222,6 +243,7 @@ function processArgs() {
 			for prog in "$@"
 			do
 				removePM "$1"
+				((rtnValue+=$?))
 				shift
 			done
 			;;
@@ -230,6 +252,7 @@ function processArgs() {
 			for prog in "$@"
 			do
 				queryPM "$1"
+				((rtnValue+=$?))
 				shift
 			done
 			;;
@@ -238,6 +261,7 @@ function processArgs() {
 			for prog in "$@"
 			do
 				pkgInfo "$1"
+				((rtnValue+=$?))
 				shift
 			done
 			;;
@@ -249,15 +273,15 @@ function processArgs() {
 function programInstaller() {
 	# Decide on mode
 	if [[ -f $1 ]]; then
-		debug "$1 is a file, running in file mode!"
+		debug "INFO: $1 is a file, running in file mode!"
 		export file=$1
 		export programMode="file"
 	elif [[ -d $1 ]]; then
-		debug "$1 is a folder, running in directory mode!"
+		debug "INFO: $1 is a folder, running in directory mode!"
 		export file=$1
 		export programMode="directory"
 	else
-		debug "Argument is not a file or folder, assuming $1 is a program!"
+		debug "INFO: Argument is not a file or folder, assuming $1 is a program!"
 	fi
 	
 	# Now, install based on mode. Taken from the old programInstaller.sh
@@ -274,11 +298,12 @@ function programInstaller() {
 			1)
 			fileTMP="$file".tmp # Temp file, so main files are not edited
 			cp "$file" "$fileTMP"
-			debug "User chose not to edit $file"
+			debug "INFO: User chose not to edit $file"
 			;;
 			*)
-			debug "Unknown option: $?"
+			debug "ERROR: Unknown option: $?"
 			announce "Error occurred! Please consult log!"
+			((rtnValue++))
 			exit 1
 			;;
 		esac
@@ -294,6 +319,7 @@ function programInstaller() {
 		do
 			[[ $line = \#* ]] && continue # Skips comment lines
 			universalInstaller "$line"
+			((rtnValue+=$?))
 		done
 		IFS=$OIFS # Reset IFS and globbing so the rest of the script doesn't break
 		set +f
@@ -305,10 +331,10 @@ function programInstaller() {
 		cd "$file"
 		for list in *.txt;
 		do
-			debug "Asking user if they would like to install $list"
+			debug "INFO: Asking user if they would like to install $list"
 			getUserAnswer "Would you like to install the programs listed in $list?"
 			if [[ $? -eq 1 ]]; then
-				debug "Skipping $list at user's choice..."
+				debug "WARN: Skipping $list at user's choice..."
 			else
 				# Ask if user wants to edit file before installing
 				getUserAnswer "Would you like to edit $list before installing?"
@@ -321,10 +347,10 @@ function programInstaller() {
 				1)
 				listTMP="$list".tmp
 				cp "$list" "$listTMP"
-				debug "User chose not to edit $list"
+				debug "INFO: User chose not to edit $list"
 				;;
 				*)
-				debug "Unknown option: $?"
+				debug "ERROR: Unknown option: $?"
 				announce "Error occurred! Please consult log!"
 				exit 1
 				;;
@@ -341,8 +367,9 @@ function programInstaller() {
 				for line in $(cat "$listTMP");
 				do
 					[[ $line == \#* ]] && continue # Skips comment lines
-					debug "Attempting to install $line"
+					debug "INFO: Attempting to install $line"
 					universalInstaller "$line"
+					((rtnValue+=$?))
 				done
 				IFS=$OIFS
 				set +f
@@ -354,6 +381,7 @@ function programInstaller() {
 		;;
 		name)
 		universalInstaller "$1"
+		((rtnValue+=$?))
 		;;
 		*)
 		debug "Everything is broken. Why. At least you have unique debug messages for an easy CTRL+F."
@@ -371,12 +399,13 @@ function updateOthers() {
 		case $? in
 			0)
 			sudo rpi-update
+			((rtnValue+=$?))
 			;;
 			1)
 			false
 			;;
 			*)
-			debug "l3" "Unknown error detected!"
+			debug "l3" "ERROR: Unknown value from getUserAnswer()!"
 			;;
 		esac
 	fi
@@ -387,27 +416,32 @@ function updateOthers() {
 		case $? in
 			0)
 			sudo msfupdate
+			((rtnValue+=$?))
 			;;
 			1)
 			false
 			;;
 			*)
-			debug "l3" "Unknown error while installing msfupdate!"
+			debug "l3" "ERROR: Unknown value from getUserAnswer()!"
 			;;
 		esac
 	fi
 }
+
 ### Main Script
 
-determinePM
-if [[ "$program" == "pacman" && "$EUID" -eq 0 ]]; then
-	debug "l3" "Please run as regular user when using arch-based distros, not sudo/root!"
-	exit 1
+# Warn users against running as root
+if [[ "$EUID" -eq 0 && "$override" -eq 0 ]]; then
+	debug "l2" "ERROR: Script was run as root without override, warning user"
+	announce "ERROR: Please do not run $longName as sudo/root!" "Script will use sudo when necessary automatically" "You can override this with the -r|--override option. Exiting for now."
+	exit 20 # That way [ -gt $x ] and [ -ne 0 ] work
 fi
+
+determinePM
 
 processArgs "$@" # Didn't plan it this way, but awesome that everything work with this script
 
 announce "Done with script!"
-exit 0
+exit "$rtnValue"
 
 #EOF
