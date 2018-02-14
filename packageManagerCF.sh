@@ -3,6 +3,10 @@
 # packageManagerCF.sh - Common functions for package managers and similar functions
 #
 # Changes:
+# v1.3.3
+# - Fixed a logic error
+# - Corrected check for pacaur
+#
 # v1.3.2
 # - Fixed debug messages
 # - Added return values to necessary functions for pm.sh
@@ -65,7 +69,7 @@
 # - For all functions - add ability to 'run PM as $1' if there is an argument
 #   ~ e.g. "upgradePM" will upgrade the current PM, "upgradePM npm" will (attempt to) upgrade npm
 #
-# v1.3.2, 10 Feb. 2018, 14:04 PST
+# v1.3.3, 13 Feb. 2018, 23:16 PST
 
 ### Variables
 
@@ -105,7 +109,7 @@ function determinePM() {
 		true
 	elif [[ ! -z $(which apt-get 2>/dev/null) ]]; then # Most common, so it goes first
 		export program="apt"
-		[[ ! -z $(which snap 2>/dev/null) ]] && debug "l3" "INFO: apt detected, installing snapd!" && sudo apt-get install snapd
+		[[ -z $(which snap 2>/dev/null) ]] && debug "l3" "INFO: apt detected, installing snapd!" && sudo apt-get install snapd
 		#apt-get update
 	elif [[ ! -z $(which dnf 2>/dev/null) ]]; then # This is why we love DistroWatch, learned about the 'replacement' to yum!
 		export program="dnf"
@@ -118,7 +122,7 @@ function determinePM() {
 		#sudo pacman -Syy &>/dev/null # Refreshes the repos, always read the man pages!
 		
 		# Conditional statement to install yaourt
-		[[ -z $(which yaourt 2>/dev/null) ]] && debug "l3" "INFO: pacman detected! pacaur will be installed for additional package availability." && sudo pacman -S git cower expac pacaur
+		[[ -z $(which pacaur 2>/dev/null) ]] && debug "l3" "INFO: pacman detected! pacaur will be installed for additional package availability." && sudo pacman -S git cower expac pacaur
 	elif [[ ! -z $(which slackpkg 2>/dev/null) ]]; then
 		export program="slackpkg"
 		#slackpkg update
