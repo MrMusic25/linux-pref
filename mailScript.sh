@@ -25,6 +25,7 @@ attachmentSize=0 # Total attachment size, in bytes
 maxAttachmentSize=20000000 # Maximum size of all attachements, in bytes
 configLocation="$HOME/.msConfig.conf" # Default location to check
 declare -a attachments # For when the user sends attachments
+subject="Message from $(whoami 2>/dev/null)" # Subject used when sending emails
 
 ### Functions
 
@@ -43,7 +44,7 @@ fi
 function displayHelp() {
 read -d '' helpVar <<"endHelp"
 
-Usage: mailScript.sh [options] <emailAddress> <messageContents OR message.txt>
+Usage: mailScript.sh [options] [emailSubject] <emailAddress> <messageContents OR message.txt>
 
 Options:
 -h | --help                  : Display this help message and exit
@@ -55,6 +56,7 @@ Options:
 By default, script will use config file at $HOME/.msConfig.conf
 If not found, will try /usr/share/.msConfig.conf
 When using a file, the whole file will be sent as text, not as an attachment
+Email subject not required, defaults to "Message from {username}"
 
 endHelp
 echo "$helpVar"
