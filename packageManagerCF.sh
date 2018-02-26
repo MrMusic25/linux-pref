@@ -3,6 +3,9 @@
 # packageManagerCF.sh - Common functions for package managers and similar functions
 #
 # Changes:
+# v1.3.4
+# - Forgot to add sudo to cleanPM() and upgradePM(), fixed
+#
 # v1.3.3
 # - Fixed a logic error
 # - Corrected check for pacaur
@@ -69,7 +72,7 @@
 # - For all functions - add ability to 'run PM as $1' if there is an argument
 #   ~ e.g. "upgradePM" will upgrade the current PM, "upgradePM npm" will (attempt to) upgrade npm
 #
-# v1.3.3, 13 Feb. 2018, 23:16 PST
+# v1.3.4, 16 Feb. 2018, 14:48 PST
 
 ### Variables
 
@@ -165,29 +168,29 @@ function updatePM() {
 	debug "INFO: Refreshing the package manager's database"
 	case $program in
 		apt)
-		apt-get $pmOptions update
+		sudo apt-get $pmOptions update
 		# No update option for snapd
 		;;
 		pacman)
 		pacaur $pmOptions -Syy
 		;;
 		dnf)
-		dnf $pmOptions check-update
+		sudo dnf $pmOptions check-update
 		;;
 		yum)
-		yum $pmOptions check-update
+		sudo yum $pmOptions check-update
 		;;
 		slackpkg)
-		slackpkg $pmOptions update
+		sudo slackpkg $pmOptions update
 		;;
 		emerge)
-		emerge $pmOptions --sync
+		sudo emerge $pmOptions --sync
 		;;
 		rpm)
-		rpm $pmOptions -F --justdb # Only updates the DB, not the system
+		sudo rpm $pmOptions -F --justdb # Only updates the DB, not the system
 		;;
 		zypper)
-		zypper $pmOptions refresh
+		sudo zypper $pmOptions refresh
 		;;
 		*)
 		debug "l2" "ERROR: Unsupported package manager detected! Please contact script maintainer to get yours added to the list!"
@@ -368,23 +371,23 @@ function cleanPM() {
 	debug "INFO: Preparing to clean with $program"
 	case $program in
 		apt)
-		apt-get $pmOptions autoremove
+		sudo apt-get $pmOptions autoremove
 		((rval+=$?))
-		apt-get $pmOptions autoclean
+		sudo apt-get $pmOptions autoclean
 		((rval+=$?))
 		;;
 		dnf)
-		dnf $pmOptions clean all
+		sudo dnf $pmOptions clean all
 		((rval+=$?))
-		dnf $pmOptions autoerase
+		sudo dnf $pmOptions autoerase
 		((rval+=$?))
 		;;
 		yum)
-		yum $pmOptions clean all
+		sudo yum $pmOptions clean all
 		((rval+=$?))
 		;;
 		slackpkg)
-		slackpkg $pmOptions clean-system
+		sudo slackpkg $pmOptions clean-system
 		((rval+=$?))
 		;;
 		rpm)
@@ -399,9 +402,9 @@ function cleanPM() {
 		announce "Zypper has no clean function"
 		;;
 		emerge)
-		emerge $pmOptions --clean
+		sudo emerge $pmOptions --clean
 		((rval+=$?))
-		emerge $pmOptions --depclean # Couldn't tell which was the only one necessary, so I included both
+		sudo emerge $pmOptions --depclean # Couldn't tell which was the only one necessary, so I included both
 		((rval+=$?))
 		;;
 		*)
