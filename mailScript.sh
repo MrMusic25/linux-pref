@@ -14,6 +14,9 @@
 #   ~ Not too many use cases, and too much to code for now, so maybe in a later release
 # - Accept piped input
 #   ~ Looked easy at first, but it's not. Save it for a later release.
+# - Make attachments comma-delimited
+#   ~ Can't imagine sending more than one attachment at once, but that's not the point. Always be dynamic as possible!
+# - High priotity email
 #
 # v0.0.1, 13 Feb. 2018, 23:22 PST
 
@@ -51,7 +54,7 @@ Options:
 -v | --verbose               : Prints verbose debug information. MUST be the first argument!
 -s | --setup [file]          : Initiates setup of mailScript, then exits. Will optionally write config to file
 -c | --config <file>         : Use given config file to run mailScript
--a | --attachment <file>     : Attach a file to the email. Use as many times as
+-a | --attachment <file>     : Attach a file to the email. Use as many times as necessary.
 
 By default, script will use config file at $HOME/.msConfig.conf
 If not found, will try /usr/share/.msConfig.conf
@@ -111,7 +114,7 @@ function processArgs() {
 				exit 1
 			fi
 			attachments+=("$2")
-			((attachmentSize+=$(stat --printf="%s" "$2"))) # Get size of  file and add to attachmentSize
+			((attachmentSize+=$(stat --printf="%s" "$2"))) # Get size of file and add to attachmentSize
 			shift
 			;;
 			*)
@@ -126,10 +129,27 @@ function processArgs() {
 
 # Creates config file
 function createConfig() {
-	return
+	# First, check if config location is free
+	if [[ -e "$configLocation" ]]; then
+		debug "l3" "ERROR: Config file at $configLocation already exists!"
+		getUserAnswer "Would you like to overwrite this file?"
+		if [[ $? -eq 1 ]]; then
+			debug "WARN: User chose not to overwirte config, exiting..."
+			exit 1
+		fi
+		
+		# else, move on. Backup config, just in case
+		debug "INFO: Backing up $configLocation to $configLocation.bak!"
+		mv "$configLocation" "$configLocation".bak
+	fi
+	
+	debug "l2" "INFO: Creating config! Can be found later at $configLocation!"
+	touch "$configLocation"
+	
 }
 ### Main Script
 
+checkRequirements "msmtp" "gpg/gpgme" # The SMTP client I have chosen to use for this project. Mostly due to better documentation.
 processArgs "$@"
 
 #EOF
