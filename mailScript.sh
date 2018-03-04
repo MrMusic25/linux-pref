@@ -22,6 +22,7 @@
 #   ~ Can't imagine sending more than one attachment at once, but that's not the point. Always be dynamic as possible!
 # - High priotity email
 # - Make config runnable from anywhere
+# - Add default port for manual input
 #
 # v0.0.2, 03 Feb. 2018, 17:27 PST
 
@@ -160,12 +161,16 @@ function createConfig() {
 	# Enter email, then search for settings 
 	until [[ "$emailAddr" == *@*.* ]]; do
 		read -p "Please enter the email you would like to use: " emailAddr
+		emailAddr="$(echo "$emailAddr" | awk '{print tolower($0)}')" # Convert email address toLower, email is case-insensitive
 	done
 	
 	domain="$(echo "$emailAddr" | cut -d'@' -f2)"
+	accountName="$(echo "$domain" | cut -d'.' -f1)" # Used for account info output
 	subCount="$(echo "$domain" | sed -e 's/\(.\)/\n/g' | grep . | wc -l)" # Gets number of dots in domain, indicating subdomains
 	found=0
-	while [[ "$subCount" -gt 1 && "$found" -eq 0]]; do
+	
+	# Check subdomains
+	while [[ "$subCount" -gt 1 && "$found" -eq 0 ]]; do
 		if [[ -f mailScriptSettings/"$domain" ]]; then
 			found=1
 		else
@@ -180,15 +185,49 @@ function createConfig() {
 		fi
 	fi
 	
-	if [[ $found -eq 1 ]]; then
-		if [[ "$domain" != "$(echo "$emailAddr" | cut -d'@' -f2)" ]]; then
-			debug "l2" "WARN: Settings for $(echo "$emailAddr" | cut -d'@' -f2) not found, but exist for subdomain $domain!"
-			getUserAnswer "No gurantees it will work, but would you like to use subdomain settings?"
-			if [[ $? -eq
-		debug "INFO: Settings found for domain $domain!"
+	# I hate the way I did these next few if statements, hopefully I can come back and fix them later
+	origDomain="$(echo "$emailAddr" | cut -d'@' -f2)"
+	origDomain="$(echo "$origDomain" | awk '{print tolower($0)}')"
+	if [[ $found -ne 0 && "$domain" != "$origDomain" ]]; then
+		debug "l2" "WARN: Settings for $origDomain not found, but exist for subdomain $domain!"
+		getUserAnswer "No gurantees it will work, but would you like to use subdomain settings?"
+		if [[ $? -eq 0 ]]; then
+			debug "WARN: Attempting to use subdomain settings!"
+			#debug "INFO: Settings found for domain $domain!"
+			cp mailScriptSettings/"$domain" "$configLocation"
+		fi
+	elif [[ $found -ne 0 ]]; then
+		debug "l2" "INFO: Settings found for domain $domain! Copying and continuing..."
 		cp mailScriptSettings/"$domain" "$configLocation"
 	else
-		debug "l2" 
+		domain="$origDomain"
+		debug "WARN: No settings found for $domain or subdomains, asking for manual input"
+		announce "No settings found for $domain domain!" "Please find them online, and enter settings into the following prompts."
+		
+		# get SMTP address
+		read -p "Please enter the SMTP address: " smtpAddr # Just gonna have to assume this is correct
+		getUserAnswer "Is this TLS or SSL? Answer [y]es for TLS, [n]o for SSL."
+		enc="$?" # 0 for TLS, 1 for SSL
+		
+		# get port number
+		portNum="abc" # In order for loop to work
+		until [[ $portNum -eq $portNum ]]; do # Just to make sure port is only numbers
+			read -p "What port number does this use?" portNum
+		done
+		
+		# determine outgoing address
+		getUserAnswer "Would you like to use a different \'from\' address than $emailAddr?"
+		if [[ $? -eq 0 ]]; then
+			until [[ $fromAddr == *@* ]]; do
+				read -p "Please enter the from address: " fromAddr
+			done
+		else
+			fromAddr="$emailAddr"
+		fi
+		
+		cp mailScriptSettings/default "$configLocation"
+		printf "\# %s\naccount %s\nhost %s\nport %s\nfrom %s\nuser %s\n" "$accountName" "$accountName" "$smtpAddr" "$portNum" "$fromAddr" "$emailAddr" | tee -a "$configLocation"
+	fi
 }
 ### Main Script
 
