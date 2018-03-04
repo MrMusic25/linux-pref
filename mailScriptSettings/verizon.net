@@ -1,0 +1,13 @@
+# Set default values for all following accounts.
+defaults
+auth           on
+tls            on
+tls_trust_file /etc/ssl/certs/ca-certificates.crt
+logfile        ~/.msmtp.log
+
+# Verizon
+account        verizon
+host           outgoing.verizon.net
+port           465
+
+

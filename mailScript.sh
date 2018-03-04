@@ -4,6 +4,9 @@
 #
 # Changes:
 #
+# v0.1.0
+# - Untested, but createConfig() is ready
+#
 # v0.0.2
 # - More work on config
 # - For now, config will now exit if not in linux-pref/
@@ -24,7 +27,7 @@
 # - Make config runnable from anywhere
 # - Add default port for manual input
 #
-# v0.0.2, 03 Feb. 2018, 17:27 PST
+# v0.1.0, 04 Feb. 2018, 01:12 PST
 
 ### Variables
 
@@ -33,6 +36,7 @@ shortName="ms"
 attachmentSize=0 # Total attachment size, in bytes
 maxAttachmentSize=20000000 # Maximum size of all attachements, in bytes
 configLocation="$HOME/.msConfig.conf" # Default location to check
+gpgFile="$HOME"/.ms-cred.gpg # Default location for GPG credential location
 declare -a attachments # For when the user sends attachments
 subject="Message from $(whoami 2>/dev/null)" # Subject used when sending emails
 
@@ -60,6 +64,7 @@ Options:
 -v | --verbose               : Prints verbose debug information. MUST be the first argument!
 -s | --setup [file]          : Initiates setup of mailScript, then exits. Will optionally write config to file
 -c | --config <file>         : Use given config file to run mailScript
+-u | --use <user|global>     : Override default, force use of global or user config, if it exists
 -a | --attachment <file>     : Attach a file to the email. Use as many times as necessary.
 
 By default, script will use config file at $HOME/.msConfig.conf
@@ -133,7 +138,7 @@ function processArgs() {
 	done
 }
 
-# Creates config file
+# Creates config file at $configLocation
 function createConfig() {
 	# Make sure folder is linux-pref/
 	if [[ "$(pwd)" != *linux-pref ]]; then
@@ -206,29 +211,59 @@ function createConfig() {
 		
 		# get SMTP address
 		read -p "Please enter the SMTP address: " smtpAddr # Just gonna have to assume this is correct
-		getUserAnswer "Is this TLS or SSL? Answer [y]es for TLS, [n]o for SSL."
-		enc="$?" # 0 for TLS, 1 for SSL
+		#getUserAnswer "Is this TLS or SSL? Answer [y]es for TLS, [n]o for SSL."
+		#enc="$?" # 0 for TLS, 1 for SSL
 		
 		# get port number
 		portNum="abc" # In order for loop to work
 		until [[ $portNum -eq $portNum ]]; do # Just to make sure port is only numbers
-			read -p "What port number does this use?" portNum
+			read -p "What port number does this use? " portNum
 		done
-		
-		# determine outgoing address
-		getUserAnswer "Would you like to use a different \'from\' address than $emailAddr?"
-		if [[ $? -eq 0 ]]; then
-			until [[ $fromAddr == *@* ]]; do
-				read -p "Please enter the from address: " fromAddr
-			done
-		else
-			fromAddr="$emailAddr"
-		fi
-		
+
 		cp mailScriptSettings/default "$configLocation"
-		printf "\# %s\naccount %s\nhost %s\nport %s\nfrom %s\nuser %s\n" "$accountName" "$accountName" "$smtpAddr" "$portNum" "$fromAddr" "$emailAddr" | tee -a "$configLocation"
+		printf "\# %s\naccount %s\nhost %s\nport %s\n" "$accountName" "$accountName" "$smtpAddr" "$portNum" | tee -a "$configLocation"
 	fi
+	
+	# determine outgoing address
+	getUserAnswer "Would you like to use a different \'from\' address than $emailAddr?"
+	if [[ $? -eq 0 ]]; then
+		until [[ $fromAddr == *@* ]]; do
+			read -p "Please enter the from address: " fromAddr
+		done
+	else
+		fromAddr="$emailAddr"
+	fi
+	
+	printf "from %s\nuser %s\npasswordeval \"gpg --quiet --for-your-eyes-only --no-tty --decrypt %s\n\"" "$fromAddr" "$emailAddr" "$gpgFile" | tee -a "$configLocation"
+	
+	# Now, for the password
+	announce "Next, you will be asked to enter a password." "It is highly recommended to create an app-specific password for this!" "This is very necessary with systems using 2FA!" "Password will be encrypted with GPG"
+	read -p "Please enter the password now: " pass
+	echo -e "$pass" | gpg --encrypt -o "$gpgFile" -r "$emailAddr" -
+	
+	# Set the account default
+	name="$(cat "$configFile" | grep account | rev | cut -d' ' -f1 | rev)"
+	printf "account default : %s\n" "$name" | tee -a "$configFile"
+	
+	# Done at this point. But now ask user if you want to make this global
+	getUserAnswer "Would you like to make this configuration global? NOTE: This will require sudo"
+	if [[ $? -eq 0 ]]; then
+		debug "WARN: Making config global per user request"
+		sudo ln -s "$configLocation" /usr/share/
+		sudo ln -s "$configLocation" /usr/share/
+		
+		announce "NOTE: User config will always take priority over global config!" "You can override this with the -u option!"
+	fi
+	
+	# Wrap things up and exit
+	debug "l2" "INFO: Done setting up config at $configLocation!"
+	getUserAnswer "n" "It is recommended to rebot to clear memory of cleartext password. Would you like to do this now?"
+	if [[ $? -eq 0 ]]; then
+		sudo reboot
+	fi
+	exit 0
 }
+
 ### Main Script
 
 checkRequirements "msmtp" "gpg/gpgme" # The SMTP client I have chosen to use for this project. Mostly due to better documentation.

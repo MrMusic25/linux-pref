@@ -5,8 +5,9 @@ tls            on
 tls_trust_file /etc/ssl/certs/ca-certificates.crt
 logfile        ~/.msmtp.log
 
-# Comcast
-account        comcast
-host           smtp.comcast.net
-port           587
+# Hotmail
+account        hotmail
+host           smtp.live.net
+port           465
+
 
