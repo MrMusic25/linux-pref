@@ -4,6 +4,10 @@
 #
 # Changes:
 #
+# v0.0.2
+# - More work on config
+# - For now, config will now exit if not in linux-pref/
+#
 # v0.0.1
 # - Initial version
 # - Got displayHelp() and processArgs() ready for everything else
@@ -17,8 +21,9 @@
 # - Make attachments comma-delimited
 #   ~ Can't imagine sending more than one attachment at once, but that's not the point. Always be dynamic as possible!
 # - High priotity email
+# - Make config runnable from anywhere
 #
-# v0.0.1, 13 Feb. 2018, 23:22 PST
+# v0.0.2, 03 Feb. 2018, 17:27 PST
 
 ### Variables
 
@@ -129,6 +134,12 @@ function processArgs() {
 
 # Creates config file
 function createConfig() {
+	# Make sure folder is linux-pref/
+	if [[ "$(pwd)" != *linux-pref ]]; then
+		debug "l2" "FATAL: Please run $longName setup from linux-pref/ directory! Exiting..."
+		exit 1
+	fi
+	
 	# First, check if config location is free
 	if [[ -e "$configLocation" ]]; then
 		debug "l3" "ERROR: Config file at $configLocation already exists!"
@@ -144,8 +155,40 @@ function createConfig() {
 	fi
 	
 	debug "l2" "INFO: Creating config! Can be found later at $configLocation!"
-	touch "$configLocation"
+	#touch "$configLocation"
 	
+	# Enter email, then search for settings 
+	until [[ "$emailAddr" == *@*.* ]]; do
+		read -p "Please enter the email you would like to use: " emailAddr
+	done
+	
+	domain="$(echo "$emailAddr" | cut -d'@' -f2)"
+	subCount="$(echo "$domain" | sed -e 's/\(.\)/\n/g' | grep . | wc -l)" # Gets number of dots in domain, indicating subdomains
+	found=0
+	while [[ "$subCount" -gt 1 && "$found" -eq 0]]; do
+		if [[ -f mailScriptSettings/"$domain" ]]; then
+			found=1
+		else
+			domain="$(echo "$domain" | cut -d'.' -f1 --complement)"
+		fi
+	done
+	
+	# Assume domain is now <domain>.<tld>
+	if [[ $found -eq 0 ]]; then
+		if [[ -f mailScriptSettings/"$domain" ]]; then
+			found=1
+		fi
+	fi
+	
+	if [[ $found -eq 1 ]]; then
+		if [[ "$domain" != "$(echo "$emailAddr" | cut -d'@' -f2)" ]]; then
+			debug "l2" "WARN: Settings for $(echo "$emailAddr" | cut -d'@' -f2) not found, but exist for subdomain $domain!"
+			getUserAnswer "No gurantees it will work, but would you like to use subdomain settings?"
+			if [[ $? -eq
+		debug "INFO: Settings found for domain $domain!"
+		cp mailScriptSettings/"$domain" "$configLocation"
+	else
+		debug "l2" 
 }
 ### Main Script
 
