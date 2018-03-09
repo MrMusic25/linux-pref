@@ -4,6 +4,11 @@
 #
 # Changes:
 #
+# v0.2.0
+# - Script needs to be tested, but everything should be ready for use now
+# - msmtp cannot send files. So, until further notice, ATTACHMENTS WILL NOT WORK. Will be implemented soon (after release)
+# - Added -g option for global config
+#
 # v0.1.0
 # - Untested, but createConfig() is ready
 #
@@ -26,8 +31,12 @@
 # - High priotity email
 # - Make config runnable from anywhere
 # - Add default port for manual input
+# - Add ability to send locally
+#   ~ Similar to sendmail for cron jobs, etc
+# - Use mutt for attachments
+#   ~ Should be a way to convert necessary options from msmtp config to mutt config
 #
-# v0.1.0, 04 Feb. 2018, 01:12 PST
+# v0.2.0, 09 Mar. 2018, 08:59 PST
 
 ### Variables
 
@@ -64,7 +73,7 @@ Options:
 -v | --verbose               : Prints verbose debug information. MUST be the first argument!
 -s | --setup [file]          : Initiates setup of mailScript, then exits. Will optionally write config to file
 -c | --config <file>         : Use given config file to run mailScript
--u | --use <user|global>     : Override default, force use of global or user config, if it exists
+-g | --global                : Force use of the global config, if it exists. 
 -a | --attachment <file>     : Attach a file to the email. Use as many times as necessary.
 
 By default, script will use config file at $HOME/.msConfig.conf
@@ -86,7 +95,22 @@ function processArgs() {
 	loopFlag=0
 	while [[ $loopFlag -eq 0 ]]; do
 		key="$1"
-			
+		
+		if [[ "$key" == *@* ]]; then
+			# Assume we have reached the email address; set and move on
+			sendToAddr="$key"
+			shift # Everything else is the message contents
+			return 0
+		elif [[ "$2" == *@* && "$key" != -* ]]; then
+			# Optional subject
+			subject="$key"
+			sendToAddr="$2"
+			shift
+			shift
+			debug "INFO: Subject given: $subject"
+			return 0
+		fi
+		
 		case "$key" in
 			-h|--help)
 			displayHelp
@@ -112,9 +136,20 @@ function processArgs() {
 				exit 1
 			fi
 			configLocation="$2"
+			debug "INFO: Using user-specified config at $configLocation"
 			shift
 			;;
+			-g|--global)
+			if [[ ! -e /usr/share/.msConfig.conf ]]; then
+				debug "l2" "FATAL: No global configuration found! Please run setup and try again!"
+				exit 1
+			else
+				debug "WARN: Using global config!"
+				configLocation=/usr/share/.msConfig.conf
+			fi
+			;;
 			-a|--attachment)
+			debug "l3" "WARN: Attachments not supported, check for a future release!"
 			if [[ -z $2 ]]; then
 				debug "l2" "ERROR: No attachment given with option $key! Please fix and re-run"
 				displayHelp
@@ -242,15 +277,14 @@ function createConfig() {
 	echo -e "$pass" | gpg --encrypt -o "$gpgFile" -r "$emailAddr" -
 	
 	# Set the account default
-	name="$(cat "$configFile" | grep account | rev | cut -d' ' -f1 | rev)"
-	printf "account default : %s\n" "$name" | tee -a "$configFile"
+	name="$(cat "$configLocation" | grep account | rev | cut -d' ' -f1 | rev)"
+	printf "account default : %s\n" "$name" | tee -a "$configLocation"
 	
 	# Done at this point. But now ask user if you want to make this global
 	getUserAnswer "Would you like to make this configuration global? NOTE: This will require sudo"
 	if [[ $? -eq 0 ]]; then
 		debug "WARN: Making config global per user request"
-		sudo ln -s "$configLocation" /usr/share/
-		sudo ln -s "$configLocation" /usr/share/
+		sudo ln -s "$configLocation" /usr/share/.msConfig.conf
 		
 		announce "NOTE: User config will always take priority over global config!" "You can override this with the -u option!"
 	fi
@@ -268,5 +302,58 @@ function createConfig() {
 
 checkRequirements "msmtp" "gpg/gpgme" # The SMTP client I have chosen to use for this project. Mostly due to better documentation.
 processArgs "$@"
+
+# Make sure config exists, and use global if not found
+if [[ ! -f "$configLocation" ]]; then
+	debug "l2" "ERROR: Given config at $configLocation not found! Trying global config..."
+	if [[ -f /usr/share/.msConfig.conf ]]; then
+		debug "l2" "WARN: Global config found, attempting to use!"
+		configLocation=/usr/share/.msConfig.conf
+	else
+		debug "l2" "FATAL: No config found or given! Please fix and re-run! Exiting...
+		sleep 2
+		displayHelp
+		exit 1
+	fi
+fi
+
+# Make sure we somehow didn't get to this step without valid send-to addr
+if [[ -z $sendToAddr ]]; then
+	debug "l2" "FATAL: Send-to address not found! Please fix call and re-run! Exiting..."
+	exit 1
+elif [[ "$sendToAddr" != *@*.* ]]; then
+	debug "l2" "WARN: $sendToAddr does not follow standard convention of *@*.* . Email migh not send, attempting anyways...
+fi
+
+# Almost ready to send. Check if "message" is a text file
+if [[ -f "$1" ]]; then
+	tmp="$(file -i "$1" | grep text)"
+	if [[ -z $tmp ]]; then 
+		# $1 is a file, but not a text file. Assume message?
+		debug "l2" "ERROR: $1 is a file, but not a text file... Assuming part of message, confinuing."
+	else
+		debug "INFO: Text file $1 given for message body, using it!"
+		mode="message"
+	fi
+fi
+
+# Finally, time to send a message
+debug "INFO: Sending message with given options to $sendToAddr!"
+if [[ "$mode" == message ]]; then
+	printf "Subject: %s\n%s\n" "$subject" "$(cat "$1")" | msmtp -c "$configLocation" "$sendToAddr"
+	val=$?
+else
+	printf "Subject: %s\n%s\n" "$subject" "$@" | msmtp -c "$configLocation" "$sendToAddr"
+	val=$?
+fi
+
+# Report error/success
+if [[ $val -eq 0 ]]; then
+	debug "INFO: Message sent successfully!"
+else
+	debug "l2" "ERROR: Message may not have sent, non-zero return value of $val!"
+fi
+
+debug "l3" "INFO: Done with script!"
 
 #EOF
