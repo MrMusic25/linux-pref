@@ -4,6 +4,13 @@
 #
 # Changes:
 #
+# v0.2.1
+# - Added correct number of spaces for output to config file
+# - Other minor output changes
+# - Fixed lines with tee to redirect stdout to /dev/null
+# - Added tail to name calculation in createConfig()
+# - Learned that it meant local used with gpg; can't get gpg to work though, so might find a different crypto program
+#
 # v0.2.0
 # - Script needs to be tested, but everything should be ready for use now
 # - msmtp cannot send files. So, until further notice, ATTACHMENTS WILL NOT WORK. Will be implemented soon (after release)
@@ -36,7 +43,7 @@
 # - Use mutt for attachments
 #   ~ Should be a way to convert necessary options from msmtp config to mutt config
 #
-# v0.2.0, 09 Mar. 2018, 08:59 PST
+# v0.2.1, 10 Mar. 2018, 10:13 PST
 
 ### Variables
 
@@ -256,7 +263,7 @@ function createConfig() {
 		done
 
 		cp mailScriptSettings/default "$configLocation"
-		printf "\# %s\naccount %s\nhost %s\nport %s\n" "$accountName" "$accountName" "$smtpAddr" "$portNum" | tee -a "$configLocation"
+		printf "\# %s\naccount        %s\nhost           %s\nport           %s\n" "$accountName" "$accountName" "$smtpAddr" "$portNum" | tee -a "$configLocation" 1>/dev/null
 	fi
 	
 	# determine outgoing address
@@ -269,16 +276,16 @@ function createConfig() {
 		fromAddr="$emailAddr"
 	fi
 	
-	printf "from %s\nuser %s\npasswordeval \"gpg --quiet --for-your-eyes-only --no-tty --decrypt %s\n\"" "$fromAddr" "$emailAddr" "$gpgFile" | tee -a "$configLocation"
+	printf "from           %s\nuser           %s\npasswordeval   \"gpg --quiet --for-your-eyes-only --no-tty --decrypt %s\"\n" "$fromAddr" "$emailAddr" "$gpgFile" | tee -a "$configLocation" 1>/dev/null
 	
 	# Now, for the password
 	announce "Next, you will be asked to enter a password." "It is highly recommended to create an app-specific password for this!" "This is very necessary with systems using 2FA!" "Password will be encrypted with GPG"
 	read -p "Please enter the password now: " pass
-	echo -e "$pass" | gpg --encrypt -o "$gpgFile" -r "$emailAddr" -
+	printf "%s" "$pass" | gpg -vv --encrypt -o "$gpgFile" -r "$(whoami)" -
 	
 	# Set the account default
-	name="$(cat "$configLocation" | grep account | rev | cut -d' ' -f1 | rev)"
-	printf "account default : %s\n" "$name" | tee -a "$configLocation"
+	name="$(cat "$configLocation" | tail -n1 | grep account | rev | cut -d' ' -f1 | rev)"
+	printf "\naccount default : %s\n" "$name" | tee -a "$configLocation" 1>/dev/null
 	
 	# Done at this point. But now ask user if you want to make this global
 	getUserAnswer "Would you like to make this configuration global? NOTE: This will require sudo"
@@ -295,7 +302,7 @@ function createConfig() {
 	if [[ $? -eq 0 ]]; then
 		sudo reboot
 	fi
-	exit 0
+	return 0
 }
 
 ### Main Script
