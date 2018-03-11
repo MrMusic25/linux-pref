@@ -11,7 +11,7 @@ i.e. OSX, BSD, UNIX, and Windows 10!
 - If you are interested in writing scripts like these, you can begin learning the syntax from the [Bash Hackers Wiki](http://wiki.bash-hackers.org/), or look at the files in `examples/`
 - I wrote most of these on a Manjaro system, but also do a lot of it with Bash for Windows. Below are the versions my scripts have been tested on:
   ~ Bash for Windows: version 4.3.11(1)-release (x86_64-pc-linux-gnu)
-  ~ Manjaro Linux: Bash version 4.4? (will verify)
+  ~ Manjaro Linux: Bash version 4.4.19(1)
 
 ## Scripts and Usage
 
@@ -50,7 +50,7 @@ Using the file `$HOME/.gitDirectoryList`, this script will update every valid gi
 
 You can also update a single repository simply by running the script with the directory as an argument.
 
-NOTE: This means you must run `gitManager.sh .` to update your current directory!
+NOTE: This means you must run `gitManager.sh ` to update your current directory!
 
 Read the help section for this script by running `gitManager.sh --help` for more info!
 
@@ -80,10 +80,17 @@ No arguments needed. The script will always ask before installing a line to the 
 ### defaultScriptTemplate.sh
 This file is the template file I use for all of my scripts. Simply copy+paste and rename, and use as a new script!
 
+### mailScript.sh
+A script used to send emails from the command line using `msmtp`. Useful for cron job notifications.
+
+After running `./mailScript.sh --setup` you can send emails using the following command. Add it to scripts for useful email notifications!
+
+`./mailScript.sh <emailAddress> <messageContents>`
+
 ### commonFunctions.sh
 A file I use to store all my functions that multiple scripts may need to use. Not meant to be run on its own, but rather imported by other scripts.
 
-Usage: Add `import commonFunctions.sh` OR `. commonFunctions.sh` to the beginning of any bash-script
+Usage: Add `source commonFunctions.sh` OR `. commonFunctions.sh` to the beginning of any bash-script
 
 For best results, put commonFunctions.sh in /usr/share with a hard link, then import from there.
 

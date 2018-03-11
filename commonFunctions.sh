@@ -258,6 +258,7 @@ function announce() {
 # Other info: If log_file is present, it will ALWAYS send debug message to log - useful when sharing scripts
 #             Note: Debug also runs 'touch' on file if not present, no need to do so in script now!
 #             Note: Starting with v1.6.0, dynamic logs are now used. $2 will be ignored, so erase those from debug statements whenever there is time
+#             Log levels: l1=log only; l2=log+stderr; l3=log+announce(); l4=log+stderr+announce(); l5=stdin, only when verbose is on
 function debug() {
 	# It would be kinda awkward trying to write to a non-existent directory... Hate to run it every call but it is necessary
 	if [[ ! -d $debugPrefix ]]; then
