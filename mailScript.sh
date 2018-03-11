@@ -4,6 +4,16 @@
 #
 # Changes:
 #
+# v1.0.0
+# - Tested, working, and ready for release! Not happy about some of my choices, but damn it, it works now!
+# - After functional testing, cleartext is the way to go. Just do your best to obfuscate the password
+# - Forgot about local function variables, added shift outside the processArgs loop
+# - Added some code for a "txt" mode, for sending to phones. Useless for now, will likely require a function in the future. Proof-read your messages for now!
+#
+# v0.2.2
+# - After research and some considerations, encryption may not be the way to go.
+# - Instead, warning user to use 2FA, or a dummy email account
+#
 # v0.2.1
 # - Added correct number of spaces for output to config file
 # - Other minor output changes
@@ -43,7 +53,7 @@
 # - Use mutt for attachments
 #   ~ Should be a way to convert necessary options from msmtp config to mutt config
 #
-# v0.2.1, 10 Mar. 2018, 10:13 PST
+# v1.0.0, 10 Mar. 2018, 21:47 PST
 
 ### Variables
 
@@ -52,7 +62,7 @@ shortName="ms"
 attachmentSize=0 # Total attachment size, in bytes
 maxAttachmentSize=20000000 # Maximum size of all attachements, in bytes
 configLocation="$HOME/.msConfig.conf" # Default location to check
-gpgFile="$HOME"/.ms-cred.gpg # Default location for GPG credential location
+#gpgFile="$HOME"/.ms-cred.gpg # Default location for password file
 declare -a attachments # For when the user sends attachments
 subject="Message from $(whoami 2>/dev/null)" # Subject used when sending emails
 
@@ -107,6 +117,7 @@ function processArgs() {
 			# Assume we have reached the email address; set and move on
 			sendToAddr="$key"
 			shift # Everything else is the message contents
+			message="$@"
 			return 0
 		elif [[ "$2" == *@* && "$key" != -* ]]; then
 			# Optional subject
@@ -114,6 +125,7 @@ function processArgs() {
 			sendToAddr="$2"
 			shift
 			shift
+			message="$@"
 			debug "INFO: Subject given: $subject"
 			return 0
 		fi
@@ -267,7 +279,7 @@ function createConfig() {
 	fi
 	
 	# determine outgoing address
-	getUserAnswer "Would you like to use a different \'from\' address than $emailAddr?"
+	getUserAnswer "Would you like to use a different 'from' address than $emailAddr?"
 	if [[ $? -eq 0 ]]; then
 		until [[ $fromAddr == *@* ]]; do
 			read -p "Please enter the from address: " fromAddr
@@ -276,16 +288,22 @@ function createConfig() {
 		fromAddr="$emailAddr"
 	fi
 	
-	printf "from           %s\nuser           %s\npasswordeval   \"gpg --quiet --for-your-eyes-only --no-tty --decrypt %s\"\n" "$fromAddr" "$emailAddr" "$gpgFile" | tee -a "$configLocation" 1>/dev/null
+	printf "from           %s\nuser           %s\npassword       %s\n" "$fromAddr" "$emailAddr" "$pass" | tee -a "$configLocation" 1>/dev/null
 	
 	# Now, for the password
-	announce "Next, you will be asked to enter a password." "It is highly recommended to create an app-specific password for this!" "This is very necessary with systems using 2FA!" "Password will be encrypted with GPG"
+	announce "Next, you will be asked to enter a password." "It is highly recommended to create an app-specific password for this!" "This is very necessary with systems using 2FA!" "Or, if possible, use a dummy account or an open relay!"
+	
+	stty -echo # Trick I found to make stdin invisible
 	read -p "Please enter the password now: " pass
-	printf "%s" "$pass" | gpg -vv --encrypt -o "$gpgFile" -r "$(whoami)" -
+	stty echo
+	
+	#printf "%s" "$pass" > "$gpgFile"
 	
 	# Set the account default
-	name="$(cat "$configLocation" | tail -n1 | grep account | rev | cut -d' ' -f1 | rev)"
+	name="$(cat "$configLocation" | grep account | tail -n1 | rev | cut -d' ' -f1 | rev)"
 	printf "\naccount default : %s\n" "$name" | tee -a "$configLocation" 1>/dev/null
+	
+	chmod 600 "$gpgFile" # Keeps file as hidden as possible
 	
 	# Done at this point. But now ask user if you want to make this global
 	getUserAnswer "Would you like to make this configuration global? NOTE: This will require sudo"
@@ -307,7 +325,7 @@ function createConfig() {
 
 ### Main Script
 
-checkRequirements "msmtp" "gpg/gpgme" # The SMTP client I have chosen to use for this project. Mostly due to better documentation.
+checkRequirements "msmtp" # The SMTP client I have chosen to use for this project. Mostly due to better documentation.
 processArgs "$@"
 
 # Make sure config exists, and use global if not found
@@ -317,7 +335,7 @@ if [[ ! -f "$configLocation" ]]; then
 		debug "l2" "WARN: Global config found, attempting to use!"
 		configLocation=/usr/share/.msConfig.conf
 	else
-		debug "l2" "FATAL: No config found or given! Please fix and re-run! Exiting...
+		debug "l2" "FATAL: No config found or given! Please fix and re-run! Exiting..."
 		sleep 2
 		displayHelp
 		exit 1
@@ -329,7 +347,13 @@ if [[ -z $sendToAddr ]]; then
 	debug "l2" "FATAL: Send-to address not found! Please fix call and re-run! Exiting..."
 	exit 1
 elif [[ "$sendToAddr" != *@*.* ]]; then
-	debug "l2" "WARN: $sendToAddr does not follow standard convention of *@*.* . Email migh not send, attempting anyways...
+	debug "l2" "WARN: $sendToAddr does not follow standard convention of *@*.* . Email might not send, attempting anyways..."
+fi
+
+# Make sure message is set
+if [[ -z $message ]]; then
+	debug "l2" "ERROR: Message is empty, cannot send! Exiting..."
+	exit 1
 fi
 
 # Almost ready to send. Check if "message" is a text file
@@ -347,10 +371,13 @@ fi
 # Finally, time to send a message
 debug "INFO: Sending message with given options to $sendToAddr!"
 if [[ "$mode" == message ]]; then
-	printf "Subject: %s\n%s\n" "$subject" "$(cat "$1")" | msmtp -c "$configLocation" "$sendToAddr"
+	printf "%s\n" "$(cat "$1")" | msmtp -C "$configLocation" "$sendToAddr"
+	val=$?
+elif [[ "$mode" == txt ]]; then
+	printf "%s\n" "$(echo "$message" | sed -e 's/\n/; /g')" | msmtp -C "$configLocation" "$sendToAddr" # Text messages look weird
 	val=$?
 else
-	printf "Subject: %s\n%s\n" "$subject" "$@" | msmtp -c "$configLocation" "$sendToAddr"
+	printf "%s\n" "$message" | msmtp -C "$configLocation" "$sendToAddr"
 	val=$?
 fi
 
