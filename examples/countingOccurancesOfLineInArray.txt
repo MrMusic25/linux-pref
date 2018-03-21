@@ -1,0 +1,27 @@
+Contents of script:
+
+	#!/bin/bash
+
+	source /usr/share/commonFunctions.sh
+
+	### Main
+
+	array=("Song1" "sOnG2" "soNg3")
+
+	printf "Array contents:\n"
+	printf "%s\n" "${array[@]}"
+	printf "\nLine count of grep -i song:\n"
+	printf "%s\n" "${array[@]}" | grep -i song | wc -l
+
+	#EOF
+
+Output of script:
+
+	kyle@N*:../bash-projects$ ./test.sh
+	Array contents:
+	Song1
+	sOnG2
+	soNg3
+
+	Line count of grep -i song:
+	3
