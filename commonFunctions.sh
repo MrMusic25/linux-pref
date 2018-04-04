@@ -6,6 +6,7 @@
 # Changes:
 # v1.12.4
 # - Using variables wasn't working for checkout(), switched to using a file instead
+# - checkout() now uses python to wait, better handling of float values
 #
 # v1.12.3
 # - Added function to store all links in .linkList
@@ -100,7 +101,7 @@
 #   ~ Recommend when cF.sh should be updated
 #   ~ Log message if 'required' versions are mismatched
 #
-# v1.12.4, 04 Apr. 2018, 00:24 PST
+# v1.12.4, 04 Apr. 2018, 00:43 PST
 
 ### Variables
 
@@ -713,21 +714,32 @@ function checkout() {
 	# Assuming the correct number of variables...
 	case $1 in
 		w*)
+		# First, wait 100-300ms before moving on, in case another process got here first
+		echo -e "import time\nimport random\ntime.sleep(random.uniform(0.1,0.3))\nexit()" | python
+		
+		# Then, claim your variable
 		if [[ ! -e "$2"".lock" ]]; then
 			touch "$2"".lock"
 			return 0
 		fi
 		
+		# Use this loop if file is locked. Waits in intervals of 50-100ms
 		until [[ ! -e "$2"".lock" ]];
 		do
-			sleep "0$(echo "scale=3; $((RANDOM%50+51)) / 1000" | bc -l )" # This sleeps for a random time between 50-100ms
+			echo -e "import time\nimport random\ntime.sleep(random.uniform(0.05,0.1))\nexit()" | python # This sleeps for a random time between 50-100ms
 		done
 		
+		# Wait one last time, just in case
+		echo -e "import time\nimport random\ntime.sleep(random.uniform(0.1,0.3))\nexit()" | python
 		touch "$2"".lock"
 		return 0
 		;;
 		d*)
 		rm "$2"".lock" # Lock deleted
+		if [[ "$?" -ne 0 ]]; then # Notify user, might be a slow system
+			debug "l2" "ERROR: $2.lock was missing! Did another process step over it?"
+			return 1
+		fi
 		return 0
 		;;
 		*)
