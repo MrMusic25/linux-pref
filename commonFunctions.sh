@@ -4,6 +4,9 @@
 # Note: this script whould not be run by itself, as it only contains functions and variables
 #
 # Changes:
+# v1.12.4
+# - Using variables wasn't working for checkout(), switched to using a file instead
+#
 # v1.12.3
 # - Added function to store all links in .linkList
 #
@@ -97,7 +100,7 @@
 #   ~ Recommend when cF.sh should be updated
 #   ~ Log message if 'required' versions are mismatched
 #
-# v1.12.3, 04 Jan. 2018, 17:07 PST
+# v1.12.4, 04 Apr. 2018, 00:24 PST
 
 ### Variables
 
@@ -710,21 +713,21 @@ function checkout() {
 	# Assuming the correct number of variables...
 	case $1 in
 		w*)
-		if [[ -z ${!2} ]]; then
-			# If the variable isn't declared, function has not been run yet, so safe to continue
-			${!2}=1
+		if [[ ! -e "$2"".lock" ]]; then
+			touch "$2"".lock"
 			return 0
 		fi
 		
-		until [[ ${!2} -eq 0 ]];
+		until [[ ! -e "$2"".lock" ]];
 		do
 			sleep "0$(echo "scale=3; $((RANDOM%50+51)) / 1000" | bc -l )" # This sleeps for a random time between 50-100ms
 		done
-		${!2}=1 # Variable is locked, ready to roll!
+		
+		touch "$2"".lock"
 		return 0
 		;;
 		d*)
-		${!2}=0 # Variable unlocked
+		rm "$2"".lock" # Lock deleted
 		return 0
 		;;
 		*)
